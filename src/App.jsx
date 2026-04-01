@@ -16,6 +16,9 @@ export default function App() {
   const [attention, setAttention] = useState([]);
   const [attentionError, setAttentionError] = useState("");
   const [attentionLoading, setAttentionLoading] = useState(false);
+  const [selectedAttention, setSelectedAttention] = useState(null);
+  const [selectedAttentionDetail, setSelectedAttentionDetail] = useState(null);
+  const [attentionActionState, setAttentionActionState] = useState(null);
 
   const [selectedSrId, setSelectedSrId] = useState("");
   const [customer, setCustomer] = useState(null);
@@ -63,6 +66,14 @@ export default function App() {
     }
   }
 
+  async function loadAttentionDetail(itemId) {
+    try {
+      setSelectedAttentionDetail(await dispatchApi.getAttentionItem(itemId));
+    } catch (error) {
+      setAttentionActionState({ error: true, message: formatError(error) });
+    }
+  }
+
   async function loadServiceRequest(srId) {
     setSrLoading(true);
     setSrError("");
@@ -105,13 +116,32 @@ export default function App() {
   }
 
   function handleAttentionSelect(item) {
+    setSelectedAttention(item);
+    setSelectedAttentionDetail(null);
+    setAttentionActionState(null);
+    loadAttentionDetail(item.itemId);
     const reference = item.reference || item.srReference || "";
     const srId = reference.replace(/^SR-/i, "");
     if (srId) {
       setSelectedSrId(srId);
-      setActiveTab("sr");
     }
-    loadRoutesFromItem(item);
+  }
+
+  async function handleAttentionAction(itemId, action, body = {}) {
+    setAttentionActionState({ error: false, message: `Running ${action}…` });
+    try {
+      const payload = await dispatchApi.postAttentionAction(itemId, action, body);
+      setAttentionActionState({ error: false, message: payload.message || `${action} complete` });
+      if (payload.item) {
+        setSelectedAttention(payload.item);
+        setSelectedAttentionDetail((current) => ({ ...(current || {}), item: payload.item, history: current?.history || [] }));
+      } else {
+        await loadAttentionDetail(itemId);
+      }
+      await loadAttention();
+    } catch (error) {
+      setAttentionActionState({ error: true, message: formatError(error) });
+    }
   }
 
   return (
@@ -119,7 +149,9 @@ export default function App() {
       <BrandBar />
       <TabNav activeTab={activeTab} onSelect={setActiveTab} />
 
-      {activeTab === "board" && <BoardView board={board} loading={boardLoading} error={boardError} />}
+      {activeTab === "board" && (
+        <BoardView board={board} loading={boardLoading} error={boardError} onOpenAttention={() => setActiveTab("attention")} />
+      )}
       {activeTab === "attention" && (
         <AttentionView
           items={attention}
@@ -127,6 +159,10 @@ export default function App() {
           error={attentionError}
           onRefresh={loadAttention}
           onSelectItem={handleAttentionSelect}
+          selectedItem={selectedAttention}
+          selectedItemDetail={selectedAttentionDetail}
+          actionState={attentionActionState}
+          onAction={handleAttentionAction}
         />
       )}
       {activeTab === "sr" && (

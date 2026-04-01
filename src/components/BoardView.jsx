@@ -6,34 +6,118 @@ function metricValue(payload, ...keys) {
   return "n/a";
 }
 
-export default function BoardView({ board, loading, error }) {
+function queueEntries(payload) {
+  const metrics = payload?.attentionMetrics || {};
+  const queueCounts = metrics.queueCounts || payload?.queueCounts || {};
+  return Object.entries(queueCounts)
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    .map(([key, value]) => ({ key, value }));
+}
+
+export default function BoardView({ board, loading, error, onOpenAttention }) {
   if (loading) return <section className="panel">Loading board…</section>;
   if (error) return <section className="panel error-panel">{error}</section>;
   if (!board) return <section className="panel">Board is not loaded yet.</section>;
 
   const metrics = [
-    ["Mapped techs", metricValue(board, "mappedTechs", "mapped_techs")],
-    ["Attention jobs", metricValue(board, "attentionJobs", "attention_jobs", "attentionCount")],
-    ["Urgent open", metricValue(board, "urgentOpenItems", "urgent_open_items")],
-    ["Suppressed urgent", metricValue(board, "suppressedUrgentItems", "suppressed_urgent_items")],
+    ["Mapped techs", metricValue(board, "mappedTechs")],
+    ["Active techs", metricValue(board, "activeTechs")],
+    ["Visible assignments", metricValue(board, "totalVisibleAssignments")],
+    ["Attention jobs", metricValue(board, "attentionJobs")],
+    ["Open parts cases", metricValue(board, "openPartsCases")],
+    ["Scanned jobs", metricValue(board, "scannedJobs")],
   ];
 
   return (
-    <section className="panel board-grid">
-      {metrics.map(([label, value]) => (
-        <article key={label} className="metric-card">
-          <p>{label}</p>
-          <strong>{value}</strong>
+    <section className="panel board-layout">
+      <div className="board-grid">
+        {metrics.map(([label, value]) => (
+          <article key={label} className="metric-card">
+            <p>{label}</p>
+            <strong>{value}</strong>
+          </article>
+        ))}
+      </div>
+
+      <div className="board-grid secondary">
+        <article className="metric-card wide">
+          <p>Attention queues</p>
+          <div className="chip-list">
+            {queueEntries(board).length ? (
+              queueEntries(board).map((entry) => (
+                <span key={entry.key} className="queue-chip">
+                  {entry.key.replaceAll("_", " ")}: {entry.value}
+                </span>
+              ))
+            ) : (
+              <span className="muted">No queue metrics yet.</span>
+            )}
+          </div>
         </article>
-      ))}
-      <article className="metric-card wide">
-        <p>Queue mix</p>
-        <pre>{JSON.stringify(board.queueCounts || board.queue_counts || {}, null, 2)}</pre>
-      </article>
-      <article className="metric-card wide">
-        <p>Owner coverage</p>
-        <pre>{JSON.stringify(board.ownerCoverage || board.owner_coverage || {}, null, 2)}</pre>
-      </article>
+
+        <article className="metric-card wide">
+          <p>Technician load</p>
+          <div className="list-stack compact">
+            {(board.technicianLoad || []).map((tech) => (
+              <div key={tech.bluefolderUserId || tech.discordUserId} className="list-row">
+                <div>
+                  <strong>{tech.technicianLabel || "Technician"}</strong>
+                  <p>{tech.originAddress || "Origin not set"}</p>
+                </div>
+                <div className="row-meta">
+                  <span>{tech.assignmentCount || 0} jobs</span>
+                  <span>{tech.nextJob?.summary || "No next job"}</span>
+                </div>
+              </div>
+            ))}
+            {!(board.technicianLoad || []).length && <p className="muted">No technician load data yet.</p>}
+          </div>
+        </article>
+      </div>
+
+      <div className="board-grid secondary">
+        <article className="metric-card wide">
+          <div className="section-head">
+            <p>Top attention</p>
+            <button type="button" onClick={onOpenAttention}>
+              Open queue
+            </button>
+          </div>
+          <div className="list-stack compact">
+            {(board.topAttention || []).map((item) => (
+              <div key={item.itemId} className="list-row">
+                <div>
+                  <strong>{item.reference}</strong>
+                  <p>{item.stageLabel || item.stage}</p>
+                </div>
+                <div className="row-meta">
+                  <span>{item.ageBucket || "n/a"}</span>
+                  <span>{item.followUpOwnerLabel || "unassigned"}</span>
+                </div>
+              </div>
+            ))}
+            {!(board.topAttention || []).length && <p className="muted">No attention items yet.</p>}
+          </div>
+        </article>
+
+        <article className="metric-card wide">
+          <p>Open parts cases</p>
+          <div className="list-stack compact">
+            {(board.openPartsCaseItems || []).map((item) => (
+              <div key={item.reference} className="list-row">
+                <div>
+                  <strong>{item.reference}</strong>
+                  <p>{item.stageLabel || item.stage}</p>
+                </div>
+                <div className="row-meta">
+                  <span>{item.nextAction || "No next action"}</span>
+                </div>
+              </div>
+            ))}
+            {!(board.openPartsCaseItems || []).length && <p className="muted">No open parts cases.</p>}
+          </div>
+        </article>
+      </div>
     </section>
   );
 }

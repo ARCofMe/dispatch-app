@@ -7,7 +7,17 @@ const DEFAULT_FILTERS = {
   reference: "",
 };
 
-export default function AttentionView({ items, loading, error, onRefresh, onSelectItem }) {
+export default function AttentionView({
+  items,
+  loading,
+  error,
+  onRefresh,
+  onSelectItem,
+  selectedItem,
+  selectedItemDetail,
+  actionState,
+  onAction,
+}) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const visibleItems = useMemo(() => {
@@ -21,50 +31,142 @@ export default function AttentionView({ items, loading, error, onRefresh, onSele
   }, [filters, items]);
 
   return (
-    <section className="panel">
-      <div className="attention-toolbar">
-        <div className="filter-grid">
-          {Object.keys(DEFAULT_FILTERS).map((key) => (
-            <label key={key} className="field">
-              <span>{labelFor(key)}</span>
-              <input
-                value={filters[key]}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    [key]: event.target.value,
-                  }))
-                }
-              />
-            </label>
+    <section className="panel attention-layout">
+      <div className="attention-column">
+        <div className="attention-toolbar">
+          <div className="filter-grid">
+            {Object.keys(DEFAULT_FILTERS).map((key) => (
+              <label key={key} className="field">
+                <span>{labelFor(key)}</span>
+                <input
+                  value={filters[key]}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      [key]: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <button type="button" onClick={onRefresh}>
+            Refresh
+          </button>
+        </div>
+
+        {loading && <p>Loading attention queue…</p>}
+        {error && <p className="error-text">{error}</p>}
+        {!loading && !error && visibleItems.length === 0 && <p>No attention items match the current filters.</p>}
+
+        <div className="list-stack">
+          {visibleItems.map((item) => (
+            <button
+              key={item.itemId || item.item_id}
+              className={selectedItem?.itemId === item.itemId ? "attention-card selected" : "attention-card"}
+              type="button"
+              onClick={() => onSelectItem(item)}
+            >
+              <div className="attention-card-top">
+                <strong>{item.reference || item.srReference || "SR"}</strong>
+                <span>{item.stageLabel || item.stage || "Stage"}</span>
+              </div>
+              <p>{item.nextAction || item.summary || "No next action text yet."}</p>
+              <div className="attention-card-meta">
+                <span>Status: {item.status || "open"}</span>
+                <span>Age: {item.ageBucket || item.age_bucket || "n/a"}</span>
+                <span>Owner: {item.followUpOwnerLabel || item.follow_up_owner_label || "unassigned"}</span>
+              </div>
+            </button>
           ))}
         </div>
-        <button type="button" onClick={onRefresh}>
-          Refresh
+      </div>
+
+      <AttentionDetail
+        item={selectedItemDetail?.item || selectedItem}
+        history={selectedItemDetail?.history || []}
+        actionState={actionState}
+        onAction={onAction}
+      />
+    </section>
+  );
+}
+
+function AttentionDetail({ item, history, actionState, onAction }) {
+  if (!item) {
+    return (
+      <aside className="detail-panel">
+        <p className="muted">Select an attention item to inspect history and take action.</p>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="detail-panel">
+      <div className="detail-head">
+        <div>
+          <p className="section-kicker">Attention detail</p>
+          <h3>{item.reference}</h3>
+        </div>
+        <span className="status-pill">{item.stageLabel || item.stage}</span>
+      </div>
+
+      <div className="detail-block">
+        <strong>Next action</strong>
+        <p>{item.nextAction || "No next action yet."}</p>
+      </div>
+
+      <div className="detail-grid">
+        <DetailValue label="Status" value={item.status} />
+        <DetailValue label="Age bucket" value={item.ageBucket} />
+        <DetailValue label="Owner" value={item.followUpOwnerLabel || "unassigned"} />
+        <DetailValue label="Technician" value={item.technicianLabel || "n/a"} />
+      </div>
+
+      <div className="action-row">
+        <button type="button" onClick={() => onAction(item.itemId, "ack")}>
+          Ack
+        </button>
+        <button type="button" onClick={() => onAction(item.itemId, "reopen")}>
+          Reopen
+        </button>
+        <button type="button" onClick={() => onAction(item.itemId, "unsnooze")}>
+          Unsnooze
+        </button>
+        <button type="button" onClick={() => onAction(item.itemId, "snooze", { hours: 4 })}>
+          Snooze 4h
         </button>
       </div>
 
-      {loading && <p>Loading attention queue…</p>}
-      {error && <p className="error-text">{error}</p>}
-      {!loading && !error && visibleItems.length === 0 && <p>No attention items match the current filters.</p>}
+      {actionState && <p className={actionState.error ? "error-text" : "muted"}>{actionState.message}</p>}
 
-      <div className="list-stack">
-        {visibleItems.map((item) => (
-          <button key={item.itemId || item.item_id} className="attention-card" type="button" onClick={() => onSelectItem(item)}>
-            <div className="attention-card-top">
-              <strong>{item.reference || item.srReference || "SR"}</strong>
-              <span>{item.stageLabel || item.stage || "Stage"}</span>
-            </div>
-            <p>{item.summary || item.nextAction || "No next action text yet."}</p>
-            <div className="attention-card-meta">
-              <span>Status: {item.status || "open"}</span>
-              <span>Age: {item.ageBucket || item.age_bucket || "n/a"}</span>
-              <span>Owner: {item.followUpOwnerLabel || item.follow_up_owner_label || "unassigned"}</span>
-            </div>
-          </button>
-        ))}
+      <div className="detail-block">
+        <strong>History</strong>
+        <div className="history-list">
+          {history.length ? (
+            history.map((event, index) => (
+              <div key={`${event.occurredAt}-${index}`} className="history-entry">
+                <p>{event.summary}</p>
+                <span>
+                  {event.occurredAt || "unknown"} • {event.actorLabel || event.source}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="muted">No workflow history yet.</p>
+          )}
+        </div>
       </div>
-    </section>
+    </aside>
+  );
+}
+
+function DetailValue({ label, value }) {
+  return (
+    <div className="detail-value">
+      <span>{label}</span>
+      <strong>{value || "n/a"}</strong>
+    </div>
   );
 }
 
