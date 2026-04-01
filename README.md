@@ -7,19 +7,70 @@ This project is intentionally separate from `ops-hub`:
 - `dispatch-app` is the web UI for dispatch workflows
 - route-planning work from `dispatcher-routing-app` should be folded into the `Routes` tab here over time
 
-## Planned tabs
+## Current scope
 
-- `Board`: queue-first dispatch overview
-- `Attention`: actionable workflow objects
-- `Service Request`: customer and timeline detail
-- `Routes`: technician route preview and routing migration seam
+- `Board`
+Queue-first overview for mapped technicians, visible assignments, attention load, and open parts cases.
 
-## Expected environment
+- `Attention`
+Actionable workflow queue with item detail, recent history, and controls for:
+  - `ack`
+  - `reopen`
+  - `unsnooze`
+  - `snooze`
+  - `assign`
+  - `clear owner`
 
-Create a `.env.local` or otherwise provide:
+- `Service Request`
+Customer detail and merged SR timeline pulled from Ops Hub.
+
+- `Routes`
+Structured route preview and heatmap payloads. This is the landing zone for migrating the older routing app into dispatch instead of keeping it separate.
+
+## Environment
+
+Copy `.env.example` to `.env.local` and set:
 
 - `VITE_OPS_HUB_API_BASE`
 - `VITE_OPS_HUB_API_TOKEN`
 - `VITE_DISPATCHER_ID`
 
-Those values are used by `src/api/client.js`.
+These values are consumed by [src/api/client.js](./src/api/client.js).
+
+## Local development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+Build the app:
+
+```bash
+npm run build
+```
+
+Run frontend tests:
+
+```bash
+npm test -- --run
+```
+
+## Current status
+
+This app is now a real first-pass dispatch shell, not just a stub:
+- it renders meaningful Ops Hub dispatch data
+- it supports basic queue actions
+- it opens SR detail and route context from the same app
+
+What is not migrated yet:
+- the richer route-planner map interactions from `dispatcher-routing-app`
+- more advanced assignment and scheduling workflows
+- deeper parts-facing dispatch cross-links
