@@ -176,6 +176,11 @@ input {
   gap: 6px;
 }
 
+.field.slim {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
 .field span {
   font-size: 0.82rem;
   color: #5f6f69;
@@ -338,6 +343,14 @@ input {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 18px;
+}
+
+.inline-form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-top: 14px;
 }
 
 .action-row button,

@@ -30,6 +30,7 @@ export default function App() {
   const [heatmap, setHeatmap] = useState(null);
   const [routesError, setRoutesError] = useState("");
   const [routesLoading, setRoutesLoading] = useState(false);
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
 
   useEffect(() => {
     loadBoard();
@@ -91,13 +92,13 @@ export default function App() {
     }
   }
 
-  async function loadRoutesFromItem(item) {
-    const techId = item.technicianBluefolderUserId || item.technician_bluefolder_user_id;
+  async function loadRoutes(techIdInput) {
+    const techId = String(techIdInput || "").trim();
     if (!techId) {
       setRoutesError("Selected attention item does not include a technician mapping yet.");
-      setActiveTab("routes");
       return;
     }
+    setSelectedTechnicianId(techId);
     setRoutesLoading(true);
     setRoutesError("");
     setActiveTab("routes");
@@ -125,6 +126,20 @@ export default function App() {
     if (srId) {
       setSelectedSrId(srId);
     }
+  }
+
+  function openServiceRequestFromAttention(item) {
+    const reference = item.reference || item.srReference || "";
+    const srId = reference.replace(/^SR-/i, "");
+    if (srId) {
+      setSelectedSrId(srId);
+      setActiveTab("sr");
+    }
+  }
+
+  function openRoutesFromAttention(item) {
+    const techId = item.ownerBluefolderUserId || item.owner_bluefolder_user_id || item.technicianBluefolderUserId;
+    loadRoutes(techId);
   }
 
   async function handleAttentionAction(itemId, action, body = {}) {
@@ -163,6 +178,8 @@ export default function App() {
           selectedItemDetail={selectedAttentionDetail}
           actionState={attentionActionState}
           onAction={handleAttentionAction}
+          onOpenServiceRequest={openServiceRequestFromAttention}
+          onOpenRoutes={openRoutesFromAttention}
         />
       )}
       {activeTab === "sr" && (
@@ -176,7 +193,15 @@ export default function App() {
         />
       )}
       {activeTab === "routes" && (
-        <RoutesView routePreview={routePreview} heatmap={heatmap} loading={routesLoading} error={routesError} />
+        <RoutesView
+          routePreview={routePreview}
+          heatmap={heatmap}
+          loading={routesLoading}
+          error={routesError}
+          technicianId={selectedTechnicianId}
+          onTechnicianIdChange={setSelectedTechnicianId}
+          onLoad={loadRoutes}
+        />
       )}
     </div>
   );

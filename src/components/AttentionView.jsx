@@ -17,6 +17,8 @@ export default function AttentionView({
   selectedItemDetail,
   actionState,
   onAction,
+  onOpenServiceRequest,
+  onOpenRoutes,
 }) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
@@ -87,12 +89,17 @@ export default function AttentionView({
         history={selectedItemDetail?.history || []}
         actionState={actionState}
         onAction={onAction}
+        onOpenServiceRequest={onOpenServiceRequest}
+        onOpenRoutes={onOpenRoutes}
       />
     </section>
   );
 }
 
-function AttentionDetail({ item, history, actionState, onAction }) {
+function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRequest, onOpenRoutes }) {
+  const [ownerId, setOwnerId] = useState("");
+  const [snoozeHours, setSnoozeHours] = useState("4");
+
   if (!item) {
     return (
       <aside className="detail-panel">
@@ -119,7 +126,7 @@ function AttentionDetail({ item, history, actionState, onAction }) {
       <div className="detail-grid">
         <DetailValue label="Status" value={item.status} />
         <DetailValue label="Age bucket" value={item.ageBucket} />
-        <DetailValue label="Owner" value={item.followUpOwnerLabel || "unassigned"} />
+        <DetailValue label="Owner" value={item.assignedOwnerLabel || item.ownerLabel || "unassigned"} />
         <DetailValue label="Technician" value={item.technicianLabel || "n/a"} />
       </div>
 
@@ -133,8 +140,44 @@ function AttentionDetail({ item, history, actionState, onAction }) {
         <button type="button" onClick={() => onAction(item.itemId, "unsnooze")}>
           Unsnooze
         </button>
-        <button type="button" onClick={() => onAction(item.itemId, "snooze", { hours: 4 })}>
-          Snooze 4h
+        <button type="button" onClick={() => onOpenServiceRequest(item)}>
+          Open SR
+        </button>
+        <button type="button" onClick={() => onOpenRoutes(item)}>
+          Open routes
+        </button>
+      </div>
+
+      <div className="inline-form-row">
+        <label className="field slim">
+          <span>Snooze hours</span>
+          <input value={snoozeHours} onChange={(event) => setSnoozeHours(event.target.value)} inputMode="numeric" />
+        </label>
+        <button
+          type="button"
+          onClick={() => onAction(item.itemId, "snooze", { hours: Number.parseInt(snoozeHours, 10) || 1 })}
+        >
+          Apply snooze
+        </button>
+      </div>
+
+      <div className="inline-form-row">
+        <label className="field slim">
+          <span>Assign owner Discord ID</span>
+          <input value={ownerId} onChange={(event) => setOwnerId(event.target.value)} inputMode="numeric" />
+        </label>
+        <button
+          type="button"
+          onClick={() =>
+            onAction(item.itemId, "assign", {
+              assignedOwnerDiscordUserId: Number.parseInt(ownerId, 10) || 0,
+            })
+          }
+        >
+          Assign
+        </button>
+        <button type="button" onClick={() => onAction(item.itemId, "clear_owner")}>
+          Clear owner
         </button>
       </div>
 

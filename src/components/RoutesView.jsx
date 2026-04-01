@@ -1,4 +1,12 @@
-export default function RoutesView({ routePreview, heatmap, loading, error }) {
+import { useEffect, useState } from "react";
+
+export default function RoutesView({ routePreview, heatmap, loading, error, technicianId, onTechnicianIdChange, onLoad }) {
+  const [draftTechId, setDraftTechId] = useState(technicianId ? String(technicianId) : "");
+
+  useEffect(() => {
+    setDraftTechId(technicianId ? String(technicianId) : "");
+  }, [technicianId]);
+
   return (
     <section className="panel">
       <div className="routes-header">
@@ -10,6 +18,27 @@ export default function RoutesView({ routePreview, heatmap, loading, error }) {
           This tab is where the current routing app gets folded into dispatch. Use Ops Hub route payloads now, then
           lift planner and map controls from `dispatcher-routing-app` here.
         </p>
+      </div>
+
+      <div className="sr-toolbar">
+        <label className="field narrow">
+          <span>Technician BlueFolder ID</span>
+          <input
+            value={draftTechId}
+            onChange={(event) => setDraftTechId(event.target.value)}
+            placeholder="9001"
+            inputMode="numeric"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            onTechnicianIdChange(draftTechId);
+            onLoad(draftTechId);
+          }}
+        >
+          Load route context
+        </button>
       </div>
 
       {loading && <p>Loading route context…</p>}
