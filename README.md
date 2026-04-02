@@ -87,6 +87,7 @@ Before building, export or place these values in an env file that Compose can re
 - `VITE_DISPATCHER_ID`
 
 The included `docker-compose.yml` currently defaults `VITE_OPS_HUB_API_BASE` to `http://host.docker.internal:8787`, which is useful when `ops-hub` is running directly on the host. On Linux, if `host.docker.internal` is not available in your Docker setup, replace it with your host IP or run the frontend with plain `npm run dev`.
+The compose file now includes `host-gateway` mapping, which usually makes `host.docker.internal` work on modern Linux Docker as well.
 
 ## Current status
 
@@ -97,6 +98,7 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - it includes the first ServiceSmith migration surface through the `Intake` tab
 - it can analyze spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
 - it includes basic import guardrails like preview-before-import, confirmation prompts, and local presets
+- it now persists working drafts for `Routes` and `Intake`, and can export preview/import JSON artifacts
 
 What is not migrated yet:
 - the richer route-planner map interactions from `dispatcher-routing-app`

@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const PRESET_STORAGE_KEY = "dispatch-intake-presets";
+const DRAFT_STORAGE_KEY = "dispatch-intake-draft";
 
 export default function IntakeView({
   formats,
@@ -30,8 +31,7 @@ export default function IntakeView({
   const [failFast, setFailFast] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetState, setPresetState] = useState("");
-
-  const presets = useMemo(() => loadPresets(), []);
+  const [presets, setPresets] = useState(() => loadPresets());
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -45,12 +45,39 @@ export default function IntakeView({
     duplicateMode,
   };
 
-  const currentConfigSignature = JSON.stringify(requestBody);
   const previewMatchesCurrentRequest =
     preview?.spreadsheetPath === spreadsheetPath &&
     preview?.duplicateMode === duplicateMode &&
     Number(preview?.rowCount || 0) > 0;
   const hasBlockingValidationErrors = (analysis?.validationIssues || []).some((item) => item.level === "error");
+
+  useEffect(() => {
+    const draft = loadDraft();
+    if (!draft) return;
+    setSpreadsheetPath(draft.spreadsheetPath || "");
+    setFormatName(draft.formatName || "default");
+    setFieldMapPath(draft.fieldMapPath || "");
+    setRowStart(draft.rowStart || "");
+    setRowEnd(draft.rowEnd || "");
+    setLimit(draft.limit || "25");
+    setDuplicateMode(draft.duplicateMode || "skip");
+    setPreviewMode(draft.previewMode || "plan");
+    setFailFast(Boolean(draft.failFast));
+  }, []);
+
+  useEffect(() => {
+    saveDraft({
+      spreadsheetPath,
+      formatName,
+      fieldMapPath,
+      rowStart,
+      rowEnd,
+      limit,
+      duplicateMode,
+      previewMode,
+      failFast,
+    });
+  }, [spreadsheetPath, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode, failFast]);
 
   return (
     <section className="panel intake-layout">
@@ -185,10 +212,30 @@ export default function IntakeView({
                   previewMode,
                   failFast,
                 });
-                setPresetState(`Saved preset ${name}. Reload the tab to refresh the preset list.`);
+                setPresets(loadPresets());
+                setPresetState(`Saved preset ${name}.`);
               }}
             >
               Save preset
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                clearDraft();
+                setSpreadsheetPath("");
+                setFormatName("default");
+                setFieldMapPath("");
+                setRowStart("");
+                setRowEnd("");
+                setLimit("25");
+                setDuplicateMode("skip");
+                setPreviewMode("plan");
+                setFailFast(false);
+                setPresetState("Cleared intake draft.");
+              }}
+            >
+              Clear draft
             </button>
             <label className="check-field">
               <input type="checkbox" checked={failFast} onChange={(event) => setFailFast(event.target.checked)} />
@@ -351,6 +398,13 @@ export default function IntakeView({
                 ))}
                 {!((preview?.items || []).length) && <p className="muted">No import preview loaded yet.</p>}
               </div>
+              {!!(preview?.items || []).length && (
+                <div className="action-row">
+                  <button type="button" className="secondary-button" onClick={() => downloadJson("intake-preview.json", preview)}>
+                    Export preview JSON
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="detail-block">
@@ -369,6 +423,13 @@ export default function IntakeView({
                 ))}
                 {!((importResult?.results || []).length) && <p className="muted">No import execution has been run yet.</p>}
               </div>
+              {!!(importResult?.results || []).length && (
+                <div className="action-row">
+                  <button type="button" className="secondary-button" onClick={() => downloadJson("intake-import-results.json", importResult)}>
+                    Export import JSON
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -445,4 +506,31 @@ function savePreset(name, value) {
   const current = loadPresets().filter((item) => item.name !== name);
   current.unshift({ name, value });
   localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(current.slice(0, 12)));
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(value) {
+  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(value));
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_STORAGE_KEY);
+}
+
+function downloadJson(filename, payload) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }

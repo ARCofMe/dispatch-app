@@ -27,6 +27,14 @@ describe("IntakeView", () => {
         analysisLoading={false}
         analysisError=""
         onAnalyze={onAnalyze}
+        preview={null}
+        previewLoading={false}
+        previewError=""
+        onPreview={vi.fn()}
+        importResult={null}
+        importLoading={false}
+        importError=""
+        onImport={vi.fn()}
       />
     );
 
@@ -37,5 +45,6 @@ describe("IntakeView", () => {
     expect(screen.getByText("Supported formats")).toBeInTheDocument();
     expect(screen.getByText("Missing: Zip")).toBeInTheDocument();
     expect(screen.getByText("Questionable email format: bad-email")).toBeInTheDocument();
+    expect(screen.getByText("Run import")).toBeDisabled();
   });
 });

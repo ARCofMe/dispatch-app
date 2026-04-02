@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const ROUTE_DRAFT_KEY = "dispatch-route-draft";
+
 export default function RoutesView({
   routePreview,
   heatmap,
@@ -29,6 +31,22 @@ export default function RoutesView({
   useEffect(() => {
     setDraftDestinationAddress(destinationAddress || "");
   }, [destinationAddress]);
+
+  useEffect(() => {
+    const draft = loadRouteDraft();
+    if (!draft) return;
+    if (!technicianId && draft.technicianId) onTechnicianIdChange?.(draft.technicianId);
+    if (!originAddress && draft.originAddress) onOriginAddressChange?.(draft.originAddress);
+    if (!destinationAddress && draft.destinationAddress) onDestinationAddressChange?.(draft.destinationAddress);
+  }, []);
+
+  useEffect(() => {
+    saveRouteDraft({
+      technicianId: draftTechId,
+      originAddress: draftOriginAddress,
+      destinationAddress: draftDestinationAddress,
+    });
+  }, [draftTechId, draftOriginAddress, draftDestinationAddress]);
 
   return (
     <section className="panel">
@@ -173,4 +191,17 @@ function Detail({ label, value }) {
       <strong>{value || "n/a"}</strong>
     </div>
   );
+}
+
+function loadRouteDraft() {
+  try {
+    const raw = localStorage.getItem(ROUTE_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRouteDraft(value) {
+  localStorage.setItem(ROUTE_DRAFT_KEY, JSON.stringify(value));
 }
