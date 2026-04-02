@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+const PRESET_STORAGE_KEY = "dispatch-intake-presets";
+
 export default function IntakeView({
   formats,
   formatsLoading,
@@ -26,6 +28,10 @@ export default function IntakeView({
   const [duplicateMode, setDuplicateMode] = useState("skip");
   const [previewMode, setPreviewMode] = useState("plan");
   const [failFast, setFailFast] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [presetState, setPresetState] = useState("");
+
+  const presets = useMemo(() => loadPresets(), []);
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -38,6 +44,13 @@ export default function IntakeView({
     limit: limit ? Number(limit) : undefined,
     duplicateMode,
   };
+
+  const currentConfigSignature = JSON.stringify(requestBody);
+  const previewMatchesCurrentRequest =
+    preview?.spreadsheetPath === spreadsheetPath &&
+    preview?.duplicateMode === duplicateMode &&
+    Number(preview?.rowCount || 0) > 0;
+  const hasBlockingValidationErrors = (analysis?.validationIssues || []).some((item) => item.level === "error");
 
   return (
     <section className="panel intake-layout">
@@ -122,6 +135,10 @@ export default function IntakeView({
                 <option value="payload_preview" />
               </datalist>
             </label>
+            <label className="field">
+              <span>Preset name</span>
+              <input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="vendor-a-review" />
+            </label>
           </div>
 
           <div className="action-row">
@@ -131,14 +148,83 @@ export default function IntakeView({
             <button type="button" onClick={() => onPreview({ ...requestBody, previewMode })}>
               Preview import
             </button>
-            <button type="button" onClick={() => onImport({ ...requestBody, failFast })}>
+            <button
+              type="button"
+              disabled={!previewMatchesCurrentRequest}
+              onClick={() => {
+                const warnings = [];
+                if (hasBlockingValidationErrors) warnings.push("validation errors are still present");
+                if (!previewMatchesCurrentRequest) warnings.push("current spreadsheet has not been previewed yet");
+                const proceed = window.confirm(
+                  warnings.length
+                    ? `Run import even though ${warnings.join(" and ")}?`
+                    : `Run import for ${spreadsheetPath || "this spreadsheet"} now?`
+                );
+                if (!proceed) return;
+                onImport({ ...requestBody, failFast });
+              }}
+            >
               Run import
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                const name = presetName.trim();
+                if (!name) {
+                  setPresetState("Enter a preset name first.");
+                  return;
+                }
+                savePreset(name, {
+                  formatName,
+                  fieldMapPath,
+                  rowStart,
+                  rowEnd,
+                  limit,
+                  duplicateMode,
+                  previewMode,
+                  failFast,
+                });
+                setPresetState(`Saved preset ${name}. Reload the tab to refresh the preset list.`);
+              }}
+            >
+              Save preset
             </button>
             <label className="check-field">
               <input type="checkbox" checked={failFast} onChange={(event) => setFailFast(event.target.checked)} />
               <span>Fail fast</span>
             </label>
           </div>
+          {presetState && <p className="muted">{presetState}</p>}
+
+          {!!presets.length && (
+            <div className="detail-block">
+              <strong>Saved presets</strong>
+              <div className="chip-list">
+                {presets.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    className="queue-chip chip-button"
+                    onClick={() => {
+                      setPresetName(preset.name);
+                      setFormatName(preset.value.formatName || "default");
+                      setFieldMapPath(preset.value.fieldMapPath || "");
+                      setRowStart(preset.value.rowStart || "");
+                      setRowEnd(preset.value.rowEnd || "");
+                      setLimit(preset.value.limit || "25");
+                      setDuplicateMode(preset.value.duplicateMode || "skip");
+                      setPreviewMode(preset.value.previewMode || "plan");
+                      setFailFast(Boolean(preset.value.failFast));
+                      setPresetState(`Loaded preset ${preset.name}.`);
+                    }}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {analysisLoading && <p>Running intake analysis…</p>}
           {analysisError && <p className="error-text">{analysisError}</p>}
@@ -237,6 +323,9 @@ export default function IntakeView({
 
             <div className="detail-block">
               <strong>Validation issues</strong>
+              {hasBlockingValidationErrors && (
+                <p className="error-text">Blocking validation errors are present. Fix or intentionally override before importing.</p>
+              )}
               <div className="history-list tall">
                 {(analysis.validationIssues || []).map((issue, index) => (
                   <div key={`${issue.row}-${index}`} className="history-entry">
@@ -250,6 +339,9 @@ export default function IntakeView({
 
             <div className="detail-block">
               <strong>Import preview</strong>
+              {!previewMatchesCurrentRequest && spreadsheetPath && (
+                <p className="muted">Preview the current spreadsheet settings before importing.</p>
+              )}
               <div className="history-list tall">
                 {(preview?.items || []).slice(0, 20).map((item, index) => (
                   <div key={`${item.row_number}-${index}`} className="history-entry">
@@ -336,4 +428,21 @@ function summarizeImportResult(item) {
   ]
     .filter(Boolean)
     .join(" • ");
+}
+
+function loadPresets() {
+  try {
+    const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+    const parsed = JSON.parse(raw || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item && typeof item.name === "string" && item.value && typeof item.value === "object");
+  } catch {
+    return [];
+  }
+}
+
+function savePreset(name, value) {
+  const current = loadPresets().filter((item) => item.name !== name);
+  current.unshift({ name, value });
+  localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(current.slice(0, 12)));
 }

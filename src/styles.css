@@ -368,6 +368,10 @@ input {
   border-color: rgba(138, 28, 16, 0.16);
 }
 
+.chip-button {
+  cursor: pointer;
+}
+
 .chip-list {
   display: flex;
   gap: 10px;
@@ -398,6 +402,11 @@ input {
   border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.7) !important;
+  color: #21332e !important;
 }
 
 .inline-form-row button,

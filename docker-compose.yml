@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  dispatch-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_OPS_HUB_API_BASE: http://host.docker.internal:8787
+        VITE_OPS_HUB_API_TOKEN: ${VITE_OPS_HUB_API_TOKEN}
+        VITE_DISPATCHER_ID: ${VITE_DISPATCHER_ID}
+    ports:
+      - "4173:80"
+    restart: unless-stopped

@@ -54,6 +54,8 @@ Run the app:
 npm run dev
 ```
 
+By default Vite will print a local URL such as `http://localhost:5173`.
+
 Build the app:
 
 ```bash
@@ -66,6 +68,26 @@ Run frontend tests:
 npm test -- --run
 ```
 
+## Docker
+
+This repo now includes a simple production-style frontend container similar to the routing frontend.
+
+Build and run with Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+That serves the app on `http://localhost:4173`.
+
+Before building, export or place these values in an env file that Compose can read:
+
+- `VITE_OPS_HUB_API_BASE`
+- `VITE_OPS_HUB_API_TOKEN`
+- `VITE_DISPATCHER_ID`
+
+The included `docker-compose.yml` currently defaults `VITE_OPS_HUB_API_BASE` to `http://host.docker.internal:8787`, which is useful when `ops-hub` is running directly on the host. On Linux, if `host.docker.internal` is not available in your Docker setup, replace it with your host IP or run the frontend with plain `npm run dev`.
+
 ## Current status
 
 This app is now a real first-pass dispatch shell, not just a stub:
@@ -74,6 +96,7 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - it opens SR detail and route context from the same app
 - it includes the first ServiceSmith migration surface through the `Intake` tab
 - it can analyze spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
+- it includes basic import guardrails like preview-before-import, confirmation prompts, and local presets
 
 What is not migrated yet:
 - the richer route-planner map interactions from `dispatcher-routing-app`
