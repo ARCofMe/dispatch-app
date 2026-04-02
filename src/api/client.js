@@ -67,6 +67,18 @@ export const dispatchApi = {
       body,
     });
   },
+  previewIntake(body) {
+    return request("/dispatch/intake/preview", {
+      method: "POST",
+      body,
+    });
+  },
+  importIntake(body) {
+    return request("/dispatch/intake/import", {
+      method: "POST",
+      body,
+    });
+  },
   postAttentionAction(itemId, action, body = {}) {
     return request(`/dispatch/attention/${encodeURIComponent(itemId)}/${action}`, {
       method: "POST",

@@ -40,6 +40,12 @@ export default function App() {
   const [intakeAnalysis, setIntakeAnalysis] = useState(null);
   const [intakeAnalysisLoading, setIntakeAnalysisLoading] = useState(false);
   const [intakeAnalysisError, setIntakeAnalysisError] = useState("");
+  const [intakePreview, setIntakePreview] = useState(null);
+  const [intakePreviewLoading, setIntakePreviewLoading] = useState(false);
+  const [intakePreviewError, setIntakePreviewError] = useState("");
+  const [intakeImportResult, setIntakeImportResult] = useState(null);
+  const [intakeImportLoading, setIntakeImportLoading] = useState(false);
+  const [intakeImportError, setIntakeImportError] = useState("");
 
   useEffect(() => {
     loadBoard();
@@ -154,6 +160,30 @@ export default function App() {
       setIntakeAnalysisError(formatError(error));
     } finally {
       setIntakeAnalysisLoading(false);
+    }
+  }
+
+  async function previewIntake(body) {
+    setIntakePreviewLoading(true);
+    setIntakePreviewError("");
+    try {
+      setIntakePreview(await dispatchApi.previewIntake(body));
+    } catch (error) {
+      setIntakePreviewError(formatError(error));
+    } finally {
+      setIntakePreviewLoading(false);
+    }
+  }
+
+  async function importIntake(body) {
+    setIntakeImportLoading(true);
+    setIntakeImportError("");
+    try {
+      setIntakeImportResult(await dispatchApi.importIntake(body));
+    } catch (error) {
+      setIntakeImportError(formatError(error));
+    } finally {
+      setIntakeImportLoading(false);
     }
   }
 
@@ -279,6 +309,14 @@ export default function App() {
           analysisLoading={intakeAnalysisLoading}
           analysisError={intakeAnalysisError}
           onAnalyze={analyzeIntake}
+          preview={intakePreview}
+          previewLoading={intakePreviewLoading}
+          previewError={intakePreviewError}
+          onPreview={previewIntake}
+          importResult={intakeImportResult}
+          importLoading={intakeImportLoading}
+          importError={intakeImportError}
+          onImport={importIntake}
         />
       )}
     </div>
