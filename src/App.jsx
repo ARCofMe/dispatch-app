@@ -31,6 +31,8 @@ export default function App() {
   const [routesError, setRoutesError] = useState("");
   const [routesLoading, setRoutesLoading] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
+  const [routeOriginAddress, setRouteOriginAddress] = useState("");
+  const [routeDestinationAddress, setRouteDestinationAddress] = useState("");
 
   useEffect(() => {
     loadBoard();
@@ -92,19 +94,26 @@ export default function App() {
     }
   }
 
-  async function loadRoutes(techIdInput) {
+  async function loadRoutes(techIdInput, options = {}) {
     const techId = String(techIdInput || "").trim();
     if (!techId) {
       setRoutesError("Selected attention item does not include a technician mapping yet.");
       return;
     }
     setSelectedTechnicianId(techId);
+    const nextOriginAddress = options.originAddress ?? routeOriginAddress;
+    const nextDestinationAddress = options.destinationAddress ?? routeDestinationAddress;
+    setRouteOriginAddress(nextOriginAddress);
+    setRouteDestinationAddress(nextDestinationAddress);
     setRoutesLoading(true);
     setRoutesError("");
     setActiveTab("routes");
     try {
       const [previewPayload, heatmapPayload] = await Promise.all([
-        dispatchApi.getRoutePreview(techId),
+        dispatchApi.getRoutePreview(techId, {
+          originAddress: nextOriginAddress,
+          destinationAddress: nextDestinationAddress,
+        }),
         dispatchApi.getRouteHeatmap(techId),
       ]);
       setRoutePreview(previewPayload);
@@ -137,6 +146,13 @@ export default function App() {
     }
   }
 
+  function openServiceRequestById(srId) {
+    const normalized = String(srId || "").replace(/^SR-/i, "").trim();
+    if (!normalized) return;
+    setSelectedSrId(normalized);
+    setActiveTab("sr");
+  }
+
   function openRoutesFromAttention(item) {
     const techId = item.ownerBluefolderUserId || item.owner_bluefolder_user_id || item.technicianBluefolderUserId;
     loadRoutes(techId);
@@ -165,7 +181,20 @@ export default function App() {
       <TabNav activeTab={activeTab} onSelect={setActiveTab} />
 
       {activeTab === "board" && (
-        <BoardView board={board} loading={boardLoading} error={boardError} onOpenAttention={() => setActiveTab("attention")} />
+        <BoardView
+          board={board}
+          loading={boardLoading}
+          error={boardError}
+          onOpenAttention={() => setActiveTab("attention")}
+          onOpenAttentionItem={(item) => {
+            setActiveTab("attention");
+            handleAttentionSelect(item);
+          }}
+          onOpenServiceRequest={(item) => openServiceRequestById(item?.srId || item?.reference)}
+          onOpenRoutes={(item) =>
+            loadRoutes(item?.ownerBluefolderUserId || item?.technicianBluefolderUserId || item?.bluefolderUserId)
+          }
+        />
       )}
       {activeTab === "attention" && (
         <AttentionView
@@ -180,6 +209,7 @@ export default function App() {
           onAction={handleAttentionAction}
           onOpenServiceRequest={openServiceRequestFromAttention}
           onOpenRoutes={openRoutesFromAttention}
+          onOpenServiceRequestById={openServiceRequestById}
         />
       )}
       {activeTab === "sr" && (
@@ -199,8 +229,13 @@ export default function App() {
           loading={routesLoading}
           error={routesError}
           technicianId={selectedTechnicianId}
+          originAddress={routeOriginAddress}
+          destinationAddress={routeDestinationAddress}
           onTechnicianIdChange={setSelectedTechnicianId}
+          onOriginAddressChange={setRouteOriginAddress}
+          onDestinationAddressChange={setRouteDestinationAddress}
           onLoad={loadRoutes}
+          onOpenServiceRequestById={openServiceRequestById}
         />
       )}
     </div>

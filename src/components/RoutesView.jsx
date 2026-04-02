@@ -1,11 +1,34 @@
 import { useEffect, useState } from "react";
 
-export default function RoutesView({ routePreview, heatmap, loading, error, technicianId, onTechnicianIdChange, onLoad }) {
+export default function RoutesView({
+  routePreview,
+  heatmap,
+  loading,
+  error,
+  technicianId,
+  originAddress,
+  destinationAddress,
+  onTechnicianIdChange,
+  onOriginAddressChange,
+  onDestinationAddressChange,
+  onLoad,
+  onOpenServiceRequestById,
+}) {
   const [draftTechId, setDraftTechId] = useState(technicianId ? String(technicianId) : "");
+  const [draftOriginAddress, setDraftOriginAddress] = useState(originAddress || "");
+  const [draftDestinationAddress, setDraftDestinationAddress] = useState(destinationAddress || "");
 
   useEffect(() => {
     setDraftTechId(technicianId ? String(technicianId) : "");
   }, [technicianId]);
+
+  useEffect(() => {
+    setDraftOriginAddress(originAddress || "");
+  }, [originAddress]);
+
+  useEffect(() => {
+    setDraftDestinationAddress(destinationAddress || "");
+  }, [destinationAddress]);
 
   return (
     <section className="panel">
@@ -30,11 +53,32 @@ export default function RoutesView({ routePreview, heatmap, loading, error, tech
             inputMode="numeric"
           />
         </label>
+        <label className="field route-field">
+          <span>Custom origin</span>
+          <input
+            value={draftOriginAddress}
+            onChange={(event) => setDraftOriginAddress(event.target.value)}
+            placeholder="Lewiston, ME"
+          />
+        </label>
+        <label className="field route-field">
+          <span>Custom destination</span>
+          <input
+            value={draftDestinationAddress}
+            onChange={(event) => setDraftDestinationAddress(event.target.value)}
+            placeholder="Auburn, ME"
+          />
+        </label>
         <button
           type="button"
           onClick={() => {
             onTechnicianIdChange(draftTechId);
-            onLoad(draftTechId);
+            onOriginAddressChange?.(draftOriginAddress);
+            onDestinationAddressChange?.(draftDestinationAddress);
+            onLoad(draftTechId, {
+              originAddress: draftOriginAddress,
+              destinationAddress: draftDestinationAddress,
+            });
           }}
         >
           Load route context
@@ -55,18 +99,26 @@ export default function RoutesView({ routePreview, heatmap, loading, error, tech
                   <Detail label="Assignments" value={routePreview.assignmentsConsidered} />
                   <Detail label="Mappable stops" value={routePreview.mappableStops} />
                   <Detail label="Skipped" value={routePreview.skippedWithoutAddress} />
+                  <Detail label="Origin" value={routePreview.originAddress || "default"} />
+                  <Detail label="Destination" value={routePreview.destinationAddress || "default"} />
                 </div>
                 <div className="list-stack compact">
-                  {(routePreview.stops || []).map((stop) => (
-                    <div key={`${stop.srId}-${stop.address}`} className="list-row">
+                  {(routePreview.stops || []).map((stop, index) => (
+                    <button
+                      key={`${stop.srId}-${stop.address}-${index}`}
+                      type="button"
+                      className="list-row button-row"
+                      onClick={() => stop.srId && onOpenServiceRequestById?.(stop.srId)}
+                    >
                       <div>
                         <strong>{stop.label}</strong>
                         <p>{stop.subject || "Service Request"}</p>
                       </div>
                       <div className="row-meta">
+                        <span>{stop.routeLabel || stop.window || "No window"}</span>
                         <span>{stop.address}</span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
                 {routePreview.routeUrl && (

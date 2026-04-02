@@ -36,6 +36,9 @@ describe("AttentionView", () => {
         selectedItemDetail={null}
         actionState={null}
         onAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
       />
     );
 
@@ -43,5 +46,48 @@ describe("AttentionView", () => {
 
     expect(screen.getByText("SR-100")).toBeInTheDocument();
     expect(screen.queryByText("SR-101")).not.toBeInTheDocument();
+  });
+
+  it("shows triage controls for triage-stage items", () => {
+    render(
+      <AttentionView
+        items={[
+          {
+            itemId: "dispatch:SR-200:new_sr_triage",
+            srId: 200,
+            reference: "SR-200",
+            stage: "new_sr_triage",
+            stageLabel: "New SR Triage",
+            nextAction: "Review symptom and decide path",
+            status: "open",
+            ageBucket: "fresh",
+            followUpOwnerLabel: "Dispatch",
+          },
+        ]}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={{
+          itemId: "dispatch:SR-200:new_sr_triage",
+          srId: 200,
+          reference: "SR-200",
+          stage: "new_sr_triage",
+          stageLabel: "New SR Triage",
+          nextAction: "Review symptom and decide path",
+          status: "open",
+          ageBucket: "fresh",
+        }}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Triage disposition")).toBeInTheDocument();
+    expect(screen.getByText("Apply triage")).toBeInTheDocument();
   });
 });

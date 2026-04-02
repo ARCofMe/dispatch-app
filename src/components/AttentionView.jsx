@@ -19,6 +19,7 @@ export default function AttentionView({
   onAction,
   onOpenServiceRequest,
   onOpenRoutes,
+  onOpenServiceRequestById,
 }) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
@@ -48,13 +49,17 @@ export default function AttentionView({
                       [key]: event.target.value,
                     }))
                   }
+                  placeholder={key === "reference" ? "SR-1234" : ""}
                 />
               </label>
             ))}
           </div>
-          <button type="button" onClick={onRefresh}>
-            Refresh
-          </button>
+          <div className="action-row">
+            <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
+            <button type="button" onClick={onRefresh}>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {loading && <p>Loading attention queue…</p>}
@@ -91,14 +96,17 @@ export default function AttentionView({
         onAction={onAction}
         onOpenServiceRequest={onOpenServiceRequest}
         onOpenRoutes={onOpenRoutes}
+        onOpenServiceRequestById={onOpenServiceRequestById}
       />
     </section>
   );
 }
 
-function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRequest, onOpenRoutes }) {
+function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRequest, onOpenRoutes, onOpenServiceRequestById }) {
   const [ownerId, setOwnerId] = useState("");
   const [snoozeHours, setSnoozeHours] = useState("4");
+  const [triageDisposition, setTriageDisposition] = useState("schedule_normal");
+  const [triageDetails, setTriageDetails] = useState("");
 
   if (!item) {
     return (
@@ -121,6 +129,10 @@ function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRe
       <div className="detail-block">
         <strong>Next action</strong>
         <p>{item.nextAction || "No next action yet."}</p>
+        {item.summary && <p className="muted">Summary: {item.summary}</p>}
+        {item.details && <p className="muted">Details: {item.details}</p>}
+        {item.location && <p className="muted">Location: {item.location}</p>}
+        {item.routeLabel && <p className="muted">Window: {item.routeLabel}</p>}
       </div>
 
       <div className="detail-grid">
@@ -128,6 +140,8 @@ function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRe
         <DetailValue label="Age bucket" value={item.ageBucket} />
         <DetailValue label="Owner" value={item.assignedOwnerLabel || item.ownerLabel || "unassigned"} />
         <DetailValue label="Technician" value={item.technicianLabel || "n/a"} />
+        <DetailValue label="Acknowledged" value={item.acknowledgedAt || "not yet"} />
+        <DetailValue label="Snoozed until" value={item.snoozedUntil || "not snoozed"} />
       </div>
 
       <div className="action-row">
@@ -181,6 +195,39 @@ function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRe
         </button>
       </div>
 
+      {isTriageStage(item.stage) && (
+        <div className="detail-block">
+          <strong>Triage disposition</strong>
+          <div className="inline-form-row">
+            <label className="field slim">
+              <span>Disposition</span>
+              <input
+                list="triage-dispositions"
+                value={triageDisposition}
+                onChange={(event) => setTriageDisposition(event.target.value)}
+              />
+              <datalist id="triage-dispositions">
+                <option value="schedule_normal" />
+                <option value="collect_info" />
+                <option value="parts_first" />
+                <option value="diag_first" />
+                <option value="quote_before_schedule" />
+              </datalist>
+            </label>
+            <label className="field slim">
+              <span>Details</span>
+              <input value={triageDetails} onChange={(event) => setTriageDetails(event.target.value)} placeholder="Why this disposition?" />
+            </label>
+            <button
+              type="button"
+              onClick={() => onAction(item.itemId, "triage_disposition", { disposition: triageDisposition, details: triageDetails })}
+            >
+              Apply triage
+            </button>
+          </div>
+        </div>
+      )}
+
       {actionState && <p className={actionState.error ? "error-text" : "muted"}>{actionState.message}</p>}
 
       <div className="detail-block">
@@ -200,6 +247,12 @@ function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRe
           )}
         </div>
       </div>
+
+      {item.srId && (
+        <div className="action-row">
+          <button type="button" onClick={() => onOpenServiceRequestById?.(item.srId)}>Open SR {item.srId}</button>
+        </div>
+      )}
     </aside>
   );
 }
@@ -220,4 +273,14 @@ function camelFromSnake(value) {
 function labelFor(key) {
   if (key === "reference") return "Reference";
   return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function isTriageStage(stage) {
+  return [
+    "new_sr_triage",
+    "model_serial_needed",
+    "likely_parts_previsit",
+    "diagnostic_required",
+    "previsit_quote_needed",
+  ].includes(stage);
 }

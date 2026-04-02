@@ -14,7 +14,15 @@ function queueEntries(payload) {
     .map(([key, value]) => ({ key, value }));
 }
 
-export default function BoardView({ board, loading, error, onOpenAttention }) {
+export default function BoardView({
+  board,
+  loading,
+  error,
+  onOpenAttention,
+  onOpenAttentionItem,
+  onOpenServiceRequest,
+  onOpenRoutes,
+}) {
   if (loading) return <section className="panel">Loading board…</section>;
   if (error) return <section className="panel error-panel">{error}</section>;
   if (!board) return <section className="panel">Board is not loaded yet.</section>;
@@ -85,7 +93,7 @@ export default function BoardView({ board, loading, error, onOpenAttention }) {
           </div>
           <div className="list-stack compact">
             {(board.topAttention || []).map((item) => (
-              <div key={item.itemId} className="list-row">
+              <button key={item.itemId} type="button" className="list-row button-row" onClick={() => onOpenAttentionItem?.(item)}>
                 <div>
                   <strong>{item.reference}</strong>
                   <p>{item.stageLabel || item.stage}</p>
@@ -94,7 +102,7 @@ export default function BoardView({ board, loading, error, onOpenAttention }) {
                   <span>{item.ageBucket || "n/a"}</span>
                   <span>{item.followUpOwnerLabel || "unassigned"}</span>
                 </div>
-              </div>
+              </button>
             ))}
             {!(board.topAttention || []).length && <p className="muted">No attention items yet.</p>}
           </div>
@@ -115,6 +123,25 @@ export default function BoardView({ board, loading, error, onOpenAttention }) {
               </div>
             ))}
             {!(board.openPartsCaseItems || []).length && <p className="muted">No open parts cases.</p>}
+          </div>
+        </article>
+      </div>
+
+      <div className="board-grid secondary">
+        <article className="metric-card wide">
+          <p>Fast jumps</p>
+          <div className="action-row">
+            <button type="button" onClick={onOpenAttention}>Open attention queue</button>
+            {(board.topAttention || []).slice(0, 1).map((item) => (
+              <button key={`${item.itemId}-sr`} type="button" onClick={() => onOpenServiceRequest?.(item)}>
+                Open {item.reference}
+              </button>
+            ))}
+            {(board.technicianLoad || []).slice(0, 1).map((tech) => (
+              <button key={`${tech.bluefolderUserId}-route`} type="button" onClick={() => onOpenRoutes?.(tech)}>
+                Open {tech.technicianLabel || "tech"} route
+              </button>
+            ))}
           </div>
         </article>
       </div>

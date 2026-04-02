@@ -37,6 +37,9 @@ describe("BoardView", () => {
         loading={false}
         error=""
         onOpenAttention={vi.fn()}
+        onOpenAttentionItem={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
       />
     );
 
@@ -45,5 +48,6 @@ describe("BoardView", () => {
     expect(screen.getByText("quote needed: 2")).toBeInTheDocument();
     expect(screen.getByText("Pat Tech")).toBeInTheDocument();
     expect(screen.getByText("SR-100")).toBeInTheDocument();
+    expect(screen.getByText("Fast jumps")).toBeInTheDocument();
   });
 });

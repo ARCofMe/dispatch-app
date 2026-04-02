@@ -46,8 +46,13 @@ export const dispatchApi = {
   getServiceRequestCustomer(srId) {
     return request(`/dispatch/sr/${srId}/customer`);
   },
-  getRoutePreview(bluefolderUserId) {
-    return request(`/dispatch/routes/preview?bluefolder_user_id=${encodeURIComponent(bluefolderUserId)}`);
+  getRoutePreview(bluefolderUserId, options = {}) {
+    const params = new URLSearchParams({
+      bluefolder_user_id: `${bluefolderUserId}`,
+    });
+    if (options.originAddress) params.set("origin_address", options.originAddress);
+    if (options.destinationAddress) params.set("destination_address", options.destinationAddress);
+    return request(`/dispatch/routes/preview?${params.toString()}`);
   },
   getRouteHeatmap(bluefolderUserId) {
     const suffix = bluefolderUserId ? `?bluefolder_user_id=${encodeURIComponent(bluefolderUserId)}` : "";
