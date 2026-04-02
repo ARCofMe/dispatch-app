@@ -3,6 +3,7 @@ const TABS = [
   ["attention", "Attention"],
   ["sr", "Service Request"],
   ["routes", "Routes"],
+  ["intake", "Intake"],
 ];
 
 export default function TabNav({ activeTab, onSelect }) {

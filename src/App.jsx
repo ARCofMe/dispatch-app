@@ -6,6 +6,7 @@ import BoardView from "./components/BoardView";
 import AttentionView from "./components/AttentionView";
 import ServiceRequestView from "./components/ServiceRequestView";
 import RoutesView from "./components/RoutesView";
+import IntakeView from "./components/IntakeView";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("board");
@@ -33,10 +34,17 @@ export default function App() {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
   const [routeOriginAddress, setRouteOriginAddress] = useState("");
   const [routeDestinationAddress, setRouteDestinationAddress] = useState("");
+  const [intakeFormats, setIntakeFormats] = useState(null);
+  const [intakeFormatsLoading, setIntakeFormatsLoading] = useState(false);
+  const [intakeFormatsError, setIntakeFormatsError] = useState("");
+  const [intakeAnalysis, setIntakeAnalysis] = useState(null);
+  const [intakeAnalysisLoading, setIntakeAnalysisLoading] = useState(false);
+  const [intakeAnalysisError, setIntakeAnalysisError] = useState("");
 
   useEffect(() => {
     loadBoard();
     loadAttention();
+    loadIntakeFormats();
   }, []);
 
   useEffect(() => {
@@ -122,6 +130,30 @@ export default function App() {
       setRoutesError(formatError(error));
     } finally {
       setRoutesLoading(false);
+    }
+  }
+
+  async function loadIntakeFormats() {
+    setIntakeFormatsLoading(true);
+    setIntakeFormatsError("");
+    try {
+      setIntakeFormats(await dispatchApi.getIntakeFormats());
+    } catch (error) {
+      setIntakeFormatsError(formatError(error));
+    } finally {
+      setIntakeFormatsLoading(false);
+    }
+  }
+
+  async function analyzeIntake(body) {
+    setIntakeAnalysisLoading(true);
+    setIntakeAnalysisError("");
+    try {
+      setIntakeAnalysis(await dispatchApi.analyzeIntake(body));
+    } catch (error) {
+      setIntakeAnalysisError(formatError(error));
+    } finally {
+      setIntakeAnalysisLoading(false);
     }
   }
 
@@ -236,6 +268,17 @@ export default function App() {
           onDestinationAddressChange={setRouteDestinationAddress}
           onLoad={loadRoutes}
           onOpenServiceRequestById={openServiceRequestById}
+        />
+      )}
+      {activeTab === "intake" && (
+        <IntakeView
+          formats={intakeFormats}
+          formatsLoading={intakeFormatsLoading}
+          formatsError={intakeFormatsError}
+          analysis={intakeAnalysis}
+          analysisLoading={intakeAnalysisLoading}
+          analysisError={intakeAnalysisError}
+          onAnalyze={analyzeIntake}
         />
       )}
     </div>

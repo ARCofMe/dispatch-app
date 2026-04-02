@@ -101,13 +101,18 @@ input {
 }
 
 .board-layout,
-.attention-layout {
+.attention-layout,
+.intake-layout {
   display: grid;
   gap: 18px;
 }
 
 .attention-layout {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+}
+
+.intake-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
 }
 
 .attention-column {
@@ -200,6 +205,14 @@ input {
 
 .field.route-field {
   min-width: min(320px, 100%);
+}
+
+.intake-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.intake-span {
+  grid-column: span 2;
 }
 
 .list-stack {
@@ -342,6 +355,12 @@ input {
   font-size: 0.85rem;
 }
 
+.danger-chip {
+  background: rgba(138, 28, 16, 0.08);
+  color: #8a1c10;
+  border-color: rgba(138, 28, 16, 0.16);
+}
+
 .chip-list {
   display: flex;
   gap: 10px;
@@ -422,8 +441,13 @@ input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .attention-layout {
+  .attention-layout,
+  .intake-layout {
     grid-template-columns: 1fr;
+  }
+
+  .intake-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -434,5 +458,13 @@ input {
 
   .filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .intake-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intake-span {
+    grid-column: span 1;
   }
 }

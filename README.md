@@ -27,6 +27,9 @@ Customer detail and merged SR timeline pulled from Ops Hub.
 - `Routes`
 Structured route preview and heatmap payloads. This is the landing zone for migrating the older routing app into dispatch instead of keeping it separate.
 
+- `Intake`
+ServiceSmith intake-analysis surface over Ops Hub. It lists supported spreadsheet adapters and lets dispatch inspect spreadsheet header fit, adapter matches, preview rows, and validation issues before import work.
+
 ## Environment
 
 Copy `.env.example` to `.env.local` and set:
@@ -69,8 +72,10 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - it renders meaningful Ops Hub dispatch data
 - it supports basic queue actions
 - it opens SR detail and route context from the same app
+- it includes the first ServiceSmith migration surface through the `Intake` tab
 
 What is not migrated yet:
 - the richer route-planner map interactions from `dispatcher-routing-app`
 - more advanced assignment and scheduling workflows
 - deeper parts-facing dispatch cross-links
+- ServiceSmith payload preview and actual import execution
