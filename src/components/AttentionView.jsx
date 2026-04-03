@@ -22,16 +22,19 @@ export default function AttentionView({
   onOpenServiceRequestById,
 }) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [sortBy, setSortBy] = useState("priority");
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const visibleItems = useMemo(() => {
-    return (items || []).filter((item) => {
+    const filtered = (items || []).filter((item) => {
       return Object.entries(filters).every(([key, value]) => {
         if (!value) return true;
         const current = item?.[key] ?? item?.[camelFromSnake(key)] ?? "";
         return String(current).toLowerCase().includes(value.toLowerCase());
       });
     });
-  }, [filters, items]);
+    return filtered.sort((left, right) => compareAttentionItems(left, right, sortBy));
+  }, [filters, items, sortBy]);
 
   return (
     <section className="panel attention-layout">
@@ -53,9 +56,41 @@ export default function AttentionView({
                 />
               </label>
             ))}
+            <label className="field">
+              <span>Sort</span>
+              <input list="attention-sorts" value={sortBy} onChange={(event) => setSortBy(event.target.value)} />
+              <datalist id="attention-sorts">
+                <option value="priority" />
+                <option value="age" />
+                <option value="reference" />
+                <option value="owner_gap" />
+              </datalist>
+            </label>
           </div>
           <div className="action-row">
             <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
+            <button
+              type="button"
+              onClick={() => {
+                visibleItems.slice(0, 20).forEach((item) => {
+                  if (item.status !== "open") return;
+                  onAction(item.itemId, "ack");
+                });
+                setSelectedIds([]);
+              }}
+            >
+              Ack visible
+            </button>
+            <button
+              type="button"
+              disabled={!selectedIds.length}
+              onClick={() => {
+                selectedIds.forEach((itemId) => onAction(itemId, "ack"));
+                setSelectedIds([]);
+              }}
+            >
+              Ack selected
+            </button>
             <button type="button" onClick={onRefresh}>
               Refresh
             </button>
@@ -68,23 +103,39 @@ export default function AttentionView({
 
         <div className="list-stack">
           {visibleItems.map((item) => (
-            <button
+            <div
               key={item.itemId || item.item_id}
               className={selectedItem?.itemId === item.itemId ? "attention-card selected" : "attention-card"}
-              type="button"
-              onClick={() => onSelectItem(item)}
             >
               <div className="attention-card-top">
-                <strong>{item.reference || item.srReference || "SR"}</strong>
+                <label className="check-field">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.itemId)}
+                    onChange={(event) => {
+                      setSelectedIds((current) =>
+                        event.target.checked ? [...current, item.itemId] : current.filter((value) => value !== item.itemId)
+                      );
+                    }}
+                  />
+                  <strong>{item.reference || item.srReference || "SR"}</strong>
+                </label>
                 <span>{item.stageLabel || item.stage || "Stage"}</span>
               </div>
-              <p>{item.nextAction || item.summary || "No next action text yet."}</p>
-              <div className="attention-card-meta">
-                <span>Status: {item.status || "open"}</span>
-                <span>Age: {item.ageBucket || item.age_bucket || "n/a"}</span>
-                <span>Owner: {item.followUpOwnerLabel || item.follow_up_owner_label || "unassigned"}</span>
+              <button className="card-button-reset" type="button" onClick={() => onSelectItem(item)}>
+                <p>{item.nextAction || item.summary || "No next action text yet."}</p>
+                <div className="attention-card-meta">
+                  <span>Status: {item.status || "open"}</span>
+                  <span>Age: {item.ageBucket || item.age_bucket || "n/a"}</span>
+                  <span>Owner: {item.followUpOwnerLabel || item.follow_up_owner_label || "unassigned"}</span>
+                </div>
+              </button>
+              <div className="chip-list">
+                {quickChip(item.ageBucket || item.age_bucket, "urgent") && <span className="queue-chip danger-chip">Urgent</span>}
+                {!item.assignedOwnerDiscordUserId && <span className="queue-chip">Owner gap</span>}
+                {isTriageStage(item.stage) && <span className="queue-chip">Triage</span>}
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>
@@ -283,4 +334,32 @@ function isTriageStage(stage) {
     "diagnostic_required",
     "previsit_quote_needed",
   ].includes(stage);
+}
+
+function compareAttentionItems(left, right, sortBy) {
+  if (sortBy === "reference") {
+    return String(left.reference || "").localeCompare(String(right.reference || ""));
+  }
+  if (sortBy === "age") {
+    return (Number(right.ageHours || 0) - Number(left.ageHours || 0)) || String(left.reference || "").localeCompare(String(right.reference || ""));
+  }
+  if (sortBy === "owner_gap") {
+    return Number(Boolean(!left.assignedOwnerDiscordUserId)) < Number(Boolean(!right.assignedOwnerDiscordUserId)) ? 1 : -1;
+  }
+  return priorityScore(right) - priorityScore(left) || (Number(right.ageHours || 0) - Number(left.ageHours || 0));
+}
+
+function priorityScore(item) {
+  let score = 0;
+  const bucket = String(item.ageBucket || "").toLowerCase();
+  if (bucket === "urgent") score += 100;
+  else if (bucket === "stale") score += 50;
+  else if (bucket === "warm") score += 25;
+  if (!item.assignedOwnerDiscordUserId) score += 30;
+  if (isTriageStage(item.stage)) score += 10;
+  return score;
+}
+
+function quickChip(value, expected) {
+  return String(value || "").toLowerCase() === expected;
 }

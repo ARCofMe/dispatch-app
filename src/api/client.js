@@ -46,6 +46,9 @@ export const dispatchApi = {
   getServiceRequestCustomer(srId) {
     return request(`/dispatch/sr/${srId}/customer`);
   },
+  getServiceRequestWork(srId) {
+    return request(`/dispatch/sr/${srId}/work`);
+  },
   getRoutePreview(bluefolderUserId, options = {}) {
     const params = new URLSearchParams({
       bluefolder_user_id: `${bluefolderUserId}`,

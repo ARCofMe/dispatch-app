@@ -1,4 +1,4 @@
-export default function ServiceRequestView({ srId, customer, timeline, loading, error, onChange }) {
+export default function ServiceRequestView({ srId, customer, timeline, work, loading, error, onChange, onOpenRoutes, onOpenAttentionItem }) {
   return (
     <section className="panel">
       <div className="sr-toolbar">
@@ -13,6 +13,59 @@ export default function ServiceRequestView({ srId, customer, timeline, loading, 
 
       {!loading && !error && (
         <div className="sr-grid">
+          <article className="metric-card wide">
+            <p>Work panel</p>
+            {work ? (
+              <div className="list-stack compact">
+                <div className="detail-grid">
+                  <Detail label="Urgent items" value={work.urgentCount} />
+                  <Detail label="Owner gaps" value={work.ownerGapCount} />
+                  <Detail label="Attention items" value={(work.attentionItems || []).length} />
+                  <Detail label="Parts stage" value={work.partsCase?.stageLabel || "none"} />
+                </div>
+                <div className="detail-block">
+                  <strong>Next actions</strong>
+                  <div className="chip-list">
+                    {(work.nextActions || []).map((action) => (
+                      <span key={action} className="queue-chip">{action}</span>
+                    ))}
+                    {!(work.nextActions || []).length && <span className="muted">No derived next actions.</span>}
+                  </div>
+                </div>
+                {!!work.partsCase && (
+                  <div className="history-entry">
+                    <p>{work.partsCase.reference} • {work.partsCase.stageLabel || work.partsCase.stage}</p>
+                    <span>
+                      {[work.partsCase.nextAction, work.partsCase.assignedPartsLabel, work.partsCase.ageBucket].filter(Boolean).join(" • ") || "No parts detail"}
+                    </span>
+                  </div>
+                )}
+                <div className="history-list">
+                  {(work.attentionItems || []).map((item) => (
+                    <button key={item.itemId} type="button" className="history-entry history-button" onClick={() => onOpenAttentionItem?.(item)}>
+                      <p>{item.reference} • {item.stageLabel || item.stage}</p>
+                      <span>{[item.nextAction, item.assignedOwnerLabel || "unassigned", item.ageBucket].filter(Boolean).join(" • ")}</span>
+                    </button>
+                  ))}
+                  {!(work.attentionItems || []).length && <p className="muted">No dispatch attention items tied to this SR.</p>}
+                </div>
+                <div className="action-row">
+                  {(work.attentionItems || [])
+                    .map((item) => item.ownerBluefolderUserId || item.technicianBluefolderUserId)
+                    .filter(Boolean)
+                    .slice(0, 1)
+                    .map((techId) => (
+                      <button key={techId} type="button" onClick={() => onOpenRoutes?.(techId)}>
+                        Open technician route
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <p className="muted">Choose an SR to load work context.</p>
+            )}
+          </article>
+
           <article className="metric-card wide">
             <p>Customer</p>
             {customer ? (

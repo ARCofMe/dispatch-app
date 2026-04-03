@@ -24,6 +24,7 @@ export default function App() {
   const [selectedSrId, setSelectedSrId] = useState("");
   const [customer, setCustomer] = useState(null);
   const [timeline, setTimeline] = useState([]);
+  const [srWork, setSrWork] = useState(null);
   const [srError, setSrError] = useState("");
   const [srLoading, setSrLoading] = useState(false);
 
@@ -95,12 +96,14 @@ export default function App() {
     setSrLoading(true);
     setSrError("");
     try {
-      const [customerPayload, timelinePayload] = await Promise.all([
+      const [customerPayload, timelinePayload, workPayload] = await Promise.all([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
+        dispatchApi.getServiceRequestWork(srId),
       ]);
       setCustomer(customerPayload);
       setTimeline(timelinePayload);
+      setSrWork(workPayload);
     } catch (error) {
       setSrError(formatError(error));
     } finally {
@@ -279,9 +282,15 @@ export default function App() {
           srId={selectedSrId}
           customer={customer}
           timeline={timeline}
+          work={srWork}
           loading={srLoading}
           error={srError}
           onChange={setSelectedSrId}
+          onOpenRoutes={(techId) => loadRoutes(techId)}
+          onOpenAttentionItem={(item) => {
+            setActiveTab("attention");
+            handleAttentionSelect(item);
+          }}
         />
       )}
       {activeTab === "routes" && (

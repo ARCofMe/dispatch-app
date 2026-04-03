@@ -90,4 +90,39 @@ describe("AttentionView", () => {
     expect(screen.getByText("Triage disposition")).toBeInTheDocument();
     expect(screen.getByText("Apply triage")).toBeInTheDocument();
   });
+
+  it("supports acknowledging selected items", () => {
+    const onAction = vi.fn();
+    render(
+      <AttentionView
+        items={[
+          {
+            itemId: "dispatch:SR-100:quote_needed",
+            reference: "SR-100",
+            stage: "quote_needed",
+            stageLabel: "Quote Needed",
+            nextAction: "Call landlord",
+            status: "open",
+            ageBucket: "urgent",
+          },
+        ]}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={null}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={onAction}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByText("Ack selected"));
+
+    expect(onAction).toHaveBeenCalledWith("dispatch:SR-100:quote_needed", "ack");
+  });
 });

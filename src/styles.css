@@ -247,6 +247,17 @@ input {
   cursor: pointer;
 }
 
+.card-button-reset {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 .list-row {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
