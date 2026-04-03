@@ -64,6 +64,20 @@ export const dispatchApi = {
   getIntakeFormats() {
     return request("/dispatch/intake/formats");
   },
+  getIntakeProfiles() {
+    return request("/dispatch/intake/profiles");
+  },
+  saveIntakeProfile(body) {
+    return request("/dispatch/intake/profiles", {
+      method: "POST",
+      body,
+    });
+  },
+  deleteIntakeProfile(name) {
+    return request(`/dispatch/intake/profiles/${encodeURIComponent(name)}`, {
+      method: "DELETE",
+    });
+  },
   analyzeIntake(body) {
     return request("/dispatch/intake/analyze", {
       method: "POST",
@@ -86,6 +100,16 @@ export const dispatchApi = {
     return request(`/dispatch/attention/${encodeURIComponent(itemId)}/${action}`, {
       method: "POST",
       body,
+    });
+  },
+  postAttentionBulkAction(action, itemIds, body = {}) {
+    return request("/dispatch/attention/bulk", {
+      method: "POST",
+      body: {
+        action,
+        itemIds,
+        ...body,
+      },
     });
   },
 };

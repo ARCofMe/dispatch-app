@@ -16,6 +16,10 @@ describe("IntakeView", () => {
         }}
         formatsLoading={false}
         formatsError=""
+        profiles={{ items: [{ name: "vendor-a", formatName: "vendor_a" }] }}
+        profilesLoading={false}
+        profilesError=""
+        onRefreshProfiles={vi.fn()}
         analysis={{
           selectedAdapter: { name: "default" },
           rowCount: 2,
@@ -35,6 +39,8 @@ describe("IntakeView", () => {
         importLoading={false}
         importError=""
         onImport={vi.fn()}
+        onSaveProfile={vi.fn(() => Promise.resolve({ success: true }))}
+        onDeleteProfile={vi.fn(() => Promise.resolve({ success: true }))}
       />
     );
 
@@ -43,6 +49,7 @@ describe("IntakeView", () => {
 
     expect(onAnalyze).toHaveBeenCalled();
     expect(screen.getByText("Supported formats")).toBeInTheDocument();
+    expect(screen.getByText("vendor-a")).toBeInTheDocument();
     expect(screen.getByText("Missing: Zip")).toBeInTheDocument();
     expect(screen.getByText("Questionable email format: bad-email")).toBeInTheDocument();
     expect(screen.getByText("Run import")).toBeDisabled();

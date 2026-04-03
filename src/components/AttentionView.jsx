@@ -17,6 +17,7 @@ export default function AttentionView({
   selectedItemDetail,
   actionState,
   onAction,
+  onBulkAction,
   onOpenServiceRequest,
   onOpenRoutes,
   onOpenServiceRequestById,
@@ -24,6 +25,8 @@ export default function AttentionView({
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sortBy, setSortBy] = useState("priority");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkOwnerId, setBulkOwnerId] = useState("");
+  const [bulkSnoozeHours, setBulkSnoozeHours] = useState("4");
 
   const visibleItems = useMemo(() => {
     const filtered = (items || []).filter((item) => {
@@ -71,11 +74,23 @@ export default function AttentionView({
             <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
             <button
               type="button"
+              onClick={() => setSelectedIds(visibleItems.slice(0, 25).map((item) => item.itemId))}
+            >
+              Select visible
+            </button>
+            <button type="button" onClick={() => setSelectedIds([])}>
+              Clear selection
+            </button>
+            <button
+              type="button"
               onClick={() => {
-                visibleItems.slice(0, 20).forEach((item) => {
-                  if (item.status !== "open") return;
-                  onAction(item.itemId, "ack");
-                });
+                onBulkAction(
+                  "ack",
+                  visibleItems
+                    .slice(0, 20)
+                    .filter((item) => item.status === "open")
+                    .map((item) => item.itemId)
+                );
                 setSelectedIds([]);
               }}
             >
@@ -85,14 +100,47 @@ export default function AttentionView({
               type="button"
               disabled={!selectedIds.length}
               onClick={() => {
-                selectedIds.forEach((itemId) => onAction(itemId, "ack"));
+                onBulkAction("ack", selectedIds);
                 setSelectedIds([]);
               }}
             >
               Ack selected
             </button>
+            <span className="muted">Selected: {selectedIds.length}</span>
             <button type="button" onClick={onRefresh}>
               Refresh
+            </button>
+          </div>
+
+          <div className="action-row">
+            <label className="field slim">
+              <span>Bulk owner ID</span>
+              <input value={bulkOwnerId} onChange={(event) => setBulkOwnerId(event.target.value)} inputMode="numeric" />
+            </label>
+            <button
+              type="button"
+              disabled={!selectedIds.length}
+              onClick={() => onBulkAction("assign", selectedIds, { assignedOwnerDiscordUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
+            >
+              Assign selected
+            </button>
+            <button type="button" disabled={!selectedIds.length} onClick={() => onBulkAction("clear_owner", selectedIds)}>
+              Clear owner
+            </button>
+            <label className="field slim">
+              <span>Bulk snooze</span>
+              <input
+                value={bulkSnoozeHours}
+                onChange={(event) => setBulkSnoozeHours(event.target.value)}
+                inputMode="numeric"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={!selectedIds.length}
+              onClick={() => onBulkAction("snooze", selectedIds, { hours: Number.parseInt(bulkSnoozeHours, 10) || 1 })}
+            >
+              Snooze selected
             </button>
           </div>
         </div>

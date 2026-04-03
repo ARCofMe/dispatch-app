@@ -36,6 +36,7 @@ describe("AttentionView", () => {
         selectedItemDetail={null}
         actionState={null}
         onAction={vi.fn()}
+        onBulkAction={vi.fn()}
         onOpenServiceRequest={vi.fn()}
         onOpenRoutes={vi.fn()}
         onOpenServiceRequestById={vi.fn()}
@@ -81,6 +82,7 @@ describe("AttentionView", () => {
         selectedItemDetail={null}
         actionState={null}
         onAction={vi.fn()}
+        onBulkAction={vi.fn()}
         onOpenServiceRequest={vi.fn()}
         onOpenRoutes={vi.fn()}
         onOpenServiceRequestById={vi.fn()}
@@ -92,7 +94,7 @@ describe("AttentionView", () => {
   });
 
   it("supports acknowledging selected items", () => {
-    const onAction = vi.fn();
+    const onBulkAction = vi.fn();
     render(
       <AttentionView
         items={[
@@ -113,7 +115,8 @@ describe("AttentionView", () => {
         selectedItem={null}
         selectedItemDetail={null}
         actionState={null}
-        onAction={onAction}
+        onAction={vi.fn()}
+        onBulkAction={onBulkAction}
         onOpenServiceRequest={vi.fn()}
         onOpenRoutes={vi.fn()}
         onOpenServiceRequestById={vi.fn()}
@@ -123,6 +126,6 @@ describe("AttentionView", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByText("Ack selected"));
 
-    expect(onAction).toHaveBeenCalledWith("dispatch:SR-100:quote_needed", "ack");
+    expect(onBulkAction).toHaveBeenCalledWith("ack", ["dispatch:SR-100:quote_needed"]);
   });
 });

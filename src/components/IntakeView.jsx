@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 
-const PRESET_STORAGE_KEY = "dispatch-intake-presets";
 const DRAFT_STORAGE_KEY = "dispatch-intake-draft";
 
 export default function IntakeView({
   formats,
   formatsLoading,
   formatsError,
+  profiles,
+  profilesLoading,
+  profilesError,
+  onRefreshProfiles,
   analysis,
   analysisLoading,
   analysisError,
@@ -19,6 +22,8 @@ export default function IntakeView({
   importLoading,
   importError,
   onImport,
+  onSaveProfile,
+  onDeleteProfile,
 }) {
   const [spreadsheetPath, setSpreadsheetPath] = useState("");
   const [formatName, setFormatName] = useState("default");
@@ -31,7 +36,6 @@ export default function IntakeView({
   const [failFast, setFailFast] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetState, setPresetState] = useState("");
-  const [presets, setPresets] = useState(() => loadPresets());
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -202,18 +206,19 @@ export default function IntakeView({
                   setPresetState("Enter a preset name first.");
                   return;
                 }
-                savePreset(name, {
+                onSaveProfile({
+                  name,
                   formatName,
                   fieldMapPath,
-                  rowStart,
-                  rowEnd,
-                  limit,
+                  rowStart: rowStart ? Number(rowStart) : undefined,
+                  rowEnd: rowEnd ? Number(rowEnd) : undefined,
+                  limit: limit ? Number(limit) : undefined,
                   duplicateMode,
                   previewMode,
                   failFast,
-                });
-                setPresets(loadPresets());
-                setPresetState(`Saved preset ${name}.`);
+                })
+                  .then((payload) => setPresetState(payload.message || `Saved preset ${name}.`))
+                  .catch((error) => setPresetState(error instanceof Error ? error.message : String(error)));
               }}
             >
               Save preset
@@ -244,34 +249,53 @@ export default function IntakeView({
           </div>
           {presetState && <p className="muted">{presetState}</p>}
 
-          {!!presets.length && (
+          {!!(profiles?.items || []).length && (
             <div className="detail-block">
-              <strong>Saved presets</strong>
+              <div className="section-head">
+                <strong>Saved presets</strong>
+                <button type="button" className="secondary-button" onClick={onRefreshProfiles}>
+                  Refresh presets
+                </button>
+              </div>
               <div className="chip-list">
-                {presets.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    className="queue-chip chip-button"
-                    onClick={() => {
-                      setPresetName(preset.name);
-                      setFormatName(preset.value.formatName || "default");
-                      setFieldMapPath(preset.value.fieldMapPath || "");
-                      setRowStart(preset.value.rowStart || "");
-                      setRowEnd(preset.value.rowEnd || "");
-                      setLimit(preset.value.limit || "25");
-                      setDuplicateMode(preset.value.duplicateMode || "skip");
-                      setPreviewMode(preset.value.previewMode || "plan");
-                      setFailFast(Boolean(preset.value.failFast));
-                      setPresetState(`Loaded preset ${preset.name}.`);
-                    }}
-                  >
-                    {preset.name}
-                  </button>
+                {(profiles?.items || []).map((preset) => (
+                  <span key={preset.name} className="chip-row">
+                    <button
+                      type="button"
+                      className="queue-chip chip-button"
+                      onClick={() => {
+                        setPresetName(preset.name);
+                        setFormatName(preset.formatName || "default");
+                        setFieldMapPath(preset.fieldMapPath || "");
+                        setRowStart(`${preset.rowStart || ""}`);
+                        setRowEnd(`${preset.rowEnd || ""}`);
+                        setLimit(`${preset.limit || "25"}`);
+                        setDuplicateMode(preset.duplicateMode || "skip");
+                        setPreviewMode(preset.previewMode || "plan");
+                        setFailFast(Boolean(preset.failFast));
+                        setPresetState(`Loaded preset ${preset.name}.`);
+                      }}
+                    >
+                      {preset.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() =>
+                        onDeleteProfile(preset.name)
+                          .then((payload) => setPresetState(payload.message || `Deleted preset ${preset.name}.`))
+                          .catch((error) => setPresetState(error instanceof Error ? error.message : String(error)))
+                      }
+                    >
+                      Delete
+                    </button>
+                  </span>
                 ))}
               </div>
             </div>
           )}
+          {profilesLoading && <p>Loading saved presets…</p>}
+          {profilesError && <p className="error-text">{profilesError}</p>}
 
           {analysisLoading && <p>Running intake analysis…</p>}
           {analysisError && <p className="error-text">{analysisError}</p>}
@@ -489,23 +513,6 @@ function summarizeImportResult(item) {
   ]
     .filter(Boolean)
     .join(" • ");
-}
-
-function loadPresets() {
-  try {
-    const raw = localStorage.getItem(PRESET_STORAGE_KEY);
-    const parsed = JSON.parse(raw || "[]");
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item) => item && typeof item.name === "string" && item.value && typeof item.value === "object");
-  } catch {
-    return [];
-  }
-}
-
-function savePreset(name, value) {
-  const current = loadPresets().filter((item) => item.name !== name);
-  current.unshift({ name, value });
-  localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(current.slice(0, 12)));
 }
 
 function loadDraft() {

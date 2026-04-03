@@ -15,11 +15,15 @@ Queue-first overview for mapped technicians, visible assignments, attention load
 - `Attention`
 Actionable workflow queue with item detail, recent history, and controls for:
   - `ack`
+  - bulk `ack`
   - `reopen`
   - `unsnooze`
   - `snooze`
+  - bulk `snooze`
   - `assign`
+  - bulk `assign`
   - `clear owner`
+  - bulk `clear owner`
 
 - `Service Request`
 Customer detail and merged SR timeline pulled from Ops Hub.
@@ -28,7 +32,7 @@ Customer detail and merged SR timeline pulled from Ops Hub.
 Structured route preview and heatmap payloads. This is the landing zone for migrating the older routing app into dispatch instead of keeping it separate.
 
 - `Intake`
-ServiceSmith intake surface over Ops Hub. It now supports spreadsheet analysis, import planning, payload preview, and first-pass import execution from the dispatch UI.
+ServiceSmith intake surface over Ops Hub. It now supports spreadsheet analysis, import planning, payload preview, first-pass import execution, and backend-saved intake profiles from the dispatch UI.
 
 ## Environment
 
@@ -97,11 +101,11 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - it opens SR detail and route context from the same app
 - it includes the first ServiceSmith migration surface through the `Intake` tab
 - it can analyze spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
-- it includes basic import guardrails like preview-before-import, confirmation prompts, and local presets
+- it includes basic import guardrails like preview-before-import, confirmation prompts, and saved intake profiles
 - it now persists working drafts for `Routes` and `Intake`, and can export preview/import JSON artifacts
 
 What is not migrated yet:
 - the richer route-planner map interactions from `dispatcher-routing-app`
 - more advanced assignment and scheduling workflows
 - deeper parts-facing dispatch cross-links
-- richer ServiceSmith reporting, saved profiles, and operator guardrails around import execution
+- richer ServiceSmith reporting and operator guardrails around import execution

@@ -38,6 +38,9 @@ export default function App() {
   const [intakeFormats, setIntakeFormats] = useState(null);
   const [intakeFormatsLoading, setIntakeFormatsLoading] = useState(false);
   const [intakeFormatsError, setIntakeFormatsError] = useState("");
+  const [intakeProfiles, setIntakeProfiles] = useState(null);
+  const [intakeProfilesLoading, setIntakeProfilesLoading] = useState(false);
+  const [intakeProfilesError, setIntakeProfilesError] = useState("");
   const [intakeAnalysis, setIntakeAnalysis] = useState(null);
   const [intakeAnalysisLoading, setIntakeAnalysisLoading] = useState(false);
   const [intakeAnalysisError, setIntakeAnalysisError] = useState("");
@@ -52,6 +55,7 @@ export default function App() {
     loadBoard();
     loadAttention();
     loadIntakeFormats();
+    loadIntakeProfiles();
   }, []);
 
   useEffect(() => {
@@ -154,6 +158,18 @@ export default function App() {
     }
   }
 
+  async function loadIntakeProfiles() {
+    setIntakeProfilesLoading(true);
+    setIntakeProfilesError("");
+    try {
+      setIntakeProfiles(await dispatchApi.getIntakeProfiles());
+    } catch (error) {
+      setIntakeProfilesError(formatError(error));
+    } finally {
+      setIntakeProfilesLoading(false);
+    }
+  }
+
   async function analyzeIntake(body) {
     setIntakeAnalysisLoading(true);
     setIntakeAnalysisError("");
@@ -188,6 +204,18 @@ export default function App() {
     } finally {
       setIntakeImportLoading(false);
     }
+  }
+
+  async function saveIntakeProfile(body) {
+    const payload = await dispatchApi.saveIntakeProfile(body);
+    await loadIntakeProfiles();
+    return payload;
+  }
+
+  async function deleteIntakeProfile(name) {
+    const payload = await dispatchApi.deleteIntakeProfile(name);
+    await loadIntakeProfiles();
+    return payload;
   }
 
   function handleAttentionSelect(item) {
@@ -240,6 +268,23 @@ export default function App() {
     }
   }
 
+  async function handleBulkAttentionAction(action, itemIds, body = {}) {
+    setAttentionActionState({ error: false, message: `Running bulk ${action}…` });
+    try {
+      const payload = await dispatchApi.postAttentionBulkAction(action, itemIds, body);
+      setAttentionActionState({ error: !payload.success, message: payload.message || `Bulk ${action} complete` });
+      if (selectedAttention?.itemId) {
+        await loadAttentionDetail(selectedAttention.itemId);
+      }
+      await loadAttention();
+      if (selectedSrId.trim()) {
+        await loadServiceRequest(selectedSrId.trim());
+      }
+    } catch (error) {
+      setAttentionActionState({ error: true, message: formatError(error) });
+    }
+  }
+
   return (
     <div className="app-shell">
       <BrandBar />
@@ -272,6 +317,7 @@ export default function App() {
           selectedItemDetail={selectedAttentionDetail}
           actionState={attentionActionState}
           onAction={handleAttentionAction}
+          onBulkAction={handleBulkAttentionAction}
           onOpenServiceRequest={openServiceRequestFromAttention}
           onOpenRoutes={openRoutesFromAttention}
           onOpenServiceRequestById={openServiceRequestById}
@@ -314,6 +360,10 @@ export default function App() {
           formats={intakeFormats}
           formatsLoading={intakeFormatsLoading}
           formatsError={intakeFormatsError}
+          profiles={intakeProfiles}
+          profilesLoading={intakeProfilesLoading}
+          profilesError={intakeProfilesError}
+          onRefreshProfiles={loadIntakeProfiles}
           analysis={intakeAnalysis}
           analysisLoading={intakeAnalysisLoading}
           analysisError={intakeAnalysisError}
@@ -326,6 +376,8 @@ export default function App() {
           importLoading={intakeImportLoading}
           importError={intakeImportError}
           onImport={importIntake}
+          onSaveProfile={saveIntakeProfile}
+          onDeleteProfile={deleteIntakeProfile}
         />
       )}
     </div>

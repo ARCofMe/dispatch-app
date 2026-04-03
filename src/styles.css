@@ -389,6 +389,12 @@ input {
   flex-wrap: wrap;
 }
 
+.chip-row {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .action-row {
   display: flex;
   gap: 10px;
