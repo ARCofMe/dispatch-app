@@ -55,6 +55,7 @@ export const dispatchApi = {
     });
     if (options.originAddress) params.set("origin_address", options.originAddress);
     if (options.destinationAddress) params.set("destination_address", options.destinationAddress);
+    if (options.optimize) params.set("optimize", "true");
     return request(`/dispatch/routes/preview?${params.toString()}`);
   },
   getRouteHeatmap(bluefolderUserId) {

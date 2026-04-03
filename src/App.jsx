@@ -35,6 +35,7 @@ export default function App() {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
   const [routeOriginAddress, setRouteOriginAddress] = useState("");
   const [routeDestinationAddress, setRouteDestinationAddress] = useState("");
+  const [routeOptimize, setRouteOptimize] = useState(false);
   const [intakeFormats, setIntakeFormats] = useState(null);
   const [intakeFormatsLoading, setIntakeFormatsLoading] = useState(false);
   const [intakeFormatsError, setIntakeFormatsError] = useState("");
@@ -124,8 +125,10 @@ export default function App() {
     setSelectedTechnicianId(techId);
     const nextOriginAddress = options.originAddress ?? routeOriginAddress;
     const nextDestinationAddress = options.destinationAddress ?? routeDestinationAddress;
+    const nextOptimize = options.optimize ?? routeOptimize;
     setRouteOriginAddress(nextOriginAddress);
     setRouteDestinationAddress(nextDestinationAddress);
+    setRouteOptimize(Boolean(nextOptimize));
     setRoutesLoading(true);
     setRoutesError("");
     setActiveTab("routes");
@@ -134,6 +137,7 @@ export default function App() {
         dispatchApi.getRoutePreview(techId, {
           originAddress: nextOriginAddress,
           destinationAddress: nextDestinationAddress,
+          optimize: nextOptimize,
         }),
         dispatchApi.getRouteHeatmap(techId),
       ]);
@@ -348,9 +352,11 @@ export default function App() {
           technicianId={selectedTechnicianId}
           originAddress={routeOriginAddress}
           destinationAddress={routeDestinationAddress}
+          optimize={routeOptimize}
           onTechnicianIdChange={setSelectedTechnicianId}
           onOriginAddressChange={setRouteOriginAddress}
           onDestinationAddressChange={setRouteDestinationAddress}
+          onOptimizeChange={setRouteOptimize}
           onLoad={loadRoutes}
           onOpenServiceRequestById={openServiceRequestById}
         />

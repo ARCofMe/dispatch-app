@@ -10,15 +10,18 @@ export default function RoutesView({
   technicianId,
   originAddress,
   destinationAddress,
+  optimize,
   onTechnicianIdChange,
   onOriginAddressChange,
   onDestinationAddressChange,
+  onOptimizeChange,
   onLoad,
   onOpenServiceRequestById,
 }) {
   const [draftTechId, setDraftTechId] = useState(technicianId ? String(technicianId) : "");
   const [draftOriginAddress, setDraftOriginAddress] = useState(originAddress || "");
   const [draftDestinationAddress, setDraftDestinationAddress] = useState(destinationAddress || "");
+  const [draftOptimize, setDraftOptimize] = useState(Boolean(optimize));
   const [stopFilter, setStopFilter] = useState("");
   const [routeStatus, setRouteStatus] = useState("");
 
@@ -35,11 +38,16 @@ export default function RoutesView({
   }, [destinationAddress]);
 
   useEffect(() => {
+    setDraftOptimize(Boolean(optimize));
+  }, [optimize]);
+
+  useEffect(() => {
     const draft = loadRouteDraft();
     if (!draft) return;
     if (!technicianId && draft.technicianId) onTechnicianIdChange?.(draft.technicianId);
     if (!originAddress && draft.originAddress) onOriginAddressChange?.(draft.originAddress);
     if (!destinationAddress && draft.destinationAddress) onDestinationAddressChange?.(draft.destinationAddress);
+    if (draft.optimize !== undefined) onOptimizeChange?.(Boolean(draft.optimize));
   }, []);
 
   useEffect(() => {
@@ -47,8 +55,9 @@ export default function RoutesView({
       technicianId: draftTechId,
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
+      optimize: draftOptimize,
     });
-  }, [draftTechId, draftOriginAddress, draftDestinationAddress]);
+  }, [draftTechId, draftOriginAddress, draftDestinationAddress, draftOptimize]);
 
   const visibleStops = useMemo(() => {
     const needle = stopFilter.trim().toLowerCase();
@@ -81,9 +90,11 @@ export default function RoutesView({
     onTechnicianIdChange(draftTechId);
     onOriginAddressChange?.(draftOriginAddress);
     onDestinationAddressChange?.(draftDestinationAddress);
+    onOptimizeChange?.(draftOptimize);
     onLoad(draftTechId, {
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
+      optimize: draftOptimize,
     });
   }
 
@@ -142,6 +153,10 @@ export default function RoutesView({
         <button type="button" onClick={handleLoad}>
           Load route context
         </button>
+        <label className="check-field">
+          <input type="checkbox" checked={draftOptimize} onChange={(event) => setDraftOptimize(event.target.checked)} />
+          <span>Optimize route order</span>
+        </label>
         <button
           type="button"
           className="secondary-button"
@@ -150,6 +165,7 @@ export default function RoutesView({
             setDraftTechId("");
             setDraftOriginAddress("");
             setDraftDestinationAddress("");
+            setDraftOptimize(false);
             setStopFilter("");
             setRouteStatus("Cleared route draft.");
           }}
@@ -213,6 +229,17 @@ export default function RoutesView({
               <Detail label="Last stop" value={routeMetrics.lastStop} />
               <Detail label="Origin" value={routePreview?.originAddress || "default"} />
               <Detail label="Destination" value={routePreview?.destinationAddress || "default"} />
+              <Detail label="Optimization" value={routePreview?.optimized ? "enabled" : "off"} />
+            </div>
+          </article>
+
+          <article className="metric-card wide">
+            <p>Route metrics</p>
+            <div className="detail-grid">
+              <Detail label="Miles" value={formatMetric(routePreview?.metrics?.total_distance_miles)} />
+              <Detail label="Drive minutes" value={formatMetric(routePreview?.metrics?.total_drive_minutes)} />
+              <Detail label="Labor minutes" value={formatMetric(routePreview?.metrics?.total_labor_minutes)} />
+              <Detail label="Total minutes" value={formatMetric(routePreview?.metrics?.total_minutes)} />
             </div>
           </article>
 
@@ -332,6 +359,12 @@ function buildManifest(stops) {
   return stops
     .map((stop, index) => `${index + 1}. ${stop.label} | ${stop.subject || "Service Request"} | ${stop.address}`)
     .join("\n");
+}
+
+function formatMetric(value) {
+  if (value === undefined || value === null || value === "") return "n/a";
+  if (typeof value === "number") return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  return `${value}`;
 }
 
 function loadRouteDraft() {
