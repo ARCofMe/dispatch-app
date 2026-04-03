@@ -402,6 +402,10 @@ input {
   margin-top: 18px;
 }
 
+.compact-row {
+  margin-top: 0;
+}
+
 .inline-form-row {
   display: flex;
   gap: 10px;
@@ -456,6 +460,22 @@ input {
 .route-link {
   color: #164e46;
   font-weight: 600;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(24, 35, 32, 0.12);
+  background: #164e46;
+  color: #f8faf7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
+.route-stop-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
 }
 
 .route-image {

@@ -29,7 +29,7 @@ Actionable workflow queue with item detail, recent history, and controls for:
 Customer detail and merged SR timeline pulled from Ops Hub.
 
 - `Routes`
-Structured route preview and heatmap payloads. This is the landing zone for migrating the older routing app into dispatch instead of keeping it separate.
+Structured route preview and heatmap payloads with a real stop workspace, filter/search, manifest copy, and route-share controls. This is the landing zone for migrating the older routing app into dispatch instead of keeping it separate.
 
 - `Intake`
 ServiceSmith intake surface over Ops Hub. It now supports spreadsheet analysis, import planning, payload preview, first-pass import execution, and backend-saved intake profiles from the dispatch UI.
@@ -99,6 +99,7 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - it renders meaningful Ops Hub dispatch data
 - it supports basic queue actions
 - it opens SR detail and route context from the same app
+- routes now include stop filtering, route summary, copy/share helpers, and a timeline view
 - it includes the first ServiceSmith migration surface through the `Intake` tab
 - it can analyze spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
 - it includes basic import guardrails like preview-before-import, confirmation prompts, and saved intake profiles
