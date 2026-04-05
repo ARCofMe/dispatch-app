@@ -224,106 +224,27 @@ export default function RoutesView({
 
       {!loading && !error && (
         <div className="sr-grid">
-          <article className="metric-card wide">
-            <div className="section-head">
-              <p>Technician workspace</p>
-              <label className="field narrow">
-                <span>Filter techs</span>
-                <input value={techFilter} onChange={(event) => setTechFilter(event.target.value)} placeholder="Name or area" />
-              </label>
-            </div>
-            <div className="list-stack compact">
-              {filteredTechnicians.map((tech) => (
-                <div
-                  key={tech.value}
-                  className={
-                    String(draftTechId) === String(tech.value)
-                      ? "list-row route-tech-row route-tech-row-selected"
-                      : "list-row route-tech-row"
-                  }
-                >
-                  <button type="button" className="card-button-reset" onClick={() => setDraftTechId(tech.value)}>
-                    <strong>{tech.label}</strong>
-                    <p>{tech.originAddress || "Origin not set"}</p>
-                  </button>
-                  <div className="row-meta">
-                    <span>BF {tech.value}</span>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => onSetDefaultTechnician?.(String(tech.value))}
-                    >
-                      {String(defaultTechnicianId) === String(tech.value) ? "Default route tech" : "Set default"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {!filteredTechnicians.length && <p className="muted">No technicians match the current filter.</p>}
-            </div>
-          </article>
-
-          <article className="metric-card">
-            <p>Stops</p>
-            <strong>{routeMetrics.stopCount}</strong>
-          </article>
-          <article className="metric-card">
-            <p>Visible after filter</p>
-            <strong>{routeMetrics.filteredCount}</strong>
-          </article>
-          <article className="metric-card">
+          <article className="metric-card route-signal-card">
             <p>Distinct areas</p>
             <strong>{routeMetrics.uniqueAreas}</strong>
           </article>
-          <article className="metric-card">
+          <article className="metric-card route-signal-card">
             <p>Skipped without address</p>
             <strong>{routePreview?.skippedWithoutAddress || 0}</strong>
           </article>
 
           <article className="metric-card wide">
             <div className="section-head">
-              <p>Route controls</p>
-              <div className="action-row compact-row">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => handleCopy(routePreview?.routeUrl, "Copied route link.")}
-                >
-                  Copy route link
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => handleCopy(buildManifest(routePreview?.stops || []), "Copied stop manifest.")}
-                >
-                  Copy stop manifest
-                </button>
-                {routePreview?.routeUrl && (
-                  <a className="route-link button-link" href={routePreview.routeUrl} target="_blank" rel="noreferrer">
-                    Open route in maps
-                  </a>
-                )}
-              </div>
+              <p>Route map</p>
+              <span className="muted">Uses the Ops Hub route path and stop geometry already returned by the backend.</span>
             </div>
-            <div className="detail-grid">
-              <Detail label="Technician" value={routePreview?.technicianLabel} />
-              <Detail label="Route date" value={routePreview?.routeDate || draftRouteDate || "today"} />
-              <Detail label="Assignments" value={routePreview?.assignmentsConsidered} />
-              <Detail label="First stop" value={routeMetrics.firstStop} />
-              <Detail label="Last stop" value={routeMetrics.lastStop} />
-              <Detail label="Origin" value={routePreview?.originAddress || "default"} />
-              <Detail label="Destination" value={routePreview?.destinationAddress || "default"} />
-              <Detail label="Optimization" value={routePreview?.optimized ? "enabled" : "off"} />
-            </div>
-          </article>
-
-          <article className="metric-card wide">
-            <p>Route metrics</p>
-            <div className="detail-grid">
-              <Detail label="Miles" value={formatMetric(routePreview?.metrics?.total_distance_miles)} />
-              <Detail label="Drive minutes" value={formatMetric(routePreview?.metrics?.total_drive_minutes)} />
-              <Detail label="Labor minutes" value={formatMetric(routePreview?.metrics?.total_labor_minutes)} />
-              <Detail label="Total minutes" value={formatMetric(routePreview?.metrics?.total_minutes)} />
-            </div>
+            <RouteMapPanel
+              stops={routePreview?.stops || []}
+              path={routePreview?.path || []}
+              imageUrl={routePreview?.imageUrl || ""}
+              selectedStopId={selectedStopId}
+              onSelectStop={setSelectedStopId}
+            />
           </article>
 
           <article className="metric-card wide">
@@ -380,16 +301,96 @@ export default function RoutesView({
 
           <article className="metric-card wide">
             <div className="section-head">
-              <p>Route map</p>
-              <span className="muted">Uses the Ops Hub route path and stop geometry already returned by the backend.</span>
+              <p>Technician workspace</p>
+              <label className="field narrow">
+                <span>Filter techs</span>
+                <input value={techFilter} onChange={(event) => setTechFilter(event.target.value)} placeholder="Name or area" />
+              </label>
             </div>
-            <RouteMapPanel
-              stops={routePreview?.stops || []}
-              path={routePreview?.path || []}
-              imageUrl={routePreview?.imageUrl || ""}
-              selectedStopId={selectedStopId}
-              onSelectStop={setSelectedStopId}
-            />
+            <div className="list-stack compact">
+              {filteredTechnicians.map((tech) => (
+                <div
+                  key={tech.value}
+                  className={
+                    String(draftTechId) === String(tech.value)
+                      ? "list-row route-tech-row route-tech-row-selected"
+                      : "list-row route-tech-row"
+                  }
+                >
+                  <button type="button" className="card-button-reset" onClick={() => setDraftTechId(tech.value)}>
+                    <strong>{tech.label}</strong>
+                    <p>{tech.originAddress || "Origin not set"}</p>
+                  </button>
+                  <div className="row-meta">
+                    <span>BF {tech.value}</span>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => onSetDefaultTechnician?.(String(tech.value))}
+                    >
+                      {String(defaultTechnicianId) === String(tech.value) ? "Default route tech" : "Set default"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {!filteredTechnicians.length && <p className="muted">No technicians match the current filter.</p>}
+            </div>
+          </article>
+
+          <article className="metric-card wide">
+            <div className="section-head">
+              <p>Route controls</p>
+              <div className="action-row compact-row">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => handleCopy(routePreview?.routeUrl, "Copied route link.")}
+                >
+                  Copy route link
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => handleCopy(buildManifest(routePreview?.stops || []), "Copied stop manifest.")}
+                >
+                  Copy stop manifest
+                </button>
+                {routePreview?.routeUrl && (
+                  <a className="route-link button-link" href={routePreview.routeUrl} target="_blank" rel="noreferrer">
+                    Open route in maps
+                  </a>
+                )}
+              </div>
+            </div>
+            <div className="detail-grid">
+              <Detail label="Technician" value={routePreview?.technicianLabel} />
+              <Detail label="Route date" value={routePreview?.routeDate || draftRouteDate || "today"} />
+              <Detail label="Assignments" value={routePreview?.assignmentsConsidered} />
+              <Detail label="First stop" value={routeMetrics.firstStop} />
+              <Detail label="Last stop" value={routeMetrics.lastStop} />
+              <Detail label="Origin" value={routePreview?.originAddress || "default"} />
+              <Detail label="Destination" value={routePreview?.destinationAddress || "default"} />
+              <Detail label="Optimization" value={routePreview?.optimized ? "enabled" : "off"} />
+            </div>
+          </article>
+
+          <article className="metric-card">
+            <p>Stops</p>
+            <strong>{routeMetrics.stopCount}</strong>
+          </article>
+          <article className="metric-card">
+            <p>Visible after filter</p>
+            <strong>{routeMetrics.filteredCount}</strong>
+          </article>
+
+          <article className="metric-card wide">
+            <p>Route metrics</p>
+            <div className="detail-grid">
+              <Detail label="Miles" value={formatMetric(routePreview?.metrics?.total_distance_miles)} />
+              <Detail label="Drive minutes" value={formatMetric(routePreview?.metrics?.total_drive_minutes)} />
+              <Detail label="Labor minutes" value={formatMetric(routePreview?.metrics?.total_labor_minutes)} />
+              <Detail label="Total minutes" value={formatMetric(routePreview?.metrics?.total_minutes)} />
+            </div>
           </article>
 
           <article className="metric-card wide">

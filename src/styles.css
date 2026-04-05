@@ -180,6 +180,10 @@ input {
   grid-column: span 6;
 }
 
+.route-signal-card {
+  grid-column: span 6;
+}
+
 .metric-card p {
   margin: 0 0 8px;
   color: var(--text-muted);
