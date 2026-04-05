@@ -3,7 +3,8 @@ import { vi } from "vitest";
 import RoutesView from "./RoutesView";
 
 describe("RoutesView", () => {
-  it("filters route stops and opens service requests", () => {
+  it("filters route stops, carries the selected date, and opens service requests", () => {
+    const onLoad = vi.fn();
     const onOpenServiceRequestById = vi.fn();
 
     render(
@@ -26,24 +27,38 @@ describe("RoutesView", () => {
         loading={false}
         error=""
         technicianId="9001"
+        routeDate="2026-04-05"
+        technicianOptions={[{ value: "9001", label: "Pat Tech", bluefolderUserId: 9001, discordUserId: 7001 }]}
         originAddress="Lewiston, ME"
         destinationAddress="Auburn, ME"
         optimize
+        onRouteDateChange={vi.fn()}
         onTechnicianIdChange={vi.fn()}
         onOriginAddressChange={vi.fn()}
         onDestinationAddressChange={vi.fn()}
         onOptimizeChange={vi.fn()}
-        onLoad={vi.fn()}
+        onLoad={onLoad}
         onOpenServiceRequestById={onOpenServiceRequestById}
       />
     );
 
     expect(screen.getByText("enabled")).toBeInTheDocument();
     expect(screen.getByText("24.5")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Pat Tech")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("2026-04-05")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Filter stops"), { target: { value: "auburn" } });
 
     expect(screen.getAllByText("Open SR")).toHaveLength(1);
     expect(screen.getByText("SR-101")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Route date"), { target: { value: "2026-04-08" } });
+    fireEvent.click(screen.getByText("Load route context"));
+    expect(onLoad).toHaveBeenCalledWith("9001", {
+      date: "2026-04-08",
+      originAddress: "Lewiston, ME",
+      destinationAddress: "Auburn, ME",
+      optimize: true,
+    });
 
     fireEvent.click(screen.getByText("Open SR"));
     expect(onOpenServiceRequestById).toHaveBeenCalledWith("101");

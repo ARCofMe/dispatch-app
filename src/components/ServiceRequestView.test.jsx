@@ -3,6 +3,25 @@ import { vi } from "vitest";
 import ServiceRequestView from "./ServiceRequestView";
 
 describe("ServiceRequestView", () => {
+  it("renders an explicit empty state when no SR is selected", () => {
+    render(
+      <ServiceRequestView
+        srId=""
+        customer={null}
+        timeline={[]}
+        work={null}
+        loading={false}
+        error=""
+        onChange={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenAttentionItem={vi.fn()}
+        technicianOptions={[]}
+      />
+    );
+
+    expect(screen.getByText("Choose an SR to load dispatch context.")).toBeInTheDocument();
+  });
+
   it("renders work panel with linked attention and parts context", () => {
     const onOpenRoutes = vi.fn();
     const onOpenAttentionItem = vi.fn();
@@ -40,6 +59,7 @@ describe("ServiceRequestView", () => {
         onChange={vi.fn()}
         onOpenRoutes={onOpenRoutes}
         onOpenAttentionItem={onOpenAttentionItem}
+        technicianOptions={[{ value: "9001", label: "Pat Tech", bluefolderUserId: 9001, discordUserId: 7001 }]}
       />
     );
 

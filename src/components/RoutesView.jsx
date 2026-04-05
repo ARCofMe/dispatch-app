@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import RouteMapPanel from "./RouteMapPanel";
 
 const ROUTE_DRAFT_KEY = "dispatch-route-draft";
 
@@ -8,9 +9,14 @@ export default function RoutesView({
   loading,
   error,
   technicianId,
+  routeDate,
+  technicianOptions = [],
+  defaultTechnicianId = "",
+  onSetDefaultTechnician,
   originAddress,
   destinationAddress,
   optimize,
+  onRouteDateChange,
   onTechnicianIdChange,
   onOriginAddressChange,
   onDestinationAddressChange,
@@ -19,15 +25,22 @@ export default function RoutesView({
   onOpenServiceRequestById,
 }) {
   const [draftTechId, setDraftTechId] = useState(technicianId ? String(technicianId) : "");
+  const [draftRouteDate, setDraftRouteDate] = useState(routeDate || "");
   const [draftOriginAddress, setDraftOriginAddress] = useState(originAddress || "");
   const [draftDestinationAddress, setDraftDestinationAddress] = useState(destinationAddress || "");
   const [draftOptimize, setDraftOptimize] = useState(Boolean(optimize));
   const [stopFilter, setStopFilter] = useState("");
   const [routeStatus, setRouteStatus] = useState("");
+  const [techFilter, setTechFilter] = useState("");
+  const [selectedStopId, setSelectedStopId] = useState("");
 
   useEffect(() => {
     setDraftTechId(technicianId ? String(technicianId) : "");
   }, [technicianId]);
+
+  useEffect(() => {
+    setDraftRouteDate(routeDate || "");
+  }, [routeDate]);
 
   useEffect(() => {
     setDraftOriginAddress(originAddress || "");
@@ -45,6 +58,7 @@ export default function RoutesView({
     const draft = loadRouteDraft();
     if (!draft) return;
     if (!technicianId && draft.technicianId) onTechnicianIdChange?.(draft.technicianId);
+    if (!routeDate && draft.routeDate) onRouteDateChange?.(draft.routeDate);
     if (!originAddress && draft.originAddress) onOriginAddressChange?.(draft.originAddress);
     if (!destinationAddress && draft.destinationAddress) onDestinationAddressChange?.(draft.destinationAddress);
     if (draft.optimize !== undefined) onOptimizeChange?.(Boolean(draft.optimize));
@@ -53,11 +67,12 @@ export default function RoutesView({
   useEffect(() => {
     saveRouteDraft({
       technicianId: draftTechId,
+      routeDate: draftRouteDate,
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
       optimize: draftOptimize,
     });
-  }, [draftTechId, draftOriginAddress, draftDestinationAddress, draftOptimize]);
+  }, [draftTechId, draftRouteDate, draftOriginAddress, draftDestinationAddress, draftOptimize]);
 
   const visibleStops = useMemo(() => {
     const needle = stopFilter.trim().toLowerCase();
@@ -69,6 +84,14 @@ export default function RoutesView({
         .some((value) => String(value).toLowerCase().includes(needle))
     );
   }, [routePreview?.stops, stopFilter]);
+
+  const filteredTechnicians = useMemo(() => {
+    const needle = techFilter.trim().toLowerCase();
+    if (!needle) return technicianOptions;
+    return technicianOptions.filter((tech) =>
+      [tech.label, tech.originAddress, tech.value].filter(Boolean).some((value) => String(value).toLowerCase().includes(needle))
+    );
+  }, [techFilter, technicianOptions]);
 
   const routeMetrics = useMemo(() => {
     const stops = routePreview?.stops || [];
@@ -88,10 +111,12 @@ export default function RoutesView({
 
   function handleLoad() {
     onTechnicianIdChange(draftTechId);
+    onRouteDateChange?.(draftRouteDate);
     onOriginAddressChange?.(draftOriginAddress);
     onDestinationAddressChange?.(draftDestinationAddress);
     onOptimizeChange?.(draftOptimize);
     onLoad(draftTechId, {
+      date: draftRouteDate,
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
       optimize: draftOptimize,
@@ -125,14 +150,32 @@ export default function RoutesView({
       </div>
 
       <div className="sr-toolbar">
+        {technicianOptions.length ? (
+          <label className="field route-field">
+            <span>Technician</span>
+            <select value={draftTechId} onChange={(event) => setDraftTechId(event.target.value)}>
+              <option value="">Select a technician</option>
+              {technicianOptions.map((tech) => (
+                <option key={tech.value} value={tech.value}>
+                  {tech.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label className="field narrow">
+            <span>Technician BlueFolder ID</span>
+            <input
+              value={draftTechId}
+              onChange={(event) => setDraftTechId(event.target.value)}
+              placeholder="9001"
+              inputMode="numeric"
+            />
+          </label>
+        )}
         <label className="field narrow">
-          <span>Technician BlueFolder ID</span>
-          <input
-            value={draftTechId}
-            onChange={(event) => setDraftTechId(event.target.value)}
-            placeholder="9001"
-            inputMode="numeric"
-          />
+          <span>Route date</span>
+          <input type="date" value={draftRouteDate} onChange={(event) => setDraftRouteDate(event.target.value)} />
         </label>
         <label className="field route-field">
           <span>Custom origin</span>
@@ -163,6 +206,7 @@ export default function RoutesView({
           onClick={() => {
             clearRouteDraft();
             setDraftTechId("");
+            setDraftRouteDate("");
             setDraftOriginAddress("");
             setDraftDestinationAddress("");
             setDraftOptimize(false);
@@ -180,6 +224,44 @@ export default function RoutesView({
 
       {!loading && !error && (
         <div className="sr-grid">
+          <article className="metric-card wide">
+            <div className="section-head">
+              <p>Technician workspace</p>
+              <label className="field narrow">
+                <span>Filter techs</span>
+                <input value={techFilter} onChange={(event) => setTechFilter(event.target.value)} placeholder="Name or area" />
+              </label>
+            </div>
+            <div className="list-stack compact">
+              {filteredTechnicians.map((tech) => (
+                <div
+                  key={tech.value}
+                  className={
+                    String(draftTechId) === String(tech.value)
+                      ? "list-row route-tech-row route-tech-row-selected"
+                      : "list-row route-tech-row"
+                  }
+                >
+                  <button type="button" className="card-button-reset" onClick={() => setDraftTechId(tech.value)}>
+                    <strong>{tech.label}</strong>
+                    <p>{tech.originAddress || "Origin not set"}</p>
+                  </button>
+                  <div className="row-meta">
+                    <span>BF {tech.value}</span>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => onSetDefaultTechnician?.(String(tech.value))}
+                    >
+                      {String(defaultTechnicianId) === String(tech.value) ? "Default route tech" : "Set default"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {!filteredTechnicians.length && <p className="muted">No technicians match the current filter.</p>}
+            </div>
+          </article>
+
           <article className="metric-card">
             <p>Stops</p>
             <strong>{routeMetrics.stopCount}</strong>
@@ -224,6 +306,7 @@ export default function RoutesView({
             </div>
             <div className="detail-grid">
               <Detail label="Technician" value={routePreview?.technicianLabel} />
+              <Detail label="Route date" value={routePreview?.routeDate || draftRouteDate || "today"} />
               <Detail label="Assignments" value={routePreview?.assignmentsConsidered} />
               <Detail label="First stop" value={routeMetrics.firstStop} />
               <Detail label="Last stop" value={routeMetrics.lastStop} />
@@ -258,7 +341,14 @@ export default function RoutesView({
             {routePreview ? (
               <div className="list-stack compact">
                 {visibleStops.map((stop, index) => (
-                  <div key={`${stop.srId}-${stop.address}-${index}`} className="list-row route-stop-row">
+                  <div
+                    key={`${stop.srId}-${stop.address}-${index}`}
+                    className={
+                      String(selectedStopId) === String(stop.srId)
+                        ? "list-row route-stop-row route-stop-row-selected"
+                        : "list-row route-stop-row"
+                    }
+                  >
                     <div>
                       <strong>
                         {index + 1}. {stop.label}
@@ -268,6 +358,13 @@ export default function RoutesView({
                     </div>
                     <div className="row-meta">
                       <span>{stop.routeLabel || stop.window || inferCityLabel(stop.address) || "No area label"}</span>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => setSelectedStopId(String(stop.srId || ""))}
+                      >
+                        Focus on map
+                      </button>
                       <button type="button" className="secondary-button" onClick={() => stop.srId && onOpenServiceRequestById?.(stop.srId)}>
                         Open SR
                       </button>
@@ -279,6 +376,20 @@ export default function RoutesView({
             ) : (
               <p className="muted">Select a technician or jump in from board/SR attention to load route context.</p>
             )}
+          </article>
+
+          <article className="metric-card wide">
+            <div className="section-head">
+              <p>Route map</p>
+              <span className="muted">Uses the Ops Hub route path and stop geometry already returned by the backend.</span>
+            </div>
+            <RouteMapPanel
+              stops={routePreview?.stops || []}
+              path={routePreview?.path || []}
+              imageUrl={routePreview?.imageUrl || ""}
+              selectedStopId={selectedStopId}
+              onSelectStop={setSelectedStopId}
+            />
           </article>
 
           <article className="metric-card wide">

@@ -1,11 +1,28 @@
 :root {
   color-scheme: light;
   font-family: "IBM Plex Sans", "Aptos", sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(255, 196, 87, 0.22), transparent 26%),
-    radial-gradient(circle at top right, rgba(17, 94, 89, 0.22), transparent 25%),
-    linear-gradient(160deg, #f4efe6 0%, #ebe4d7 48%, #dfe8e3 100%);
   color: #182320;
+  --bg-radial-warm: rgba(255, 196, 87, 0.22);
+  --bg-radial-cool: rgba(17, 94, 89, 0.22);
+  --bg-start: #f4efe6;
+  --bg-mid: #ebe4d7;
+  --bg-end: #dfe8e3;
+  --panel-bg: rgba(255, 251, 243, 0.84);
+  --panel-border: rgba(24, 35, 32, 0.1);
+  --panel-shadow: rgba(83, 70, 37, 0.1);
+  --card-bg: rgba(247, 240, 226, 0.82);
+  --card-border: rgba(24, 35, 32, 0.08);
+  --text-main: #182320;
+  --text-soft: #42534e;
+  --text-muted: #60736d;
+  --tab-bg: rgba(255, 250, 240, 0.92);
+  --tab-text: #21332e;
+  --accent: #164e46;
+  --accent-contrast: #f8faf7;
+  --warm-accent: #8b5e1a;
+  --input-bg: rgba(255, 255, 255, 0.88);
+  --subtle-surface: rgba(255, 255, 255, 0.5);
+  --error: #8a1c10;
 }
 
 * {
@@ -15,6 +32,37 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, var(--bg-radial-warm), transparent 26%),
+    radial-gradient(circle at top right, var(--bg-radial-cool), transparent 25%),
+    linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 48%, var(--bg-end) 100%);
+  color: var(--text-main);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #edf2ee;
+  --bg-radial-warm: rgba(214, 162, 77, 0.18);
+  --bg-radial-cool: rgba(65, 168, 153, 0.2);
+  --bg-start: #0f1619;
+  --bg-mid: #162126;
+  --bg-end: #182d2a;
+  --panel-bg: rgba(18, 28, 30, 0.86);
+  --panel-border: rgba(214, 226, 221, 0.12);
+  --panel-shadow: rgba(0, 0, 0, 0.35);
+  --card-bg: rgba(28, 42, 45, 0.86);
+  --card-border: rgba(214, 226, 221, 0.08);
+  --text-main: #edf2ee;
+  --text-soft: #cad7d1;
+  --text-muted: #9fb3ab;
+  --tab-bg: rgba(26, 39, 42, 0.94);
+  --tab-text: #e4ece8;
+  --accent: #41a899;
+  --accent-contrast: #081311;
+  --warm-accent: #d6a24d;
+  --input-bg: rgba(14, 22, 24, 0.9);
+  --subtle-surface: rgba(255, 255, 255, 0.04);
+  --error: #ffb29f;
 }
 
 button,
@@ -33,10 +81,10 @@ input {
   gap: 12px;
   margin-bottom: 20px;
   padding: 24px 28px;
-  border: 1px solid rgba(24, 35, 32, 0.12);
+  border: 1px solid var(--panel-border);
   border-radius: 24px;
-  background: rgba(255, 251, 243, 0.82);
-  box-shadow: 0 24px 60px rgba(83, 70, 37, 0.12);
+  background: color-mix(in srgb, var(--panel-bg) 96%, transparent);
+  box-shadow: 0 24px 60px var(--panel-shadow);
 }
 
 .brand-bar h1,
@@ -53,14 +101,14 @@ input {
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.74rem;
-  color: #8b5e1a;
+  color: var(--warm-accent);
 }
 
 .brand-copy,
 .routes-header p {
   margin: 0;
   max-width: 58rem;
-  color: #42534e;
+  color: var(--text-soft);
 }
 
 .tab-nav {
@@ -71,26 +119,26 @@ input {
 }
 
 .tab-button {
-  border: 1px solid rgba(24, 35, 32, 0.12);
-  background: rgba(255, 250, 240, 0.92);
-  color: #21332e;
+  border: 1px solid var(--panel-border);
+  background: var(--tab-bg);
+  color: var(--tab-text);
   border-radius: 999px;
   padding: 10px 16px;
   cursor: pointer;
 }
 
 .tab-button.active {
-  background: #164e46;
-  color: #f8faf7;
-  border-color: #164e46;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
 }
 
 .panel {
-  border: 1px solid rgba(24, 35, 32, 0.1);
+  border: 1px solid var(--panel-border);
   border-radius: 24px;
-  background: rgba(255, 251, 243, 0.84);
+  background: var(--panel-bg);
   padding: 22px;
-  box-shadow: 0 18px 44px rgba(83, 70, 37, 0.1);
+  box-shadow: 0 18px 44px var(--panel-shadow);
 }
 
 .board-grid,
@@ -124,8 +172,8 @@ input {
   grid-column: span 3;
   padding: 18px;
   border-radius: 18px;
-  background: rgba(247, 240, 226, 0.82);
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
 }
 
 .metric-card.wide {
@@ -134,7 +182,7 @@ input {
 
 .metric-card p {
   margin: 0 0 8px;
-  color: #5f6f69;
+  color: var(--text-muted);
 }
 
 .metric-card strong {
@@ -188,15 +236,17 @@ input {
 
 .field span {
   font-size: 0.82rem;
-  color: #5f6f69;
+  color: var(--text-muted);
 }
 
-.field input {
+.field input,
+.field select {
   min-width: 0;
-  border: 1px solid rgba(24, 35, 32, 0.14);
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--input-bg);
+  color: var(--text-main);
 }
 
 .field.narrow {
@@ -211,7 +261,7 @@ input {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #42534e;
+  color: var(--text-soft);
 }
 
 .intake-grid {
@@ -237,8 +287,8 @@ input {
   gap: 6px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  background: var(--subtle-surface);
+  border: 1px solid var(--card-border);
 }
 
 .button-row {
@@ -273,23 +323,23 @@ input {
   gap: 6px;
   justify-items: end;
   text-align: right;
-  color: #60736d;
+  color: var(--text-muted);
   font-size: 0.86rem;
 }
 
 .attention-card {
   width: 100%;
   text-align: left;
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  border: 1px solid var(--card-border);
   border-radius: 18px;
-  background: rgba(250, 244, 233, 0.92);
+  background: color-mix(in srgb, var(--card-bg) 96%, transparent);
   padding: 16px;
   cursor: pointer;
 }
 
 .attention-card.selected {
-  border-color: #164e46;
-  box-shadow: 0 0 0 2px rgba(22, 78, 70, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .attention-card-top,
@@ -302,27 +352,27 @@ input {
 
 .attention-card p {
   margin: 10px 0;
-  color: #30413b;
+  color: var(--text-soft);
 }
 
 .attention-card-meta {
   font-size: 0.86rem;
-  color: #60736d;
+  color: var(--text-muted);
 }
 
 .error-panel,
 .error-text {
-  color: #8a1c10;
+  color: var(--error);
 }
 
 .muted {
-  color: #60736d;
+  color: var(--text-muted);
 }
 
 .detail-panel {
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  border: 1px solid var(--card-border);
   border-radius: 18px;
-  background: rgba(247, 240, 226, 0.75);
+  background: color-mix(in srgb, var(--card-bg) 92%, transparent);
   padding: 18px;
   min-height: 360px;
 }
@@ -349,14 +399,14 @@ input {
 .detail-value {
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  background: var(--subtle-surface);
+  border: 1px solid var(--card-border);
 }
 
 .detail-value span {
   display: block;
   font-size: 0.8rem;
-  color: #60736d;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
@@ -367,16 +417,16 @@ input {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(22, 78, 70, 0.1);
-  color: #164e46;
-  border: 1px solid rgba(22, 78, 70, 0.14);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
   font-size: 0.85rem;
 }
 
 .danger-chip {
-  background: rgba(138, 28, 16, 0.08);
-  color: #8a1c10;
-  border-color: rgba(138, 28, 16, 0.16);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 16%, transparent);
 }
 
 .chip-button {
@@ -417,25 +467,25 @@ input {
 .action-row button,
 .section-head button,
 .attention-toolbar button {
-  border: 1px solid rgba(24, 35, 32, 0.12);
-  background: #164e46;
-  color: #f8faf7;
+  border: 1px solid var(--panel-border);
+  background: var(--accent);
+  color: var(--accent-contrast);
   border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
 }
 
 .secondary-button {
-  background: rgba(255, 255, 255, 0.7) !important;
-  color: #21332e !important;
+  background: color-mix(in srgb, var(--subtle-surface) 92%, transparent) !important;
+  color: var(--tab-text) !important;
 }
 
 .inline-form-row button,
 .sr-toolbar button,
 .routes-header button {
-  border: 1px solid rgba(24, 35, 32, 0.12);
-  background: #164e46;
-  color: #f8faf7;
+  border: 1px solid var(--panel-border);
+  background: var(--accent);
+  color: var(--accent-contrast);
   border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
@@ -454,20 +504,20 @@ input {
 
 .history-entry span,
 .history-entry small {
-  color: #60736d;
+  color: var(--text-muted);
 }
 
 .route-link {
-  color: #164e46;
+  color: var(--accent);
   font-weight: 600;
 }
 
 .button-link {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(24, 35, 32, 0.12);
-  background: #164e46;
-  color: #f8faf7;
+  border: 1px solid var(--panel-border);
+  background: var(--accent);
+  color: var(--accent-contrast);
   border-radius: 12px;
   padding: 10px 14px;
   text-decoration: none;
@@ -478,10 +528,132 @@ input {
   align-items: start;
 }
 
+.route-stop-row-selected,
+.route-tech-row-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.route-tech-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .route-image {
   width: 100%;
   border-radius: 18px;
-  border: 1px solid rgba(24, 35, 32, 0.08);
+  border: 1px solid var(--card-border);
+}
+
+.route-map-shell,
+.route-map-empty {
+  width: 100%;
+  min-height: 360px;
+  border-radius: 18px;
+  border: 1px solid var(--card-border);
+  background:
+    radial-gradient(circle at 20% 18%, color-mix(in srgb, var(--warm-accent) 18%, transparent), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, var(--subtle-surface) 98%, transparent), color-mix(in srgb, var(--panel-bg) 100%, transparent));
+}
+
+.route-map-empty {
+  display: grid;
+  place-items: center;
+}
+
+.route-map-test-shell {
+  display: grid;
+  place-items: center;
+}
+
+.route-leaflet-map {
+  width: 100%;
+  height: 360px;
+  display: block;
+}
+
+.route-map-shell .leaflet-container {
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel-bg) 94%, var(--bg-end) 6%);
+  font: inherit;
+}
+
+.route-map-shell .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--panel-bg) 96%, transparent);
+  color: var(--text-soft);
+}
+
+.route-map-shell .leaflet-control-attribution a {
+  color: var(--accent);
+}
+
+.route-stop-div-icon {
+  background: transparent;
+  border: 0;
+}
+
+.route-stop-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+
+.route-stop-icon.selected {
+  transform: scale(1.08);
+}
+
+.route-map-shell .leaflet-tooltip {
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--panel-bg) 98%, transparent);
+  color: var(--text-main);
+  box-shadow: 0 10px 24px var(--panel-shadow);
+}
+
+.route-map-shell .leaflet-tooltip-top::before {
+  border-top-color: color-mix(in srgb, var(--panel-bg) 98%, transparent);
+}
+
+.empty-state-card {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-title {
+  margin: 0;
+  font-family: "Fraunces", "Georgia", serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.settings-copy {
+  margin: 0;
+  color: var(--text-soft);
+  max-width: 52rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.theme-toggle-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 @media (max-width: 960px) {
@@ -501,6 +673,10 @@ input {
 
   .intake-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
   }
 }
 

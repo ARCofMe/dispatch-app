@@ -1,13 +1,11 @@
-export default function BrandBar() {
+export default function BrandBar({ appName = "SendIt" }) {
   return (
     <header className="brand-bar">
       <div>
         <p className="brand-kicker">ARCoM Ops Hub</p>
-        <h1>Dispatch App</h1>
+        <h1>{appName}</h1>
       </div>
-      <p className="brand-copy">
-        Queue-first control surface for attention, service-request context, and route planning.
-      </p>
+      <p className="brand-copy">Start with your calls. Plan the route. Send it.</p>
     </header>
   );
 }

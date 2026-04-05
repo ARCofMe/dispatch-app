@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_FILTERS = {
   stage: "",
@@ -11,6 +11,9 @@ export default function AttentionView({
   items,
   loading,
   error,
+  initialFilters = DEFAULT_FILTERS,
+  initialSortBy = "priority",
+  onPreferencesChange,
   onRefresh,
   onSelectItem,
   selectedItem,
@@ -22,11 +25,20 @@ export default function AttentionView({
   onOpenRoutes,
   onOpenServiceRequestById,
 }) {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [sortBy, setSortBy] = useState("priority");
+  const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
+  const [sortBy, setSortBy] = useState(initialSortBy);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkOwnerId, setBulkOwnerId] = useState("");
   const [bulkSnoozeHours, setBulkSnoozeHours] = useState("4");
+
+  useEffect(() => {
+    setFilters({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
+    setSortBy(initialSortBy || "priority");
+  }, [initialFilters, initialSortBy]);
+
+  useEffect(() => {
+    onPreferencesChange?.({ filters, sortBy });
+  }, [filters, sortBy, onPreferencesChange]);
 
   const visibleItems = useMemo(() => {
     const filtered = (items || []).filter((item) => {

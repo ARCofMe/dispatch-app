@@ -1,4 +1,20 @@
-export default function ServiceRequestView({ srId, customer, timeline, work, loading, error, onChange, onOpenRoutes, onOpenAttentionItem }) {
+import { technicianDisplayLabel } from "./labelUtils";
+
+export default function ServiceRequestView({
+  srId,
+  customer,
+  timeline,
+  work,
+  loading,
+  error,
+  onChange,
+  onOpenRoutes,
+  onOpenAttentionItem,
+  technicianOptions = [],
+}) {
+  const normalizedSrId = String(srId || "").trim();
+  const timelineEntries = Array.isArray(timeline?.entries) ? timeline.entries : Array.isArray(timeline) ? timeline : [];
+
   return (
     <section className="panel">
       <div className="sr-toolbar">
@@ -11,7 +27,18 @@ export default function ServiceRequestView({ srId, customer, timeline, work, loa
       {loading && <p>Loading service request detail…</p>}
       {error && <p className="error-text">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && !normalizedSrId && (
+        <article className="metric-card wide empty-state-card">
+          <p className="section-kicker">Service Request</p>
+          <strong>Choose an SR to load dispatch context.</strong>
+          <p>
+            Open one from the board, attention queue, or enter a service request ID here. This view should not be a
+            blank screen when no SR has been selected yet.
+          </p>
+        </article>
+      )}
+
+      {!loading && !error && normalizedSrId && (
         <div className="sr-grid">
           <article className="metric-card wide">
             <p>Work panel</p>
@@ -44,7 +71,7 @@ export default function ServiceRequestView({ srId, customer, timeline, work, loa
                   {(work.attentionItems || []).map((item) => (
                     <button key={item.itemId} type="button" className="history-entry history-button" onClick={() => onOpenAttentionItem?.(item)}>
                       <p>{item.reference} • {item.stageLabel || item.stage}</p>
-                      <span>{[item.nextAction, item.assignedOwnerLabel || "unassigned", item.ageBucket].filter(Boolean).join(" • ")}</span>
+                      <span>{[item.nextAction, technicianDisplayLabel(item, technicianOptions), item.ageBucket].filter(Boolean).join(" • ")}</span>
                     </button>
                   ))}
                   {!(work.attentionItems || []).length && <p className="muted">No dispatch attention items tied to this SR.</p>}
@@ -105,7 +132,7 @@ export default function ServiceRequestView({ srId, customer, timeline, work, loa
           <article className="metric-card wide">
             <p>Timeline</p>
             <div className="history-list tall">
-              {(timeline?.entries || timeline || []).map((entry, index) => (
+              {timelineEntries.map((entry, index) => (
                 <div key={`${entry.occurredAt}-${index}`} className="history-entry">
                   <p>{entry.summary}</p>
                   <span>
@@ -114,7 +141,7 @@ export default function ServiceRequestView({ srId, customer, timeline, work, loa
                   {entry.details && <small>{entry.details}</small>}
                 </div>
               ))}
-              {!((timeline?.entries || timeline || []).length) && <p className="muted">No timeline loaded.</p>}
+              {!timelineEntries.length && <p className="muted">No timeline loaded.</p>}
             </div>
           </article>
         </div>

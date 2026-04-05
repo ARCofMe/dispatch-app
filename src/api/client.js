@@ -53,6 +53,7 @@ export const dispatchApi = {
     const params = new URLSearchParams({
       bluefolder_user_id: `${bluefolderUserId}`,
     });
+    if (options.date) params.set("date", options.date);
     if (options.originAddress) params.set("origin_address", options.originAddress);
     if (options.destinationAddress) params.set("destination_address", options.destinationAddress);
     if (options.optimize) params.set("optimize", "true");

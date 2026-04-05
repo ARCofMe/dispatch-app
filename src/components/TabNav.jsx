@@ -4,6 +4,7 @@ const TABS = [
   ["sr", "Service Request"],
   ["routes", "Routes"],
   ["intake", "Intake"],
+  ["settings", "Settings"],
 ];
 
 export default function TabNav({ activeTab, onSelect }) {

@@ -7,6 +7,35 @@ import AttentionView from "./components/AttentionView";
 import ServiceRequestView from "./components/ServiceRequestView";
 import RoutesView from "./components/RoutesView";
 import IntakeView from "./components/IntakeView";
+import SettingsView from "./components/SettingsView";
+import { buildTechnicianOptions } from "./components/labelUtils";
+
+const THEME_MODE_KEY = "dispatch-theme-mode";
+const APP_NAME_KEY = "dispatch-app-name";
+const DISPATCH_PREFERENCES_KEY = "dispatch-preferences";
+const LAST_SR_KEY = "dispatch-last-sr";
+const INTAKE_DRAFT_KEY = "dispatch-intake-draft";
+const ROUTE_DRAFT_KEY = "dispatch-route-draft";
+const DEFAULT_APP_NAME = "SendIt";
+const DEFAULT_PREFERENCES = {
+  attentionFilters: { stage: "", age: "", status: "", reference: "" },
+  attentionSortBy: "priority",
+  defaultRouteTechnicianId: "",
+  autoLoadDefaultRouteTech: true,
+  routeOptimizeByDefault: false,
+  defaultRouteDate: getLocalISODate(),
+  rememberLastSr: true,
+  restoreLastSrOnLaunch: false,
+  openSrOnAttentionSelect: false,
+};
+
+function getLocalISODate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("board");
@@ -33,6 +62,7 @@ export default function App() {
   const [routesError, setRoutesError] = useState("");
   const [routesLoading, setRoutesLoading] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
+  const [selectedRouteDate, setSelectedRouteDate] = useState(() => readStoredPreferences().defaultRouteDate || getLocalISODate());
   const [routeOriginAddress, setRouteOriginAddress] = useState("");
   const [routeDestinationAddress, setRouteDestinationAddress] = useState("");
   const [routeOptimize, setRouteOptimize] = useState(false);
@@ -51,6 +81,9 @@ export default function App() {
   const [intakeImportResult, setIntakeImportResult] = useState(null);
   const [intakeImportLoading, setIntakeImportLoading] = useState(false);
   const [intakeImportError, setIntakeImportError] = useState("");
+  const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem(THEME_MODE_KEY) || "light");
+  const [appName, setAppName] = useState(() => window.localStorage.getItem(APP_NAME_KEY) || DEFAULT_APP_NAME);
+  const [preferences, setPreferences] = useState(() => readStoredPreferences());
 
   useEffect(() => {
     loadBoard();
@@ -60,9 +93,34 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    window.localStorage.setItem(THEME_MODE_KEY, themeMode);
+    document.documentElement.dataset.theme = themeMode;
+  }, [themeMode]);
+
+  useEffect(() => {
+    const nextName = appName.trim() || DEFAULT_APP_NAME;
+    window.localStorage.setItem(APP_NAME_KEY, nextName);
+    document.title = `${nextName} | ARCoM Ops Hub`;
+  }, [appName]);
+
+  useEffect(() => {
+    window.localStorage.setItem(DISPATCH_PREFERENCES_KEY, JSON.stringify(preferences));
+  }, [preferences]);
+
+  useEffect(() => {
+    if (!preferences.restoreLastSrOnLaunch) return;
+    const lastSr = window.localStorage.getItem(LAST_SR_KEY) || "";
+    if (!lastSr.trim()) return;
+    setSelectedSrId((current) => current || lastSr.trim());
+  }, [preferences.restoreLastSrOnLaunch]);
+
+  useEffect(() => {
     if (!selectedSrId.trim()) return;
+    if (preferences.rememberLastSr) {
+      window.localStorage.setItem(LAST_SR_KEY, selectedSrId.trim());
+    }
     loadServiceRequest(selectedSrId.trim());
-  }, [selectedSrId]);
+  }, [preferences.rememberLastSr, selectedSrId]);
 
   async function loadBoard() {
     setBoardLoading(true);
@@ -125,16 +183,19 @@ export default function App() {
     setSelectedTechnicianId(techId);
     const nextOriginAddress = options.originAddress ?? routeOriginAddress;
     const nextDestinationAddress = options.destinationAddress ?? routeDestinationAddress;
-    const nextOptimize = options.optimize ?? routeOptimize;
+    const nextOptimize = options.optimize ?? routeOptimize ?? preferences.routeOptimizeByDefault;
+    const nextDate = options.date ?? selectedRouteDate ?? preferences.defaultRouteDate ?? getLocalISODate();
     setRouteOriginAddress(nextOriginAddress);
     setRouteDestinationAddress(nextDestinationAddress);
     setRouteOptimize(Boolean(nextOptimize));
+    setSelectedRouteDate(nextDate);
     setRoutesLoading(true);
     setRoutesError("");
     setActiveTab("routes");
     try {
       const [previewPayload, heatmapPayload] = await Promise.all([
         dispatchApi.getRoutePreview(techId, {
+          date: nextDate,
           originAddress: nextOriginAddress,
           destinationAddress: nextDestinationAddress,
           optimize: nextOptimize,
@@ -231,6 +292,9 @@ export default function App() {
     const srId = reference.replace(/^SR-/i, "");
     if (srId) {
       setSelectedSrId(srId);
+      if (preferences.openSrOnAttentionSelect) {
+        setActiveTab("sr");
+      }
     }
   }
 
@@ -254,6 +318,27 @@ export default function App() {
     const techId = item.ownerBluefolderUserId || item.owner_bluefolder_user_id || item.technicianBluefolderUserId;
     loadRoutes(techId);
   }
+
+  const technicianOptions = buildTechnicianOptions(board);
+
+  useEffect(() => {
+    if (activeTab !== "routes") return;
+    if (selectedTechnicianId) return;
+    if (!preferences.autoLoadDefaultRouteTech) return;
+    if (!preferences.defaultRouteTechnicianId) return;
+    loadRoutes(preferences.defaultRouteTechnicianId, {
+      date: selectedRouteDate || preferences.defaultRouteDate,
+      optimize: preferences.routeOptimizeByDefault,
+    });
+  }, [
+    activeTab,
+    preferences.autoLoadDefaultRouteTech,
+    preferences.defaultRouteTechnicianId,
+    preferences.defaultRouteDate,
+    preferences.routeOptimizeByDefault,
+    selectedRouteDate,
+    selectedTechnicianId,
+  ]);
 
   async function handleAttentionAction(itemId, action, body = {}) {
     setAttentionActionState({ error: false, message: `Running ${action}…` });
@@ -291,7 +376,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <BrandBar />
+      <BrandBar appName={appName.trim() || DEFAULT_APP_NAME} />
       <TabNav activeTab={activeTab} onSelect={setActiveTab} />
 
       {activeTab === "board" && (
@@ -299,6 +384,7 @@ export default function App() {
           board={board}
           loading={boardLoading}
           error={boardError}
+          technicianOptions={technicianOptions}
           onOpenAttention={() => setActiveTab("attention")}
           onOpenAttentionItem={(item) => {
             setActiveTab("attention");
@@ -315,6 +401,15 @@ export default function App() {
           items={attention}
           loading={attentionLoading}
           error={attentionError}
+          initialFilters={preferences.attentionFilters}
+          initialSortBy={preferences.attentionSortBy}
+          onPreferencesChange={({ filters, sortBy }) =>
+            setPreferences((current) => ({
+              ...current,
+              attentionFilters: filters,
+              attentionSortBy: sortBy,
+            }))
+          }
           onRefresh={loadAttention}
           onSelectItem={handleAttentionSelect}
           selectedItem={selectedAttention}
@@ -333,6 +428,7 @@ export default function App() {
           customer={customer}
           timeline={timeline}
           work={srWork}
+          technicianOptions={technicianOptions}
           loading={srLoading}
           error={srError}
           onChange={setSelectedSrId}
@@ -350,6 +446,22 @@ export default function App() {
           loading={routesLoading}
           error={routesError}
           technicianId={selectedTechnicianId}
+          routeDate={selectedRouteDate}
+          technicianOptions={technicianOptions}
+          defaultTechnicianId={preferences.defaultRouteTechnicianId}
+          onSetDefaultTechnician={(technicianId) =>
+            setPreferences((current) => ({
+              ...current,
+              defaultRouteTechnicianId: technicianId,
+            }))
+          }
+          onRouteDateChange={(value) => {
+            setSelectedRouteDate(value);
+            setPreferences((current) => ({
+              ...current,
+              defaultRouteDate: value,
+            }));
+          }}
           originAddress={routeOriginAddress}
           destinationAddress={routeDestinationAddress}
           optimize={routeOptimize}
@@ -386,6 +498,65 @@ export default function App() {
           onDeleteProfile={deleteIntakeProfile}
         />
       )}
+      {activeTab === "settings" && (
+        <SettingsView
+          themeMode={themeMode}
+          onThemeModeChange={setThemeMode}
+          appName={appName}
+          onAppNameChange={setAppName}
+          technicianOptions={technicianOptions}
+          defaultRouteTechnicianId={preferences.defaultRouteTechnicianId}
+          onDefaultRouteTechnicianChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              defaultRouteTechnicianId: value,
+            }))
+          }
+          autoLoadDefaultRouteTech={preferences.autoLoadDefaultRouteTech}
+          onAutoLoadDefaultRouteTechChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              autoLoadDefaultRouteTech: value,
+            }))
+          }
+          routeOptimizeByDefault={preferences.routeOptimizeByDefault}
+          onRouteOptimizeByDefaultChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              routeOptimizeByDefault: value,
+            }))
+          }
+          rememberLastSr={preferences.rememberLastSr}
+          onRememberLastSrChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              rememberLastSr: value,
+            }))
+          }
+          restoreLastSrOnLaunch={preferences.restoreLastSrOnLaunch}
+          onRestoreLastSrOnLaunchChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              restoreLastSrOnLaunch: value,
+            }))
+          }
+          openSrOnAttentionSelect={preferences.openSrOnAttentionSelect}
+          onOpenSrOnAttentionSelectChange={(value) =>
+            setPreferences((current) => ({
+              ...current,
+              openSrOnAttentionSelect: value,
+            }))
+          }
+          dispatcherId={import.meta.env.VITE_DISPATCHER_ID || ""}
+          apiBase={import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787"}
+          onClearRouteDraft={() => {
+            window.localStorage.removeItem(ROUTE_DRAFT_KEY);
+          }}
+          onClearIntakeDraft={() => {
+            window.localStorage.removeItem(INTAKE_DRAFT_KEY);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -393,4 +564,23 @@ export default function App() {
 function formatError(error) {
   if (error instanceof Error) return error.message;
   return String(error || "Unknown error");
+}
+
+function readStoredPreferences() {
+  try {
+    const raw = window.localStorage.getItem(DISPATCH_PREFERENCES_KEY);
+    if (!raw) return DEFAULT_PREFERENCES;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return DEFAULT_PREFERENCES;
+    return {
+      ...DEFAULT_PREFERENCES,
+      ...parsed,
+      attentionFilters: {
+        ...DEFAULT_PREFERENCES.attentionFilters,
+        ...(parsed.attentionFilters || {}),
+      },
+    };
+  } catch {
+    return DEFAULT_PREFERENCES;
+  }
 }

@@ -1,3 +1,5 @@
+import { technicianDisplayLabel } from "./labelUtils";
+
 function metricValue(payload, ...keys) {
   for (const key of keys) {
     const value = payload?.[key];
@@ -14,6 +16,11 @@ function queueEntries(payload) {
     .map(([key, value]) => ({ key, value }));
 }
 
+function allTechniciansIdle(payload) {
+  const technicianLoad = payload?.technicianLoad || [];
+  return technicianLoad.length > 0 && technicianLoad.every((tech) => Number(tech.assignmentCount || 0) === 0);
+}
+
 export default function BoardView({
   board,
   loading,
@@ -22,6 +29,7 @@ export default function BoardView({
   onOpenAttentionItem,
   onOpenServiceRequest,
   onOpenRoutes,
+  technicianOptions = [],
 }) {
   if (loading) return <section className="panel">Loading board…</section>;
   if (error) return <section className="panel error-panel">{error}</section>;
@@ -66,6 +74,9 @@ export default function BoardView({
         <article className="metric-card wide">
           <p>Technician load</p>
           <div className="list-stack compact">
+            {allTechniciansIdle(board) && (
+              <p className="muted">No calls assigned yet for the current day. Routes can wait until the board fills in.</p>
+            )}
             {(board.technicianLoad || []).map((tech) => (
               <div key={tech.bluefolderUserId || tech.discordUserId} className="list-row">
                 <div>
@@ -74,7 +85,7 @@ export default function BoardView({
                 </div>
                 <div className="row-meta">
                   <span>{tech.assignmentCount || 0} jobs</span>
-                  <span>{tech.nextJob?.summary || "No next job"}</span>
+                  <span>{tech.nextJob?.summary || "No calls on deck"}</span>
                 </div>
               </div>
             ))}
@@ -100,7 +111,7 @@ export default function BoardView({
                 </div>
                 <div className="row-meta">
                   <span>{item.ageBucket || "n/a"}</span>
-                  <span>{item.followUpOwnerLabel || "unassigned"}</span>
+                  <span>{technicianDisplayLabel(item, technicianOptions)}</span>
                 </div>
               </button>
             ))}
