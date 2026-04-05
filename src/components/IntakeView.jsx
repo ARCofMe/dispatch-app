@@ -22,10 +22,12 @@ export default function IntakeView({
   importLoading,
   importError,
   onImport,
+  onUploadSpreadsheet,
   onSaveProfile,
   onDeleteProfile,
 }) {
   const [spreadsheetPath, setSpreadsheetPath] = useState("");
+  const [spreadsheetName, setSpreadsheetName] = useState("");
   const [formatName, setFormatName] = useState("default");
   const [fieldMapPath, setFieldMapPath] = useState("");
   const [rowStart, setRowStart] = useState("");
@@ -36,6 +38,8 @@ export default function IntakeView({
   const [failFast, setFailFast] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [presetState, setPresetState] = useState("");
+  const [uploadState, setUploadState] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -59,6 +63,7 @@ export default function IntakeView({
     const draft = loadDraft();
     if (!draft) return;
     setSpreadsheetPath(draft.spreadsheetPath || "");
+    setSpreadsheetName(draft.spreadsheetName || "");
     setFormatName(draft.formatName || "default");
     setFieldMapPath(draft.fieldMapPath || "");
     setRowStart(draft.rowStart || "");
@@ -72,6 +77,7 @@ export default function IntakeView({
   useEffect(() => {
     saveDraft({
       spreadsheetPath,
+      spreadsheetName,
       formatName,
       fieldMapPath,
       rowStart,
@@ -81,7 +87,7 @@ export default function IntakeView({
       previewMode,
       failFast,
     });
-  }, [spreadsheetPath, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode, failFast]);
+  }, [spreadsheetPath, spreadsheetName, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode, failFast]);
 
   return (
     <section className="panel intake-layout">
@@ -100,11 +106,27 @@ export default function IntakeView({
         <div className="detail-panel">
           <div className="filter-grid intake-grid">
             <label className="field intake-span">
-              <span>Spreadsheet path</span>
+              <span>Upload spreadsheet</span>
               <input
-                value={spreadsheetPath}
-                onChange={(event) => setSpreadsheetPath(event.target.value)}
-                placeholder="/home/ner0tic/Downloads/vendor_export.xlsx"
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  setUploadState("");
+                  try {
+                    const payload = await onUploadSpreadsheet(file);
+                    setSpreadsheetPath(payload.spreadsheetPath || "");
+                    setSpreadsheetName(payload.fileName || file.name);
+                    setUploadState(payload.message || `Uploaded ${file.name}.`);
+                  } catch (error) {
+                    setUploadState(error instanceof Error ? error.message : String(error));
+                  } finally {
+                    setUploading(false);
+                    event.target.value = "";
+                  }
+                }}
               />
             </label>
             <label className="field">
@@ -189,7 +211,7 @@ export default function IntakeView({
                 const proceed = window.confirm(
                   warnings.length
                     ? `Run import even though ${warnings.join(" and ")}?`
-                    : `Run import for ${spreadsheetPath || "this spreadsheet"} now?`
+                    : `Run import for ${spreadsheetName || spreadsheetPath || "this spreadsheet"} now?`
                 );
                 if (!proceed) return;
                 onImport({ ...requestBody, failFast });
@@ -229,6 +251,7 @@ export default function IntakeView({
               onClick={() => {
                 clearDraft();
                 setSpreadsheetPath("");
+                setSpreadsheetName("");
                 setFormatName("default");
                 setFieldMapPath("");
                 setRowStart("");
@@ -237,6 +260,7 @@ export default function IntakeView({
                 setDuplicateMode("skip");
                 setPreviewMode("plan");
                 setFailFast(false);
+                setUploadState("");
                 setPresetState("Cleared intake draft.");
               }}
             >
@@ -247,6 +271,10 @@ export default function IntakeView({
               <span>Fail fast</span>
             </label>
           </div>
+          {spreadsheetName && <p className="muted">Selected spreadsheet: {spreadsheetName}</p>}
+          {spreadsheetPath && <p className="muted">Uploaded to Ops Hub temp path: {spreadsheetPath}</p>}
+          {uploading && <p>Uploading spreadsheet…</p>}
+          {uploadState && <p className={uploadState.toLowerCase().includes("uploaded") ? "muted" : "error-text"}>{uploadState}</p>}
           {presetState && <p className="muted">{presetState}</p>}
 
           {!!(profiles?.items || []).length && (

@@ -3,8 +3,16 @@ import { vi } from "vitest";
 import IntakeView from "./IntakeView";
 
 describe("IntakeView", () => {
-  it("renders formats and analysis details", () => {
+  it("renders formats, uploads a spreadsheet, and shows analysis details", async () => {
     const onAnalyze = vi.fn();
+    const onUploadSpreadsheet = vi.fn(() =>
+      Promise.resolve({
+        success: true,
+        fileName: "intake.csv",
+        spreadsheetPath: "/tmp/dispatch-intake.csv",
+        message: "Uploaded intake.csv.",
+      })
+    );
 
     render(
       <IntakeView
@@ -39,15 +47,19 @@ describe("IntakeView", () => {
         importLoading={false}
         importError=""
         onImport={vi.fn()}
+        onUploadSpreadsheet={onUploadSpreadsheet}
         onSaveProfile={vi.fn(() => Promise.resolve({ success: true }))}
         onDeleteProfile={vi.fn(() => Promise.resolve({ success: true }))}
       />
     );
 
-    fireEvent.change(screen.getByLabelText("Spreadsheet path"), { target: { value: "/tmp/intake.csv" } });
+    const file = new File(["name,subject\nPat Smith,No heat"], "intake.csv", { type: "text/csv" });
+    fireEvent.change(screen.getByLabelText("Upload spreadsheet"), { target: { files: [file] } });
+    await screen.findByText("Uploaded intake.csv.");
     fireEvent.click(screen.getByText("Analyze spreadsheet"));
 
-    expect(onAnalyze).toHaveBeenCalled();
+    expect(onUploadSpreadsheet).toHaveBeenCalled();
+    expect(onAnalyze).toHaveBeenCalledWith(expect.objectContaining({ spreadsheetPath: "/tmp/dispatch-intake.csv" }));
     expect(screen.getByText("Supported formats")).toBeInTheDocument();
     expect(screen.getByText("vendor-a")).toBeInTheDocument();
     expect(screen.getByText("Missing: Zip")).toBeInTheDocument();

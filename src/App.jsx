@@ -283,6 +283,14 @@ export default function App() {
     return payload;
   }
 
+  async function uploadIntakeSpreadsheet(file) {
+    const contentBase64 = await readFileAsBase64(file);
+    return dispatchApi.uploadIntakeSpreadsheet({
+      fileName: file.name,
+      contentBase64,
+    });
+  }
+
   function handleAttentionSelect(item) {
     setSelectedAttention(item);
     setSelectedAttentionDetail(null);
@@ -494,6 +502,7 @@ export default function App() {
           importLoading={intakeImportLoading}
           importError={intakeImportError}
           onImport={importIntake}
+          onUploadSpreadsheet={uploadIntakeSpreadsheet}
           onSaveProfile={saveIntakeProfile}
           onDeleteProfile={deleteIntakeProfile}
         />
@@ -564,6 +573,19 @@ export default function App() {
 function formatError(error) {
   if (error instanceof Error) return error.message;
   return String(error || "Unknown error");
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const base64 = result.includes(",") ? result.split(",", 2)[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error || new Error("File read failed."));
+    reader.readAsDataURL(file);
+  });
 }
 
 function readStoredPreferences() {

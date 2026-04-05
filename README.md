@@ -32,7 +32,7 @@ Customer detail and merged SR timeline pulled from Ops Hub.
 Structured route preview and heatmap payloads with a real stop workspace, filter/search, manifest copy, route-share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.
 
 - `Intake`
-ServiceSmith intake surface over Ops Hub. It now supports spreadsheet analysis, import planning, payload preview, first-pass import execution, and backend-saved intake profiles from the dispatch UI.
+ServiceSmith intake surface over Ops Hub. It now supports spreadsheet upload, analysis, import planning, payload preview, first-pass import execution, and backend-saved intake profiles from the dispatch UI.
 
 ## Environment
 
@@ -103,7 +103,7 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - routes now render inside a real Leaflet/OpenStreetMap panel instead of a placeholder SVG-only map
 - route previews can now request optimized order and expose route metrics when the legacy routing backend is available
 - it includes the first ServiceSmith migration surface through the `Intake` tab
-- it can analyze spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
+- it can upload spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
 - it includes basic import guardrails like preview-before-import, confirmation prompts, and saved intake profiles
 - it now persists working drafts for `Routes` and `Intake`, and can export preview/import JSON artifacts
 

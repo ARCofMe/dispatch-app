@@ -75,6 +75,15 @@ export const dispatchApi = {
       body,
     });
   },
+  uploadIntakeSpreadsheet({ fileName, contentBase64 }) {
+    return request("/dispatch/intake/upload", {
+      method: "POST",
+      body: {
+        fileName,
+        contentBase64,
+      },
+    });
+  },
   deleteIntakeProfile(name) {
     return request(`/dispatch/intake/profiles/${encodeURIComponent(name)}`, {
       method: "DELETE",
