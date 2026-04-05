@@ -63,6 +63,12 @@ export const dispatchApi = {
     const suffix = bluefolderUserId ? `?bluefolder_user_id=${encodeURIComponent(bluefolderUserId)}` : "";
     return request(`/dispatch/routes/heatmap${suffix}`);
   },
+  simulateRoute(body) {
+    return request("/dispatch/routes/simulate", {
+      method: "POST",
+      body,
+    });
+  },
   getIntakeFormats() {
     return request("/dispatch/intake/formats");
   },

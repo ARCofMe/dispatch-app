@@ -22,6 +22,7 @@ export default function RoutesView({
   onDestinationAddressChange,
   onOptimizeChange,
   onLoad,
+  onSimulateRoute,
   onOpenServiceRequestById,
 }) {
   const [draftTechId, setDraftTechId] = useState(technicianId ? String(technicianId) : "");
@@ -33,6 +34,15 @@ export default function RoutesView({
   const [routeStatus, setRouteStatus] = useState("");
   const [techFilter, setTechFilter] = useState("");
   const [selectedStopId, setSelectedStopId] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+  const [newStop, setNewStop] = useState({
+    name: "",
+    address: "",
+    durationMinutes: "30",
+    windowStart: "",
+    windowEnd: "",
+  });
 
   useEffect(() => {
     setDraftTechId(technicianId ? String(technicianId) : "");
@@ -76,14 +86,14 @@ export default function RoutesView({
 
   const visibleStops = useMemo(() => {
     const needle = stopFilter.trim().toLowerCase();
-    const stops = routePreview?.stops || [];
+    const stops = (routePreview?.stops || []).filter((stop) => !hideCompleted || stop.status !== "complete");
     if (!needle) return stops;
     return stops.filter((stop) =>
       [stop.label, stop.subject, stop.address, stop.routeLabel, stop.window]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(needle))
     );
-  }, [routePreview?.stops, stopFilter]);
+  }, [hideCompleted, routePreview?.stops, stopFilter]);
 
   const filteredTechnicians = useMemo(() => {
     const needle = techFilter.trim().toLowerCase();
@@ -109,6 +119,18 @@ export default function RoutesView({
     };
   }, [routePreview?.stops, visibleStops.length]);
 
+  const validation = useMemo(() => {
+    const stops = routePreview?.stops || [];
+    const lateCount = stops.filter((stop) => stop.eta && stop.window_end && stop.eta > stop.window_end).length;
+    const windowSorted = [...stops]
+      .filter((stop) => stop.window_start)
+      .sort((left, right) => String(left.window_start).localeCompare(String(right.window_start)));
+    return {
+      lateCount,
+      suggestedFirstStop: windowSorted[0]?.label || "n/a",
+    };
+  }, [routePreview?.stops]);
+
   function handleLoad() {
     onTechnicianIdChange(draftTechId);
     onRouteDateChange?.(draftRouteDate);
@@ -120,6 +142,30 @@ export default function RoutesView({
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
       optimize: draftOptimize,
+    });
+  }
+
+  async function simulateRoute({
+    existingStops = routePreview?.stops || [],
+    addedStops = [],
+    removedIds = [],
+    manualOrder,
+  } = {}) {
+    if (!onSimulateRoute) return;
+    const defaultOrder = existingStops
+      .filter((stop) => !removedIds.includes(String(stop.id || stop.srId || "")))
+      .map((stop) => String(stop.id || stop.srId || ""))
+      .concat(addedStops.map((stop) => String(stop.id || stop.srId || "")));
+    await onSimulateRoute({
+      technicianBluefolderUserId: draftTechId ? Number(draftTechId) : null,
+      routeDate: draftRouteDate,
+      originAddress: draftOriginAddress,
+      destinationAddress: draftDestinationAddress,
+      optimize: draftOptimize,
+      existingStops,
+      addedStops,
+      removedIds,
+      manualOrder: manualOrder || defaultOrder,
     });
   }
 
@@ -135,6 +181,111 @@ export default function RoutesView({
       setRouteStatus("Clipboard write failed.");
     }
   }
+
+  function buildRouteUrl() {
+    if (routePreview?.routeUrl) return routePreview.routeUrl;
+    const parts = [];
+    if (draftOriginAddress) parts.push(draftOriginAddress);
+    (routePreview?.stops || []).forEach((stop) => parts.push(stop.address || ""));
+    if (draftDestinationAddress) parts.push(draftDestinationAddress);
+    const filtered = parts.filter(Boolean);
+    return filtered.length ? `https://www.google.com/maps/dir/${filtered.map(encodeURIComponent).join("/")}` : "";
+  }
+
+  async function copyRouteLink() {
+    await handleCopy(buildRouteUrl(), "Copied route link.");
+    setShareStatus("Route link copied.");
+    window.setTimeout(() => setShareStatus(""), 1800);
+  }
+
+  function shiftStop(stopId, direction) {
+    const stops = [...(routePreview?.stops || [])];
+    const index = stops.findIndex((stop) => String(stop.id || stop.srId || "") === String(stopId));
+    if (index < 0) return;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= stops.length) return;
+    const reordered = [...stops];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(nextIndex, 0, moved);
+    simulateRoute({
+      existingStops: reordered,
+      manualOrder: reordered.map((stop) => String(stop.id || stop.srId || "")),
+    });
+  }
+
+  function toggleStopComplete(stopId) {
+    const stops = (routePreview?.stops || []).map((stop) =>
+      String(stop.id || stop.srId || "") === String(stopId)
+        ? { ...stop, status: stop.status === "complete" ? "scheduled" : "complete" }
+        : stop
+    );
+    simulateRoute({
+      existingStops: stops,
+      manualOrder: stops.map((stop) => String(stop.id || stop.srId || "")),
+    });
+  }
+
+  function removeStop(stopId) {
+    const stops = routePreview?.stops || [];
+    simulateRoute({
+      existingStops: stops,
+      removedIds: [String(stopId)],
+      manualOrder: stops
+        .filter((stop) => String(stop.id || stop.srId || "") !== String(stopId))
+        .map((stop) => String(stop.id || stop.srId || "")),
+    });
+    setRouteStatus("Removed stop from route draft.");
+  }
+
+  async function addAdHocStop() {
+    if (!newStop.address.trim()) {
+      setRouteStatus("Ad-hoc stop needs an address.");
+      return;
+    }
+    const stopId = `adhoc-${Date.now()}`;
+    await simulateRoute({
+      existingStops: routePreview?.stops || [],
+      addedStops: [
+        {
+          id: stopId,
+          label: newStop.name.trim() || "Ad-hoc stop",
+          customer_name: newStop.name.trim() || "Ad-hoc stop",
+          subject: newStop.name.trim() || "Ad-hoc stop",
+          address: newStop.address.trim(),
+          duration_minutes: Number(newStop.durationMinutes || 30),
+          window_start: newStop.windowStart || undefined,
+          window_end: newStop.windowEnd || undefined,
+          status: "draft",
+        },
+      ],
+    });
+    setNewStop({ name: "", address: "", durationMinutes: "30", windowStart: "", windowEnd: "" });
+    setRouteStatus("Added ad-hoc stop to route draft.");
+  }
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (!(event.metaKey || event.ctrlKey)) return;
+      const key = event.key.toLowerCase();
+      if (key === "s") {
+        event.preventDefault();
+        saveRouteDraft({
+          technicianId: draftTechId,
+          routeDate: draftRouteDate,
+          originAddress: draftOriginAddress,
+          destinationAddress: draftDestinationAddress,
+          optimize: draftOptimize,
+        });
+        setRouteStatus("Route draft saved.");
+      }
+      if (key === "c") {
+        event.preventDefault();
+        copyRouteLink();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [draftDestinationAddress, draftOptimize, draftOriginAddress, draftRouteDate, draftTechId, routePreview]);
 
   return (
     <section className="panel">
@@ -250,14 +401,26 @@ export default function RoutesView({
           <article className="metric-card wide">
             <div className="section-head">
               <p>Stop workspace</p>
-              <label className="field narrow">
-                <span>Filter stops</span>
-                <input
-                  value={stopFilter}
-                  onChange={(event) => setStopFilter(event.target.value)}
-                  placeholder="SR, city, address, subject"
-                />
-              </label>
+              <div className="action-row compact-row">
+                <label className="field narrow">
+                  <span>Filter stops</span>
+                  <input
+                    value={stopFilter}
+                    onChange={(event) => setStopFilter(event.target.value)}
+                    placeholder="SR, city, address, subject"
+                  />
+                </label>
+                <label className="check-field">
+                  <input type="checkbox" checked={hideCompleted} onChange={(event) => setHideCompleted(event.target.checked)} />
+                  <span>Hide completed</span>
+                </label>
+                <button type="button" className="secondary-button" onClick={() => setRouteStatus("Route draft saved.")}>
+                  Save draft
+                </button>
+                <button type="button" className="secondary-button" onClick={copyRouteLink}>
+                  Copy route
+                </button>
+              </div>
             </div>
             {routePreview ? (
               <div className="list-stack compact">
@@ -278,13 +441,31 @@ export default function RoutesView({
                       <p className="muted">{stop.address}</p>
                     </div>
                     <div className="row-meta">
-                      <span>{stop.routeLabel || stop.window || inferCityLabel(stop.address) || "No area label"}</span>
+                      <span>
+                        {[stop.routeLabel || stop.window || inferCityLabel(stop.address), stop.eta ? `ETA ${stop.eta}` : null, stop.status]
+                          .filter(Boolean)
+                          .join(" • ") || "No area label"}
+                      </span>
+                      <div className="route-stop-actions">
+                        <button type="button" className="secondary-button" onClick={() => shiftStop(stop.id || stop.srId, -1)}>
+                          Up
+                        </button>
+                        <button type="button" className="secondary-button" onClick={() => shiftStop(stop.id || stop.srId, 1)}>
+                          Down
+                        </button>
+                      </div>
                       <button
                         type="button"
                         className="secondary-button"
                         onClick={() => setSelectedStopId(String(stop.srId || ""))}
                       >
                         Focus on map
+                      </button>
+                      <button type="button" className="secondary-button" onClick={() => toggleStopComplete(stop.id || stop.srId)}>
+                        {stop.status === "complete" ? "Reopen" : "Complete"}
+                      </button>
+                      <button type="button" className="secondary-button" onClick={() => removeStop(stop.id || stop.srId)}>
+                        Remove
                       </button>
                       <button type="button" className="secondary-button" onClick={() => stop.srId && onOpenServiceRequestById?.(stop.srId)}>
                         Open SR
@@ -297,6 +478,42 @@ export default function RoutesView({
             ) : (
               <p className="muted">Select a technician or jump in from board/SR attention to load route context.</p>
             )}
+            <div className="detail-block">
+              <div className="section-head">
+                <p>Add ad-hoc stop</p>
+              </div>
+              <div className="detail-grid">
+                <label className="field">
+                  <span>Label</span>
+                  <input value={newStop.name} onChange={(event) => setNewStop((current) => ({ ...current, name: event.target.value }))} />
+                </label>
+                <label className="field">
+                  <span>Address</span>
+                  <input value={newStop.address} onChange={(event) => setNewStop((current) => ({ ...current, address: event.target.value }))} />
+                </label>
+                <label className="field">
+                  <span>On-site minutes</span>
+                  <input
+                    inputMode="numeric"
+                    value={newStop.durationMinutes}
+                    onChange={(event) => setNewStop((current) => ({ ...current, durationMinutes: event.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Window start</span>
+                  <input type="time" value={newStop.windowStart} onChange={(event) => setNewStop((current) => ({ ...current, windowStart: event.target.value }))} />
+                </label>
+                <label className="field">
+                  <span>Window end</span>
+                  <input type="time" value={newStop.windowEnd} onChange={(event) => setNewStop((current) => ({ ...current, windowEnd: event.target.value }))} />
+                </label>
+              </div>
+              <div className="action-row">
+                <button type="button" onClick={addAdHocStop}>
+                  Add stop
+                </button>
+              </div>
+            </div>
           </article>
 
           <article className="metric-card wide">
@@ -390,6 +607,31 @@ export default function RoutesView({
               <Detail label="Drive minutes" value={formatMetric(routePreview?.metrics?.total_drive_minutes)} />
               <Detail label="Labor minutes" value={formatMetric(routePreview?.metrics?.total_labor_minutes)} />
               <Detail label="Total minutes" value={formatMetric(routePreview?.metrics?.total_minutes)} />
+            </div>
+          </article>
+
+          <article className="metric-card wide">
+            <p>Validation and share</p>
+            <div className="detail-grid">
+              <Detail label="Late stops" value={validation.lateCount} />
+              <Detail label="Suggested first stop" value={validation.suggestedFirstStop} />
+            </div>
+            <div className="action-row">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => window.open(`mailto:?subject=${encodeURIComponent(`Route for ${draftRouteDate || "today"}`)}&body=${encodeURIComponent(buildRouteUrl())}`, "_blank")}
+              >
+                Email route
+              </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => window.open(`sms:?&body=${encodeURIComponent(buildRouteUrl())}`, "_blank")}
+              >
+                SMS route
+              </button>
+              {shareStatus && <span className="muted">{shareStatus}</span>}
             </div>
           </article>
 

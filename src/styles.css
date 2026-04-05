@@ -552,6 +552,13 @@ input {
   align-items: center;
 }
 
+.route-stop-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: end;
+  flex-wrap: wrap;
+}
+
 .route-image {
   width: 100%;
   border-radius: 18px;

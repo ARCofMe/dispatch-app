@@ -40,6 +40,8 @@ export default function IntakeView({
   const [presetState, setPresetState] = useState("");
   const [uploadState, setUploadState] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [confirmPreviewed, setConfirmPreviewed] = useState(false);
+  const [allowValidationOverride, setAllowValidationOverride] = useState(false);
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -58,6 +60,7 @@ export default function IntakeView({
     preview?.duplicateMode === duplicateMode &&
     Number(preview?.rowCount || 0) > 0;
   const hasBlockingValidationErrors = (analysis?.validationIssues || []).some((item) => item.level === "error");
+  const intakeReadyForImport = previewMatchesCurrentRequest && confirmPreviewed && (!hasBlockingValidationErrors || allowValidationOverride);
 
   useEffect(() => {
     const draft = loadDraft();
@@ -88,6 +91,11 @@ export default function IntakeView({
       failFast,
     });
   }, [spreadsheetPath, spreadsheetName, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode, failFast]);
+
+  useEffect(() => {
+    setConfirmPreviewed(false);
+    setAllowValidationOverride(false);
+  }, [spreadsheetPath, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode]);
 
   return (
     <section className="panel intake-layout">
@@ -195,19 +203,20 @@ export default function IntakeView({
           </div>
 
           <div className="action-row">
-            <button type="button" onClick={() => onAnalyze(requestBody)}>
+            <button type="button" disabled={!spreadsheetPath || uploading} onClick={() => onAnalyze(requestBody)}>
               Analyze spreadsheet
             </button>
-            <button type="button" onClick={() => onPreview({ ...requestBody, previewMode })}>
+            <button type="button" disabled={!spreadsheetPath || uploading} onClick={() => onPreview({ ...requestBody, previewMode })}>
               Preview import
             </button>
             <button
               type="button"
-              disabled={!previewMatchesCurrentRequest}
+              disabled={!intakeReadyForImport}
               onClick={() => {
                 const warnings = [];
                 if (hasBlockingValidationErrors) warnings.push("validation errors are still present");
                 if (!previewMatchesCurrentRequest) warnings.push("current spreadsheet has not been previewed yet");
+                if (!confirmPreviewed) warnings.push("the preview checklist is not confirmed");
                 const proceed = window.confirm(
                   warnings.length
                     ? `Run import even though ${warnings.join(" and ")}?`
@@ -260,6 +269,8 @@ export default function IntakeView({
                 setDuplicateMode("skip");
                 setPreviewMode("plan");
                 setFailFast(false);
+                setConfirmPreviewed(false);
+                setAllowValidationOverride(false);
                 setUploadState("");
                 setPresetState("Cleared intake draft.");
               }}
@@ -272,10 +283,54 @@ export default function IntakeView({
             </label>
           </div>
           {spreadsheetName && <p className="muted">Selected spreadsheet: {spreadsheetName}</p>}
-          {spreadsheetPath && <p className="muted">Uploaded to Ops Hub temp path: {spreadsheetPath}</p>}
+          {spreadsheetPath && <p className="muted">Spreadsheet upload is staged on Ops Hub and ready for analysis.</p>}
           {uploading && <p>Uploading spreadsheet…</p>}
           {uploadState && <p className={uploadState.toLowerCase().includes("uploaded") ? "muted" : "error-text"}>{uploadState}</p>}
           {presetState && <p className="muted">{presetState}</p>}
+          <div className="detail-block">
+            <div className="section-head">
+              <strong>Import safety</strong>
+            </div>
+            <div className="list-stack compact">
+              <div className="history-entry">
+                <p>Preview freshness</p>
+                <span>
+                  {previewMatchesCurrentRequest
+                    ? "Current preview matches the selected spreadsheet and import settings."
+                    : "Preview is stale or missing. Run Preview import again before importing."}
+                </span>
+              </div>
+              <div className="history-entry">
+                <p>Validation status</p>
+                <span>
+                  {hasBlockingValidationErrors
+                    ? "Blocking validation errors were found. Override explicitly if you still intend to import."
+                    : "No blocking validation errors are currently reported."}
+                </span>
+              </div>
+            </div>
+            <div className="action-row">
+              <label className="check-field">
+                <input
+                  type="checkbox"
+                  checked={confirmPreviewed}
+                  onChange={(event) => setConfirmPreviewed(event.target.checked)}
+                  disabled={!previewMatchesCurrentRequest}
+                />
+                <span>I reviewed the current preview and want to use it for import</span>
+              </label>
+              {hasBlockingValidationErrors && (
+                <label className="check-field">
+                  <input
+                    type="checkbox"
+                    checked={allowValidationOverride}
+                    onChange={(event) => setAllowValidationOverride(event.target.checked)}
+                  />
+                  <span>Allow import despite blocking validation errors</span>
+                </label>
+              )}
+            </div>
+          </div>
 
           {!!(profiles?.items || []).length && (
             <div className="detail-block">

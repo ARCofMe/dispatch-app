@@ -29,10 +29,10 @@ Actionable workflow queue with item detail, recent history, and controls for:
 Customer detail and merged SR timeline pulled from Ops Hub.
 
 - `Routes`
-Structured route preview and heatmap payloads with a real stop workspace, filter/search, manifest copy, route-share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.
+Structured route preview and heatmap payloads with a real stop workspace, filter/search, manual reordering, ad-hoc stop drafting, validation/share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.
 
 - `Intake`
-ServiceSmith intake surface over Ops Hub. It now supports spreadsheet upload, analysis, import planning, payload preview, first-pass import execution, and backend-saved intake profiles from the dispatch UI.
+ServiceSmith intake surface over Ops Hub. It now supports spreadsheet upload, analysis, import planning, payload preview, first-pass import execution, import-safety confirmations, and backend-saved intake profiles from the dispatch UI.
 
 ## Environment
 
@@ -102,8 +102,10 @@ This app is now a real first-pass dispatch shell, not just a stub:
 - routes now include stop filtering, route summary, copy/share helpers, and a timeline view
 - routes now render inside a real Leaflet/OpenStreetMap panel instead of a placeholder SVG-only map
 - route previews can now request optimized order and expose route metrics when the legacy routing backend is available
+- routes now support manual resequencing, ad-hoc stop drafting, share actions, and route validation cues through Ops Hub-backed simulation
 - it includes the first ServiceSmith migration surface through the `Intake` tab
 - it can upload spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
+- intake now requires a fresh preview plus explicit operator acknowledgement before import, with a separate override for blocking validation errors
 - it includes basic import guardrails like preview-before-import, confirmation prompts, and saved intake profiles
 - it now persists working drafts for `Routes` and `Intake`, and can export preview/import JSON artifacts
 

@@ -211,6 +211,19 @@ export default function App() {
     }
   }
 
+  async function simulateRouteDraft(body) {
+    setRoutesLoading(true);
+    setRoutesError("");
+    try {
+      const payload = await dispatchApi.simulateRoute(body);
+      setRoutePreview(payload);
+    } catch (error) {
+      setRoutesError(formatError(error));
+    } finally {
+      setRoutesLoading(false);
+    }
+  }
+
   async function loadIntakeFormats() {
     setIntakeFormatsLoading(true);
     setIntakeFormatsError("");
@@ -478,6 +491,7 @@ export default function App() {
           onDestinationAddressChange={setRouteDestinationAddress}
           onOptimizeChange={setRouteOptimize}
           onLoad={loadRoutes}
+          onSimulateRoute={simulateRouteDraft}
           onOpenServiceRequestById={openServiceRequestById}
         />
       )}
