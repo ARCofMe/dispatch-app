@@ -68,6 +68,9 @@ export const dispatchApi = {
   getServiceRequestWork(srId) {
     return request(`/dispatch/sr/${srId}/work`);
   },
+  getServiceRequestPhotoCompliance(srId) {
+    return request(`/dispatch/sr/${srId}/photo_compliance`);
+  },
   getRoutePreview(bluefolderUserId, options = {}) {
     const params = new URLSearchParams({
       bluefolder_user_id: `${bluefolderUserId}`,

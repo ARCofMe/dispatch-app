@@ -11,6 +11,7 @@ const { dispatchApiMock } = vi.hoisted(() => ({
     getServiceRequestCustomer: vi.fn(),
     getServiceRequestTimeline: vi.fn(),
     getServiceRequestWork: vi.fn(),
+    getServiceRequestPhotoCompliance: vi.fn(),
   },
 }));
 
@@ -28,12 +29,21 @@ describe("Dispatch App", () => {
     dispatchApiMock.getServiceRequestCustomer.mockReset();
     dispatchApiMock.getServiceRequestTimeline.mockReset();
     dispatchApiMock.getServiceRequestWork.mockReset();
+    dispatchApiMock.getServiceRequestPhotoCompliance.mockReset();
     dispatchApiMock.getAttention.mockResolvedValue({ items: [] });
     dispatchApiMock.getIntakeFormats.mockResolvedValue({ items: [] });
     dispatchApiMock.getIntakeProfiles.mockResolvedValue({ items: [] });
     dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat", reference: "SR-100" });
     dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
     dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
+    dispatchApiMock.getServiceRequestPhotoCompliance.mockResolvedValue({
+      mailboxStatus: "found",
+      totalPhotos: 2,
+      matchedRequiredStatus: true,
+      shouldNotify: false,
+      foundTags: ["Model", "Serial"],
+      missingTags: [],
+    });
   });
 
   afterEach(() => {
@@ -79,5 +89,31 @@ describe("Dispatch App", () => {
     });
     expect(screen.queryByText("Pat Smith")).not.toBeInTheDocument();
     expect(screen.queryByText("Work panel")).not.toBeInTheDocument();
+  });
+
+  it("shows photo compliance in service request detail", async () => {
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat Smith", reference: "SR-100" });
+    dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
+    dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
+    dispatchApiMock.getServiceRequestPhotoCompliance.mockResolvedValue({
+      mailboxStatus: "found",
+      totalPhotos: 1,
+      matchedRequiredStatus: true,
+      shouldNotify: true,
+      reason: "Missing required archived photos.",
+      foundTags: ["Model"],
+      missingTags: ["Serial"],
+      checkedAt: "2026-04-06T17:30:00+00:00",
+    });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
+    fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+
+    expect(await screen.findByText("Photo compliance")).toBeInTheDocument();
+    expect(screen.getByText("Missing required archived photos.")).toBeInTheDocument();
+    expect(screen.getByText("Serial")).toBeInTheDocument();
   });
 });

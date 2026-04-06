@@ -5,6 +5,7 @@ export default function ServiceRequestView({
   customer,
   timeline,
   work,
+  photoCompliance,
   loading,
   error,
   onChange,
@@ -94,6 +95,31 @@ export default function ServiceRequestView({
           </article>
 
           <article className="metric-card wide">
+            <p>Photo compliance</p>
+            {photoCompliance ? (
+              <div className="list-stack compact">
+                <div className="detail-grid">
+                  <Detail label="Mailbox" value={photoCompliance.mailboxStatus || "unknown"} />
+                  <Detail label="Photos" value={photoCompliance.totalPhotos} />
+                  <Detail label="Required status" value={photoCompliance.matchedRequiredStatus ? "yes" : "no"} />
+                  <Detail label="Needs follow-up" value={photoCompliance.shouldNotify ? "yes" : "no"} />
+                </div>
+                <div className="detail-block">
+                  <strong>Current read</strong>
+                  <p>{photoCompliance.reason || photoCompliance.message || "No photo compliance detail."}</p>
+                  {photoCompliance.checkedAt && <span className="muted">Checked {photoCompliance.checkedAt}</span>}
+                </div>
+                <div className="detail-grid single">
+                  <Detail label="Found tags" value={formatTagList(photoCompliance.foundTags)} />
+                  <Detail label="Missing tags" value={formatTagList(photoCompliance.missingTags)} />
+                </div>
+              </div>
+            ) : (
+              <p className="muted">No photo compliance detail loaded.</p>
+            )}
+          </article>
+
+          <article className="metric-card wide">
             <p>Customer</p>
             {customer ? (
               <div className="list-stack compact">
@@ -157,4 +183,9 @@ function Detail({ label, value }) {
       <strong>{value || "n/a"}</strong>
     </div>
   );
+}
+
+function formatTagList(tags) {
+  if (!Array.isArray(tags) || !tags.length) return "none";
+  return tags.join(", ");
 }

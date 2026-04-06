@@ -58,6 +58,7 @@ export default function App() {
   const [customer, setCustomer] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [srWork, setSrWork] = useState(null);
+  const [srPhotoCompliance, setSrPhotoCompliance] = useState(null);
   const [srError, setSrError] = useState("");
   const [srLoading, setSrLoading] = useState(false);
 
@@ -181,21 +182,25 @@ export default function App() {
     setCustomer(null);
     setTimeline([]);
     setSrWork(null);
+    setSrPhotoCompliance(null);
     try {
-      const [customerPayload, timelinePayload, workPayload] = await Promise.all([
+      const [customerPayload, timelinePayload, workPayload, photoCompliancePayload] = await Promise.all([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
+        dispatchApi.getServiceRequestPhotoCompliance(srId),
       ]);
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(customerPayload);
       setTimeline(timelinePayload);
       setSrWork(workPayload);
+      setSrPhotoCompliance(photoCompliancePayload);
     } catch (error) {
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(null);
       setTimeline([]);
       setSrWork(null);
+      setSrPhotoCompliance(null);
       setSrError(formatError(error));
     } finally {
       if (serviceRequestLoadIdRef.current !== requestId) return;
@@ -487,6 +492,7 @@ export default function App() {
           customer={customer}
           timeline={timeline}
           work={srWork}
+          photoCompliance={srPhotoCompliance}
           technicianOptions={technicianOptions}
           loading={srLoading}
           error={srError}
