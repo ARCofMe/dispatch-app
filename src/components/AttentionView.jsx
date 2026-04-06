@@ -38,7 +38,7 @@ export default function AttentionView({
 
   useEffect(() => {
     onPreferencesChange?.({ filters, sortBy });
-  }, [filters, sortBy, onPreferencesChange]);
+  }, [filters, sortBy]);
 
   const visibleItems = useMemo(() => {
     const filtered = (items || []).filter((item) => {

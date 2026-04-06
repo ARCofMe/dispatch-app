@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { dispatchApi } from "./api/client";
 import BrandBar from "./components/BrandBar";
 import TabNav from "./components/TabNav";
@@ -38,6 +38,9 @@ function getLocalISODate() {
 }
 
 export default function App() {
+  const attentionDetailRequestIdRef = useRef(0);
+  const serviceRequestLoadIdRef = useRef(0);
+  const routesLoadIdRef = useRef(0);
   const [activeTab, setActiveTab] = useState("board");
   const [board, setBoard] = useState(null);
   const [boardError, setBoardError] = useState("");
@@ -148,28 +151,47 @@ export default function App() {
   }
 
   async function loadAttentionDetail(itemId) {
+    const requestId = attentionDetailRequestIdRef.current + 1;
+    attentionDetailRequestIdRef.current = requestId;
+    setSelectedAttentionDetail(null);
     try {
-      setSelectedAttentionDetail(await dispatchApi.getAttentionItem(itemId));
+      const payload = await dispatchApi.getAttentionItem(itemId);
+      if (attentionDetailRequestIdRef.current !== requestId) return;
+      setSelectedAttentionDetail(payload);
+      setAttentionActionState(null);
     } catch (error) {
+      if (attentionDetailRequestIdRef.current !== requestId) return;
+      setSelectedAttentionDetail(null);
       setAttentionActionState({ error: true, message: formatError(error) });
     }
   }
 
   async function loadServiceRequest(srId) {
+    const requestId = serviceRequestLoadIdRef.current + 1;
+    serviceRequestLoadIdRef.current = requestId;
     setSrLoading(true);
     setSrError("");
+    setCustomer(null);
+    setTimeline([]);
+    setSrWork(null);
     try {
       const [customerPayload, timelinePayload, workPayload] = await Promise.all([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
       ]);
+      if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(customerPayload);
       setTimeline(timelinePayload);
       setSrWork(workPayload);
     } catch (error) {
+      if (serviceRequestLoadIdRef.current !== requestId) return;
+      setCustomer(null);
+      setTimeline([]);
+      setSrWork(null);
       setSrError(formatError(error));
     } finally {
+      if (serviceRequestLoadIdRef.current !== requestId) return;
       setSrLoading(false);
     }
   }
@@ -189,8 +211,12 @@ export default function App() {
     setRouteDestinationAddress(nextDestinationAddress);
     setRouteOptimize(Boolean(nextOptimize));
     setSelectedRouteDate(nextDate);
+    const requestId = routesLoadIdRef.current + 1;
+    routesLoadIdRef.current = requestId;
     setRoutesLoading(true);
     setRoutesError("");
+    setRoutePreview(null);
+    setHeatmap(null);
     setActiveTab("routes");
     try {
       const [previewPayload, heatmapPayload] = await Promise.all([
@@ -202,11 +228,16 @@ export default function App() {
         }),
         dispatchApi.getRouteHeatmap(techId),
       ]);
+      if (routesLoadIdRef.current !== requestId) return;
       setRoutePreview(previewPayload);
       setHeatmap(heatmapPayload);
     } catch (error) {
+      if (routesLoadIdRef.current !== requestId) return;
+      setRoutePreview(null);
+      setHeatmap(null);
       setRoutesError(formatError(error));
     } finally {
+      if (routesLoadIdRef.current !== requestId) return;
       setRoutesLoading(false);
     }
   }
