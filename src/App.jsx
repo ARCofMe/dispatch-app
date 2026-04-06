@@ -49,6 +49,7 @@ export default function App() {
   const [attention, setAttention] = useState([]);
   const [attentionError, setAttentionError] = useState("");
   const [attentionLoading, setAttentionLoading] = useState(false);
+  const [attentionLoaded, setAttentionLoaded] = useState(false);
   const [selectedAttention, setSelectedAttention] = useState(null);
   const [selectedAttentionDetail, setSelectedAttentionDetail] = useState(null);
   const [attentionActionState, setAttentionActionState] = useState(null);
@@ -90,10 +91,15 @@ export default function App() {
 
   useEffect(() => {
     loadBoard();
-    loadAttention();
     loadIntakeFormats();
     loadIntakeProfiles();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "attention") return;
+    if (attentionLoaded || attentionLoading) return;
+    loadAttention();
+  }, [activeTab, attentionLoaded, attentionLoading]);
 
   useEffect(() => {
     window.localStorage.setItem(THEME_MODE_KEY, themeMode);
@@ -143,6 +149,7 @@ export default function App() {
     try {
       const payload = await dispatchApi.getAttention();
       setAttention(payload.items || payload.attentionItems || payload || []);
+      setAttentionLoaded(true);
     } catch (error) {
       setAttentionError(formatError(error));
     } finally {

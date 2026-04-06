@@ -1,7 +1,7 @@
 const API_BASE = (import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787").replace(/\/$/, "");
 const API_TOKEN = import.meta.env.VITE_OPS_HUB_API_TOKEN || "";
 const DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
-const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 15000);
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 30000);
 
 async function request(path, options = {}) {
   const controller = new AbortController();
