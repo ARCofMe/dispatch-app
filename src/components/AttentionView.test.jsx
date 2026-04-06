@@ -128,4 +128,63 @@ describe("AttentionView", () => {
 
     expect(onBulkAction).toHaveBeenCalledWith("ack", ["dispatch:SR-100:quote_needed"]);
   });
+
+  it("exposes refresh recovery controls after an error", () => {
+    const onRefresh = vi.fn();
+    const { rerender } = render(
+      <AttentionView
+        items={[]}
+        loading={false}
+        error="Could not reach Ops Hub. Check that ops-hub is running and the API base URL is correct."
+        onRefresh={onRefresh}
+        onSelectItem={vi.fn()}
+        selectedItem={null}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={vi.fn()}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText("Could not reach Ops Hub. Check that ops-hub is running and the API base URL is correct.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AttentionView
+        items={[
+          {
+            itemId: "dispatch:SR-100:quote_needed",
+            reference: "SR-100",
+            stage: "quote_needed",
+            stageLabel: "Quote Needed",
+            nextAction: "Call landlord",
+            status: "open",
+            ageBucket: "urgent",
+            followUpOwnerLabel: "Dispatch",
+          },
+        ]}
+        loading={false}
+        error=""
+        onRefresh={onRefresh}
+        onSelectItem={vi.fn()}
+        selectedItem={null}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={vi.fn()}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("SR-100")).toBeInTheDocument();
+  });
 });
