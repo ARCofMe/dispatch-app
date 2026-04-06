@@ -1,26 +1,45 @@
 const API_BASE = (import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787").replace(/\/$/, "");
 const API_TOKEN = import.meta.env.VITE_OPS_HUB_API_TOKEN || "";
 const DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 15000);
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: options.method || "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${API_TOKEN}`,
-      "Content-Type": "application/json",
-      "X-Dispatch-Subject": DISPATCHER_ID,
-      ...(options.headers || {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const hasBody = options.body !== undefined;
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: options.method || "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${API_TOKEN}`,
+        "X-Dispatch-Subject": DISPATCHER_ID,
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+      },
+      body: hasBody ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `HTTP ${response.status}`);
+    const text = await response.text();
+    const payload = parsePayload(text);
+
+    if (!response.ok) {
+      throw new Error(buildErrorMessage(response.status, payload, text));
+    }
+
+    return payload;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Ops Hub request timed out after ${Math.round(REQUEST_TIMEOUT_MS / 1000)}s.`);
+    }
+    if (error instanceof TypeError) {
+      throw new Error("Could not reach Ops Hub. Check that ops-hub is running and the API base URL is correct.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
 export const dispatchApi = {
@@ -130,3 +149,24 @@ export const dispatchApi = {
     });
   },
 };
+
+function parsePayload(text) {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function buildErrorMessage(status, payload, text) {
+  const message =
+    (payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" && payload.message) ||
+    (typeof payload === "string" ? payload : "") ||
+    text ||
+    `HTTP ${status}`;
+
+  if (status === 401) return `${message} Check the Ops Hub API token.`;
+  if (status === 403) return `${message} Check the dispatcher/admin user ID allowlist.`;
+  return message;
+}
