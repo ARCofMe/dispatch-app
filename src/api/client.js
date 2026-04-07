@@ -2,10 +2,12 @@ const API_BASE = (import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:878
 const API_TOKEN = import.meta.env.VITE_OPS_HUB_API_TOKEN || "";
 const DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 30000);
+const ROUTE_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ROUTE_TIMEOUT_MS || 90000);
 
 async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutMs = Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : REQUEST_TIMEOUT_MS;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const hasBody = options.body !== undefined;
   try {
     const response = await fetch(`${API_BASE}${path}`, {
@@ -30,8 +32,13 @@ async function request(path, options = {}) {
 
     return payload;
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`Ops Hub request timed out after ${Math.round(REQUEST_TIMEOUT_MS / 1000)}s.`);
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "AbortError"
+    ) {
+      throw new Error(`Ops Hub request timed out after ${Math.round(timeoutMs / 1000)}s.`);
     }
     if (error instanceof TypeError) {
       throw new Error("Could not reach Ops Hub. Check that ops-hub is running and the API base URL is correct.");
@@ -79,16 +86,21 @@ export const dispatchApi = {
     if (options.originAddress) params.set("origin_address", options.originAddress);
     if (options.destinationAddress) params.set("destination_address", options.destinationAddress);
     if (options.optimize) params.set("optimize", "true");
-    return request(`/dispatch/routes/preview?${params.toString()}`);
+    return request(`/dispatch/routes/preview?${params.toString()}`, {
+      timeoutMs: ROUTE_REQUEST_TIMEOUT_MS,
+    });
   },
   getRouteHeatmap(bluefolderUserId) {
     const suffix = bluefolderUserId ? `?bluefolder_user_id=${encodeURIComponent(bluefolderUserId)}` : "";
-    return request(`/dispatch/routes/heatmap${suffix}`);
+    return request(`/dispatch/routes/heatmap${suffix}`, {
+      timeoutMs: ROUTE_REQUEST_TIMEOUT_MS,
+    });
   },
   simulateRoute(body) {
     return request("/dispatch/routes/simulate", {
       method: "POST",
       body,
+      timeoutMs: ROUTE_REQUEST_TIMEOUT_MS,
     });
   },
   getIntakeFormats() {

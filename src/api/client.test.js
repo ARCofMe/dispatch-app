@@ -34,4 +34,47 @@ describe("dispatchApi client", () => {
       "Dispatcher or admin identity could not be resolved. Check the dispatcher/admin user ID allowlist.",
     );
   });
+
+  it("uses the extended route timeout for route preview requests", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              text: () => Promise.resolve(JSON.stringify({ success: true, stops: [] })),
+            });
+          }, 31_000);
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const requestPromise = dispatchApi.getRoutePreview(9001, { optimize: true });
+    await vi.advanceTimersByTimeAsync(31_000);
+
+    await expect(requestPromise).resolves.toEqual({ success: true, stops: [] });
+    vi.useRealTimers();
+  });
+
+  it("keeps the shorter default timeout for non-route requests", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_, options) =>
+        new Promise((_, reject) => {
+          options.signal.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        }),
+      ),
+    );
+
+    const requestPromise = dispatchApi.getBoard();
+    const rejection = expect(requestPromise).rejects.toThrow("Ops Hub request timed out after 30s.");
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    await rejection;
+    vi.useRealTimers();
+  });
 });
