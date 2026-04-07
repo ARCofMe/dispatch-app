@@ -1,10 +1,10 @@
-# Dispatch App
+# RouteDesk
 
-Dispatch web frontend for Ops Hub.
+RouteDesk is the dispatch web frontend for Ops Hub.
 
 This project is intentionally separate from `ops-hub`:
 - `ops-hub` stays the backend, workflow engine, and Discord surface
-- `dispatch-app` is the web UI for dispatch workflows
+- `dispatch-app` is the RouteDesk web UI for dispatch workflows
 - route-planning work from `dispatcher-routing-app` should be folded into the `Routes` tab here over time
 
 ## Current scope
@@ -44,7 +44,7 @@ Copy `.env.example` to `.env.local` and set:
 - `VITE_OPS_HUB_API_TIMEOUT_MS` (optional, defaults to `30000`)
 - `VITE_OPS_HUB_ROUTE_TIMEOUT_MS` (optional, defaults to `90000` for route preview, heatmap, and simulation calls)
 
-These values are consumed by [src/api/client.js](./src/api/client.js).
+These values are consumed by [src/api/client.js](./src/api/client.js). The checked-in `.env.example` includes the full supported set.
 
 ## Local development
 

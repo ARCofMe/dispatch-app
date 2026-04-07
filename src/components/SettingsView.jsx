@@ -46,7 +46,7 @@ export default function SettingsView({
           <input
             value={appName}
             onChange={(event) => onAppNameChange?.(event.target.value)}
-            placeholder="Dispatch Cannon"
+            placeholder="RouteDesk"
           />
         </label>
         <p className="muted">

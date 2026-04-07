@@ -116,4 +116,16 @@ describe("Dispatch App", () => {
     expect(screen.getByText("Missing required archived photos.")).toBeInTheDocument();
     expect(screen.getByText("Serial")).toBeInTheDocument();
   });
+
+  it("drops malformed stored preferences instead of crashing on boot", async () => {
+    window.localStorage.setItem("dispatch-preferences", "{bad json");
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(dispatchApiMock.getBoard).toHaveBeenCalledTimes(1);
+    });
+    expect(() => JSON.parse(window.localStorage.getItem("dispatch-preferences") || "")).not.toThrow();
+  });
 });

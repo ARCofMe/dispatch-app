@@ -16,7 +16,7 @@ const DISPATCH_PREFERENCES_KEY = "dispatch-preferences";
 const LAST_SR_KEY = "dispatch-last-sr";
 const INTAKE_DRAFT_KEY = "dispatch-intake-draft";
 const ROUTE_DRAFT_KEY = "dispatch-route-draft";
-const DEFAULT_APP_NAME = "SendIt";
+const DEFAULT_APP_NAME = "RouteDesk";
 const DEFAULT_PREFERENCES = {
   attentionFilters: { stage: "", age: "", status: "", reference: "" },
   attentionSortBy: "priority",
@@ -647,20 +647,25 @@ function readFileAsBase64(file) {
 }
 
 function readStoredPreferences() {
+  const parsed = readStoredJson(window.localStorage, DISPATCH_PREFERENCES_KEY);
+  if (!parsed || typeof parsed !== "object") return DEFAULT_PREFERENCES;
+  return {
+    ...DEFAULT_PREFERENCES,
+    ...parsed,
+    attentionFilters: {
+      ...DEFAULT_PREFERENCES.attentionFilters,
+      ...(parsed.attentionFilters || {}),
+    },
+  };
+}
+
+function readStoredJson(storage, key) {
   try {
-    const raw = window.localStorage.getItem(DISPATCH_PREFERENCES_KEY);
-    if (!raw) return DEFAULT_PREFERENCES;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return DEFAULT_PREFERENCES;
-    return {
-      ...DEFAULT_PREFERENCES,
-      ...parsed,
-      attentionFilters: {
-        ...DEFAULT_PREFERENCES.attentionFilters,
-        ...(parsed.attentionFilters || {}),
-      },
-    };
+    const raw = storage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
   } catch {
-    return DEFAULT_PREFERENCES;
+    storage.removeItem(key);
+    return null;
   }
 }

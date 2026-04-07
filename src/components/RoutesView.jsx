@@ -722,12 +722,7 @@ function formatMetric(value) {
 }
 
 function loadRouteDraft() {
-  try {
-    const raw = localStorage.getItem(ROUTE_DRAFT_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return readStoredJson(localStorage, ROUTE_DRAFT_KEY);
 }
 
 function saveRouteDraft(value) {
@@ -736,4 +731,14 @@ function saveRouteDraft(value) {
 
 function clearRouteDraft() {
   localStorage.removeItem(ROUTE_DRAFT_KEY);
+}
+
+function readStoredJson(storage, key) {
+  try {
+    const raw = storage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    storage.removeItem(key);
+    return null;
+  }
 }

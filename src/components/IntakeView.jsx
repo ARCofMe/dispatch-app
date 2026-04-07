@@ -599,12 +599,7 @@ function summarizeImportResult(item) {
 }
 
 function loadDraft() {
-  try {
-    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return readStoredJson(localStorage, DRAFT_STORAGE_KEY);
 }
 
 function saveDraft(value) {
@@ -613,6 +608,16 @@ function saveDraft(value) {
 
 function clearDraft() {
   localStorage.removeItem(DRAFT_STORAGE_KEY);
+}
+
+function readStoredJson(storage, key) {
+  try {
+    const raw = storage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    storage.removeItem(key);
+    return null;
+  }
 }
 
 function downloadJson(filename, payload) {
