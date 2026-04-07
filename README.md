@@ -45,6 +45,7 @@ Copy `.env.example` to `.env.local` and set:
 - `VITE_OPS_HUB_ROUTE_TIMEOUT_MS` (optional, defaults to `90000` for route preview, heatmap, and simulation calls)
 
 These values are consumed by [src/api/client.js](./src/api/client.js). The checked-in `.env.example` includes the full supported set.
+RouteDesk branding is fixed in the app; there is no environment or local-setting override for the product name.
 
 ## Local development
 

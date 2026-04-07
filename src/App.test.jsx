@@ -128,4 +128,17 @@ describe("Dispatch App", () => {
     });
     expect(() => JSON.parse(window.localStorage.getItem("dispatch-preferences") || "")).not.toThrow();
   });
+
+  it("removes the legacy local app-name override and keeps the RouteDesk title", async () => {
+    window.localStorage.setItem("dispatch-app-name", "Custom Dispatch");
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(dispatchApiMock.getBoard).toHaveBeenCalledTimes(1);
+    });
+    expect(window.localStorage.getItem("dispatch-app-name")).toBeNull();
+    expect(document.title).toBe("RouteDesk | ARCoM Ops Hub");
+  });
 });

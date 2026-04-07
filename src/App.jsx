@@ -11,12 +11,10 @@ import SettingsView from "./components/SettingsView";
 import { buildTechnicianOptions } from "./components/labelUtils";
 
 const THEME_MODE_KEY = "dispatch-theme-mode";
-const APP_NAME_KEY = "dispatch-app-name";
 const DISPATCH_PREFERENCES_KEY = "dispatch-preferences";
 const LAST_SR_KEY = "dispatch-last-sr";
 const INTAKE_DRAFT_KEY = "dispatch-intake-draft";
 const ROUTE_DRAFT_KEY = "dispatch-route-draft";
-const DEFAULT_APP_NAME = "RouteDesk";
 const DEFAULT_PREFERENCES = {
   attentionFilters: { stage: "", age: "", status: "", reference: "" },
   attentionSortBy: "priority",
@@ -87,7 +85,6 @@ export default function App() {
   const [intakeImportLoading, setIntakeImportLoading] = useState(false);
   const [intakeImportError, setIntakeImportError] = useState("");
   const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem(THEME_MODE_KEY) || "light");
-  const [appName, setAppName] = useState(() => window.localStorage.getItem(APP_NAME_KEY) || DEFAULT_APP_NAME);
   const [preferences, setPreferences] = useState(() => readStoredPreferences());
 
   useEffect(() => {
@@ -108,10 +105,9 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    const nextName = appName.trim() || DEFAULT_APP_NAME;
-    window.localStorage.setItem(APP_NAME_KEY, nextName);
-    document.title = `${nextName} | ARCoM Ops Hub`;
-  }, [appName]);
+    window.localStorage.removeItem("dispatch-app-name");
+    document.title = "RouteDesk | ARCoM Ops Hub";
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(DISPATCH_PREFERENCES_KEY, JSON.stringify(preferences));
@@ -440,7 +436,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <BrandBar appName={appName.trim() || DEFAULT_APP_NAME} />
+      <BrandBar />
       <TabNav activeTab={activeTab} onSelect={setActiveTab} />
 
       {activeTab === "board" && (
@@ -569,8 +565,6 @@ export default function App() {
         <SettingsView
           themeMode={themeMode}
           onThemeModeChange={setThemeMode}
-          appName={appName}
-          onAppNameChange={setAppName}
           technicianOptions={technicianOptions}
           defaultRouteTechnicianId={preferences.defaultRouteTechnicianId}
           onDefaultRouteTechnicianChange={(value) =>

@@ -3,8 +3,6 @@ const SETTINGS_THEME_KEY = "dispatch-theme-mode";
 export default function SettingsView({
   themeMode,
   onThemeModeChange,
-  appName,
-  onAppNameChange,
   technicianOptions = [],
   defaultRouteTechnicianId,
   onDefaultRouteTechnicianChange,
@@ -35,24 +33,9 @@ export default function SettingsView({
         <div className="settings-grid">
           <Detail label="API base" value={apiBase || "n/a"} />
           <Detail label="Dispatcher ID" value={dispatcherId || "not set"} />
+          <Detail label="Workspace" value="RouteDesk" />
           <Detail label="Theme mode" value={themeMode} />
         </div>
-      </article>
-
-      <article className="metric-card wide">
-        <p>Branding</p>
-        <label className="field route-field">
-          <span>App name</span>
-          <input
-            value={appName}
-            onChange={(event) => onAppNameChange?.(event.target.value)}
-            placeholder="RouteDesk"
-          />
-        </label>
-        <p className="muted">
-          This changes the dispatch header locally for this operator workspace. If you want a backend-owned global app
-          name later, we can add that in Ops Hub after the UI behavior settles down.
-        </p>
       </article>
 
       <article className="metric-card wide">
