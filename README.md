@@ -1,59 +1,50 @@
 # RouteDesk
 
-RouteDesk is the dispatch web frontend for Ops Hub.
+RouteDesk is the dispatch and triage web app for Ops Hub.
 
-This project is intentionally separate from `ops-hub`:
-- `ops-hub` stays the backend, workflow engine, and Discord surface
-- `dispatch-app` is the RouteDesk web UI for dispatch workflows
-- route-planning work from `dispatcher-routing-app` should be folded into the `Routes` tab here over time
+It gives dispatch and service managers a browser-first workspace for:
 
-## Current scope
+- technician load and board visibility
+- new-ticket triage
+- attention queue ownership and follow-up
+- service request review
+- route planning and route simulation
+- ServiceSmith intake work
+
+## Main Workspaces
 
 - `Board`
-Queue-first overview for routeable technicians, visible assignments, attention load, and open parts cases. Board rows now surface BlueFolder role hints when available so dispatch/admin users discovered from the BF roster are easier to distinguish from field techs.
-
+  Technician load, visible assignments, attention pressure, and open parts visibility.
 - `Triage`
-Service-manager-focused intake and decision queue for new SR triage, missing model/serial follow-up, parts-first candidates, diagnostic-first candidates, and quote-before-schedule work.
-
+  Service-manager queue for new SR triage, missing info, parts-first, diagnostic-first, and quote-before-schedule work.
 - `Attention`
-Actionable workflow queue with item detail, recent history, and controls for:
-  - `ack`
-  - bulk `ack`
-  - `reopen`
-  - `unsnooze`
-  - `snooze`
-  - bulk `snooze`
-  - `assign`
-  - bulk `assign`
-  - `clear owner`
-  - bulk `clear owner`
-
-  Attention owner assignment now uses a BlueFolder-backed dropdown of dispatch-capable users rather than raw Discord ids. When BlueFolder role metadata is available, the picker labels also show the effective role, such as `dispatch`, `admin`, or `parts`.
-
+  Actionable queue with assign, acknowledge, snooze, reopen, and history review.
 - `Service Request`
-Customer detail and merged SR timeline pulled from Ops Hub. SR detail now also renders BlueFolder-aware `statusMeta` context so dispatch can see whether a status is closed, quote-blocked, parts-active, waiting-customer, scheduling, or review-oriented without reinterpreting tenant strings in the browser. It also includes the first SR-level SMS workspace backed by Ops Hub preview/send/history endpoints.
-
+  Customer detail, timeline, work context, photo compliance, and SMS preview/send workspace.
 - `Routes`
-Structured route preview and heatmap payloads with a real stop workspace, filter/search, manual reordering, ad-hoc stop drafting, validation/share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.
-
+  Route preview, heatmap, stop sequencing, stop drafting, validation, and simulation.
 - `Intake`
-ServiceSmith intake surface over Ops Hub. It now supports spreadsheet upload, analysis, import planning, payload preview, first-pass import execution, import-safety confirmations, and backend-saved intake profiles from the dispatch UI.
+  Spreadsheet analysis, preview, import planning, and profile-backed intake work.
+- `Settings`
+  Local operator preferences such as theme and saved defaults.
 
-## Environment
+## Runtime Requirements
 
-Copy `.env.example` to `.env.local` and set:
+Create `.env.local` from `.env.example` and set:
 
 - `VITE_OPS_HUB_API_BASE`
 - `VITE_OPS_HUB_API_TOKEN`
 - `VITE_DISPATCHER_ID`
-- `VITE_OPS_HUB_API_TIMEOUT_MS` (optional, defaults to `30000`)
-- `VITE_OPS_HUB_ATTENTION_TIMEOUT_MS` (optional, defaults to `90000` for attention queue reads)
-- `VITE_OPS_HUB_ROUTE_TIMEOUT_MS` (optional, defaults to `90000` for route preview, heatmap, and simulation calls)
 
-These values are consumed by [src/api/client.js](./src/api/client.js). The checked-in `.env.example` includes the full supported set.
-RouteDesk branding is fixed in the app; there is no environment or local-setting override for the product name.
+Optional:
 
-## Local development
+- `VITE_OPS_HUB_API_TIMEOUT_MS`
+- `VITE_OPS_HUB_ATTENTION_TIMEOUT_MS`
+- `VITE_OPS_HUB_ROUTE_TIMEOUT_MS`
+
+RouteDesk branding is fixed in the app. There is no product-name override.
+
+## Local Development
 
 Install dependencies:
 
@@ -67,15 +58,13 @@ Run the app:
 npm run dev
 ```
 
-By default Vite will print a local URL such as `http://localhost:5173`.
-
-Build the app:
+Build:
 
 ```bash
 npm run build
 ```
 
-Run frontend tests:
+Run tests:
 
 ```bash
 npm test -- --run
@@ -83,43 +72,17 @@ npm test -- --run
 
 ## Docker
 
-This repo now includes a simple production-style frontend container similar to the routing frontend.
-
-Build and run with Docker Compose:
+Run with Docker Compose:
 
 ```bash
 docker compose up -d --build
 ```
 
-That serves the app on `http://localhost:4173`.
+By default the container serves on `http://localhost:4173`.
 
-Before building, export or place these values in an env file that Compose can read:
+## Notes
 
-- `VITE_OPS_HUB_API_BASE`
-- `VITE_OPS_HUB_API_TOKEN`
-- `VITE_DISPATCHER_ID`
-
-The included `docker-compose.yml` currently defaults `VITE_OPS_HUB_API_BASE` to `http://host.docker.internal:8787`, which is useful when `ops-hub` is running directly on the host. On Linux, if `host.docker.internal` is not available in your Docker setup, replace it with your host IP or run the frontend with plain `npm run dev`.
-The compose file now includes `host-gateway` mapping, which usually makes `host.docker.internal` work on modern Linux Docker as well.
-
-## Current status
-
-This app is now a real first-pass dispatch shell, not just a stub:
-- it renders meaningful Ops Hub dispatch data
-- it supports basic queue actions
-- it opens SR detail and route context from the same app
-- routes now include stop filtering, route summary, copy/share helpers, and a timeline view
-- routes now render inside a real Leaflet/OpenStreetMap panel instead of a placeholder SVG-only map
-- route previews can now request optimized order and expose route metrics when the legacy routing backend is available
-- routes now support manual resequencing, ad-hoc stop drafting, share actions, and route validation cues through Ops Hub-backed simulation
-- it includes the first ServiceSmith migration surface through the `Intake` tab
-- it can upload spreadsheets, preview import plans/payloads, and run intake imports through Ops Hub
-- intake now requires a fresh preview plus explicit operator acknowledgement before import, with a separate override for blocking validation errors
-- it includes basic import guardrails like preview-before-import, confirmation prompts, and saved intake profiles
-- it now persists working drafts for `Routes` and `Intake`, and can export preview/import JSON artifacts
-
-What is not migrated yet:
-- the full route-planner interaction model from `dispatcher-routing-app` such as drag/drop resequencing and deeper map editing
-- more advanced assignment and scheduling workflows
-- deeper parts-facing dispatch cross-links
-- richer ServiceSmith reporting and operator guardrails around import execution
+- RouteDesk depends on Ops Hub for all workflow and BlueFolder-derived data.
+- Attention owner assignment is BlueFolder-first rather than Discord-first.
+- The board and attention queue are snapshot-first so the UI stays responsive during heavier background refreshes.
+- SR SMS support is currently grounded in Ops Hub’s provider seam. The default backend mode is still dry-run unless a real provider is configured there.
