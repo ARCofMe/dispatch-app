@@ -10,7 +10,7 @@ This project is intentionally separate from `ops-hub`:
 ## Current scope
 
 - `Board`
-Queue-first overview for mapped technicians, visible assignments, attention load, and open parts cases.
+Queue-first overview for routeable technicians, visible assignments, attention load, and open parts cases. Board rows now surface BlueFolder role hints when available so dispatch/admin users discovered from the BF roster are easier to distinguish from field techs.
 
 - `Attention`
 Actionable workflow queue with item detail, recent history, and controls for:

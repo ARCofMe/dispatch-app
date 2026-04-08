@@ -6,6 +6,7 @@ import { buildTechnicianOptions } from "./labelUtils";
 describe("BoardView", () => {
   it("renders key dispatch board metrics and top attention items", () => {
     const board = {
+      visibleOperators: 6,
       mappedTechs: 4,
       discordLinkedTechs: 1,
       activeTechs: 3,
@@ -19,6 +20,7 @@ describe("BoardView", () => {
           bluefolderUserId: 9001,
           discordUserId: 7001,
           technicianLabel: "Pat Tech",
+          bluefolderRole: "technician",
           assignmentCount: 4,
           originAddress: "Lewiston, ME",
           nextJob: { summary: "Dryer no heat" },
@@ -51,16 +53,19 @@ describe("BoardView", () => {
     );
 
     expect(screen.getByText("Visible techs")).toBeInTheDocument();
+    expect(screen.getByText("Visible BF users")).toBeInTheDocument();
     expect(screen.getByText("Discord-linked")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByText("quote needed: 2")).toBeInTheDocument();
     expect(screen.getAllByText("Pat Tech").length).toBeGreaterThan(0);
+    expect(screen.getByText("Technician · Lewiston, ME")).toBeInTheDocument();
     expect(screen.getByText("SR-100")).toBeInTheDocument();
     expect(screen.getByText("Fast jumps")).toBeInTheDocument();
   });
 
   it("renders an explicit idle-day message when technicians have no calls yet", () => {
     const board = {
+      visibleOperators: 1,
       mappedTechs: 1,
       discordLinkedTechs: 0,
       activeTechs: 0,
@@ -74,6 +79,7 @@ describe("BoardView", () => {
           bluefolderUserId: 9001,
           discordUserId: 7001,
           technicianLabel: "Pat Tech",
+          bluefolderRole: "technician",
           assignmentCount: 0,
           originAddress: "Lewiston, ME",
           nextJob: null,

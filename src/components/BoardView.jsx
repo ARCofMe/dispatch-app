@@ -21,6 +21,16 @@ function allTechniciansIdle(payload) {
   return technicianLoad.length > 0 && technicianLoad.every((tech) => Number(tech.assignmentCount || 0) === 0);
 }
 
+function boardRoleLabel(tech) {
+  const role = String(tech?.bluefolderRole || "").trim().toLowerCase();
+  if (!role) return null;
+  if (role === "technician") return "Technician";
+  if (role === "dispatch") return "Dispatch";
+  if (role === "admin") return "Admin";
+  if (role === "other") return tech?.bluefolderUserType || "Other";
+  return tech?.bluefolderUserType || role;
+}
+
 export default function BoardView({
   board,
   loading,
@@ -36,6 +46,7 @@ export default function BoardView({
   if (!board) return <section className="panel">Board is not loaded yet.</section>;
 
   const metrics = [
+    ["Visible BF users", metricValue(board, "visibleOperators")],
     ["Visible techs", metricValue(board, "mappedTechs")],
     ["Discord-linked", metricValue(board, "discordLinkedTechs")],
     ["Active techs", metricValue(board, "activeTechs")],
@@ -82,7 +93,10 @@ export default function BoardView({
               <div key={tech.bluefolderUserId || tech.discordUserId} className="list-row">
                 <div>
                   <strong>{tech.technicianLabel || "Technician"}</strong>
-                  <p>{tech.originAddress || "Origin not set"}</p>
+                  <p>
+                    {boardRoleLabel(tech) ? `${boardRoleLabel(tech)} · ` : ""}
+                    {tech.originAddress || "Origin not set"}
+                  </p>
                 </div>
                 <div className="row-meta">
                   <span>{tech.assignmentCount || 0} jobs</span>
