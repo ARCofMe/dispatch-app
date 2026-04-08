@@ -99,4 +99,19 @@ describe("dispatchApi client", () => {
     await rejection;
     vi.useRealTimers();
   });
+
+  it("posts SR SMS preview payloads to the dispatch API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ provider: "dry_run", message: "Test" })),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await dispatchApi.previewServiceRequestSms(100, { intent: "dispatch_follow_up", customMessage: "Test" });
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain("/dispatch/sr/100/sms/preview");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual({ intent: "dispatch_follow_up", customMessage: "Test" });
+  });
 });

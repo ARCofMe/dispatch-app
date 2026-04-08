@@ -31,7 +31,7 @@ Actionable workflow queue with item detail, recent history, and controls for:
   Attention owner assignment now uses a BlueFolder-backed dropdown of dispatch-capable users rather than raw Discord ids. When BlueFolder role metadata is available, the picker labels also show the effective role, such as `dispatch`, `admin`, or `parts`.
 
 - `Service Request`
-Customer detail and merged SR timeline pulled from Ops Hub. SR detail now also renders BlueFolder-aware `statusMeta` context so dispatch can see whether a status is closed, quote-blocked, parts-active, waiting-customer, scheduling, or review-oriented without reinterpreting tenant strings in the browser.
+Customer detail and merged SR timeline pulled from Ops Hub. SR detail now also renders BlueFolder-aware `statusMeta` context so dispatch can see whether a status is closed, quote-blocked, parts-active, waiting-customer, scheduling, or review-oriented without reinterpreting tenant strings in the browser. It also includes the first SR-level SMS workspace backed by Ops Hub preview/send/history endpoints.
 
 - `Routes`
 Structured route preview and heatmap payloads with a real stop workspace, filter/search, manual reordering, ad-hoc stop drafting, validation/share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.

@@ -78,6 +78,24 @@ export const dispatchApi = {
   getServiceRequestWork(srId) {
     return request(`/dispatch/sr/${srId}/work`);
   },
+  getServiceRequestSmsCapabilities(srId) {
+    return request(`/dispatch/sr/${srId}/sms_capabilities`);
+  },
+  getServiceRequestSmsHistory(srId) {
+    return request(`/dispatch/sr/${srId}/sms/history`);
+  },
+  previewServiceRequestSms(srId, body) {
+    return request(`/dispatch/sr/${srId}/sms/preview`, {
+      method: "POST",
+      body,
+    });
+  },
+  sendServiceRequestSms(srId, body) {
+    return request(`/dispatch/sr/${srId}/sms/send`, {
+      method: "POST",
+      body,
+    });
+  },
   getServiceRequestPhotoCompliance(srId) {
     return request(`/dispatch/sr/${srId}/photo_compliance`);
   },

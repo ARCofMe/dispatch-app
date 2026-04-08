@@ -59,6 +59,10 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [srWork, setSrWork] = useState(null);
   const [srPhotoCompliance, setSrPhotoCompliance] = useState(null);
+  const [srSmsCapabilities, setSrSmsCapabilities] = useState(null);
+  const [srSmsHistory, setSrSmsHistory] = useState([]);
+  const [srSmsPreview, setSrSmsPreview] = useState(null);
+  const [srSmsActionState, setSrSmsActionState] = useState(null);
   const [srError, setSrError] = useState("");
   const [srLoading, setSrLoading] = useState(false);
 
@@ -199,28 +203,83 @@ export default function App() {
     setTimeline([]);
     setSrWork(null);
     setSrPhotoCompliance(null);
+    setSrSmsCapabilities(null);
+    setSrSmsHistory([]);
+    setSrSmsPreview(null);
+    setSrSmsActionState(null);
     try {
-      const [customerPayload, timelinePayload, workPayload, photoCompliancePayload] = await Promise.all([
+      const [customerPayload, timelinePayload, workPayload, photoCompliancePayload, smsCapabilitiesPayload, smsHistoryPayload] = await Promise.all([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
         dispatchApi.getServiceRequestPhotoCompliance(srId),
+        dispatchApi.getServiceRequestSmsCapabilities(srId),
+        dispatchApi.getServiceRequestSmsHistory(srId),
       ]);
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(customerPayload);
       setTimeline(timelinePayload);
       setSrWork(workPayload);
       setSrPhotoCompliance(photoCompliancePayload);
+      setSrSmsCapabilities(smsCapabilitiesPayload);
+      setSrSmsHistory(smsHistoryPayload?.items || []);
     } catch (error) {
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(null);
       setTimeline([]);
       setSrWork(null);
       setSrPhotoCompliance(null);
+      setSrSmsCapabilities(null);
+      setSrSmsHistory([]);
+      setSrSmsPreview(null);
+      setSrSmsActionState(null);
       setSrError(formatError(error));
     } finally {
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setSrLoading(false);
+    }
+  }
+
+  async function previewServiceRequestSms(intent, customMessage) {
+    const srId = selectedSrId.trim();
+    if (!srId) return;
+    setSrSmsActionState({ loading: true, message: "Generating SMS preview…" });
+    try {
+      const payload = await dispatchApi.previewServiceRequestSms(srId, {
+        intent,
+        customMessage,
+      });
+      setSrSmsPreview(payload);
+      setSrSmsActionState(null);
+    } catch (error) {
+      setSrSmsPreview(null);
+      setSrSmsActionState({ error: true, message: formatError(error) });
+    }
+  }
+
+  async function sendServiceRequestSms(intent, customMessage) {
+    const srId = selectedSrId.trim();
+    if (!srId) return;
+    setSrSmsActionState({ loading: true, message: "Sending SMS…" });
+    try {
+      const payload = await dispatchApi.sendServiceRequestSms(srId, {
+        intent,
+        customMessage,
+      });
+      setSrSmsPreview(payload);
+      setSrSmsActionState({
+        error: !payload?.success,
+        message:
+          payload?.status === "dry_run"
+            ? "SMS recorded in dry-run mode."
+            : payload?.success
+              ? "SMS submitted."
+              : payload?.error || "SMS delivery failed.",
+      });
+      const historyPayload = await dispatchApi.getServiceRequestSmsHistory(srId);
+      setSrSmsHistory(historyPayload?.items || []);
+    } catch (error) {
+      setSrSmsActionState({ error: true, message: formatError(error) });
     }
   }
 
@@ -537,11 +596,17 @@ export default function App() {
           timeline={timeline}
           work={srWork}
           photoCompliance={srPhotoCompliance}
+          smsCapabilities={srSmsCapabilities}
+          smsHistory={srSmsHistory}
+          smsPreview={srSmsPreview}
+          smsActionState={srSmsActionState}
           technicianOptions={technicianOptions}
           loading={srLoading}
           error={srError}
           onChange={setSelectedSrId}
           onOpenRoutes={(techId) => loadRoutes(techId)}
+          onPreviewSms={previewServiceRequestSms}
+          onSendSms={sendServiceRequestSms}
           onOpenAttentionItem={(item) => {
             setActiveTab("attention");
             handleAttentionSelect(item);

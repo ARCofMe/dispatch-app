@@ -13,6 +13,10 @@ import App from "./App";
     getServiceRequestTimeline: vi.fn(),
     getServiceRequestWork: vi.fn(),
     getServiceRequestPhotoCompliance: vi.fn(),
+    getServiceRequestSmsCapabilities: vi.fn(),
+    getServiceRequestSmsHistory: vi.fn(),
+    previewServiceRequestSms: vi.fn(),
+    sendServiceRequestSms: vi.fn(),
   },
 }));
 
@@ -32,6 +36,10 @@ describe("Dispatch App", () => {
     dispatchApiMock.getServiceRequestTimeline.mockReset();
     dispatchApiMock.getServiceRequestWork.mockReset();
     dispatchApiMock.getServiceRequestPhotoCompliance.mockReset();
+    dispatchApiMock.getServiceRequestSmsCapabilities.mockReset();
+    dispatchApiMock.getServiceRequestSmsHistory.mockReset();
+    dispatchApiMock.previewServiceRequestSms.mockReset();
+    dispatchApiMock.sendServiceRequestSms.mockReset();
     dispatchApiMock.getAttention.mockResolvedValue({ items: [] });
     dispatchApiMock.getAttentionItem.mockResolvedValue({
       item: {
@@ -56,6 +64,27 @@ describe("Dispatch App", () => {
       shouldNotify: false,
       foundTags: ["Model", "Serial"],
       missingTags: [],
+    });
+    dispatchApiMock.getServiceRequestSmsCapabilities.mockResolvedValue({
+      provider: "dry_run",
+      enabled: true,
+      toNumber: "555-0100",
+      fromLabel: "ARCoM Ops",
+      intents: [{ key: "dispatch_follow_up", label: "General follow-up", recommended: "true" }],
+    });
+    dispatchApiMock.getServiceRequestSmsHistory.mockResolvedValue({ items: [] });
+    dispatchApiMock.previewServiceRequestSms.mockResolvedValue({
+      provider: "dry_run",
+      toNumber: "555-0100",
+      message: "ARCoM Ops: Test",
+      segments: 1,
+    });
+    dispatchApiMock.sendServiceRequestSms.mockResolvedValue({
+      success: true,
+      provider: "dry_run",
+      status: "dry_run",
+      toNumber: "555-0100",
+      message: "ARCoM Ops: Test",
     });
   });
 

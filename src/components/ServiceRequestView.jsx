@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { technicianDisplayLabel } from "./labelUtils";
 
 export default function ServiceRequestView({
@@ -6,15 +8,35 @@ export default function ServiceRequestView({
   timeline,
   work,
   photoCompliance,
+  smsCapabilities,
+  smsHistory,
+  smsPreview,
+  smsActionState,
   loading,
   error,
   onChange,
   onOpenRoutes,
+  onPreviewSms,
+  onSendSms,
   onOpenAttentionItem,
   technicianOptions = [],
 }) {
   const normalizedSrId = String(srId || "").trim();
   const timelineEntries = Array.isArray(timeline?.entries) ? timeline.entries : Array.isArray(timeline) ? timeline : [];
+  const smsIntents = Array.isArray(smsCapabilities?.intents) ? smsCapabilities.intents : [];
+  const [smsIntent, setSmsIntent] = useState("");
+  const [smsDraft, setSmsDraft] = useState("");
+
+  useEffect(() => {
+    setSmsIntent("");
+    setSmsDraft("");
+  }, [normalizedSrId]);
+
+  useEffect(() => {
+    if (smsIntent || !smsIntents.length) return;
+    const recommendedIntent = smsIntents.find((intent) => String(intent.recommended) === "true")?.key || smsIntents[0]?.key || "";
+    setSmsIntent(recommendedIntent);
+  }, [smsIntent, smsIntents]);
 
   return (
     <section className="panel">
@@ -137,6 +159,82 @@ export default function ServiceRequestView({
               </div>
             ) : (
               <p className="muted">No photo compliance detail loaded.</p>
+            )}
+          </article>
+
+          <article className="metric-card wide">
+            <p>Customer SMS</p>
+            {smsCapabilities ? (
+              <div className="list-stack compact">
+                <div className="detail-grid">
+                  <Detail label="Provider" value={smsCapabilities.provider || "unknown"} />
+                  <Detail label="Enabled" value={smsCapabilities.enabled ? "yes" : "no"} />
+                  <Detail label="To number" value={smsCapabilities.toNumber || "n/a"} />
+                  <Detail label="Sender" value={smsCapabilities.fromLabel || "ARCoM Ops"} />
+                </div>
+                {!!smsCapabilities.reason && <p className="muted">{smsCapabilities.reason}</p>}
+                <label className="field">
+                  <span>Intent</span>
+                  <select value={smsIntent} onChange={(event) => setSmsIntent(event.target.value)}>
+                    {!smsIntents.length && <option value="">No SMS intents available</option>}
+                    {smsIntents.map((intent) => (
+                      <option key={intent.key} value={intent.key}>
+                        {intent.label}{String(intent.recommended) === "true" ? " (recommended)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Custom message</span>
+                  <textarea
+                    rows={4}
+                    placeholder="Optional custom SMS text. Leave blank to use the template."
+                    value={smsDraft}
+                    onChange={(event) => setSmsDraft(event.target.value)}
+                  />
+                </label>
+                <div className="action-row">
+                  <button
+                    type="button"
+                    disabled={!smsCapabilities.enabled || !smsIntent || smsActionState?.loading}
+                    onClick={() => onPreviewSms?.(smsIntent, smsDraft)}
+                  >
+                    Preview SMS
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!smsCapabilities.enabled || !smsIntent || smsActionState?.loading}
+                    onClick={() => onSendSms?.(smsIntent, smsDraft)}
+                  >
+                    Send SMS
+                  </button>
+                  {smsActionState?.message && (
+                    <span className={smsActionState?.error ? "error-text" : "muted"}>{smsActionState.message}</span>
+                  )}
+                </div>
+                {smsPreview && (
+                  <div className="detail-block">
+                    <strong>Preview</strong>
+                    <p>{smsPreview.message || "No SMS preview text available."}</p>
+                    <span className="muted">
+                      {(smsPreview.provider || smsCapabilities.provider || "unknown")} • {smsPreview.toNumber || "n/a"} •{" "}
+                      {(smsPreview.segments || 0) || 1} segment(s)
+                    </span>
+                  </div>
+                )}
+                <div className="history-list">
+                  {(smsHistory || []).map((entry, index) => (
+                    <div key={`${entry.sentAt}-${index}`} className="history-entry">
+                      <p>{entry.intent || "SMS"} • {entry.status || "unknown"}</p>
+                      <span>{[entry.sentAt, entry.provider, entry.toNumber].filter(Boolean).join(" • ")}</span>
+                      <small>{entry.message}</small>
+                    </div>
+                  ))}
+                  {!(smsHistory || []).length && <p className="muted">No SMS attempts recorded for this SR yet.</p>}
+                </div>
+              </div>
+            ) : (
+              <p className="muted">No SMS detail loaded.</p>
             )}
           </article>
 
