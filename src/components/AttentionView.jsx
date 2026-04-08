@@ -9,6 +9,7 @@ const DEFAULT_FILTERS = {
 
 export default function AttentionView({
   items,
+  ownerOptions = [],
   loading,
   error,
   initialFilters = DEFAULT_FILTERS,
@@ -126,13 +127,20 @@ export default function AttentionView({
 
           <div className="action-row">
             <label className="field slim">
-              <span>Bulk owner ID</span>
-              <input value={bulkOwnerId} onChange={(event) => setBulkOwnerId(event.target.value)} inputMode="numeric" />
+              <span>Bulk owner</span>
+              <select value={bulkOwnerId} onChange={(event) => setBulkOwnerId(event.target.value)}>
+                <option value="">Select owner</option>
+                {ownerOptions.map((option) => (
+                  <option key={option.bluefolderUserId} value={option.bluefolderUserId}>
+                    {formatOwnerOption(option)}
+                  </option>
+                ))}
+              </select>
             </label>
             <button
               type="button"
               disabled={!selectedIds.length}
-              onClick={() => onBulkAction("assign", selectedIds, { assignedOwnerDiscordUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
+              onClick={() => onBulkAction("assign", selectedIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
             >
               Assign selected
             </button>
@@ -192,7 +200,7 @@ export default function AttentionView({
               </button>
               <div className="chip-list">
                 {quickChip(item.ageBucket || item.age_bucket, "urgent") && <span className="queue-chip danger-chip">Urgent</span>}
-                {!item.assignedOwnerDiscordUserId && <span className="queue-chip">Owner gap</span>}
+                {!item.assignedOwnerBluefolderUserId && !item.assignedOwnerDiscordUserId && <span className="queue-chip">Owner gap</span>}
                 {isTriageStage(item.stage) && <span className="queue-chip">Triage</span>}
               </div>
             </div>
@@ -204,6 +212,7 @@ export default function AttentionView({
         item={selectedItemDetail?.item || selectedItem}
         history={selectedItemDetail?.history || []}
         actionState={actionState}
+        ownerOptions={ownerOptions}
         onAction={onAction}
         onOpenServiceRequest={onOpenServiceRequest}
         onOpenRoutes={onOpenRoutes}
@@ -213,11 +222,15 @@ export default function AttentionView({
   );
 }
 
-function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRequest, onOpenRoutes, onOpenServiceRequestById }) {
+function AttentionDetail({ item, history, actionState, ownerOptions, onAction, onOpenServiceRequest, onOpenRoutes, onOpenServiceRequestById }) {
   const [ownerId, setOwnerId] = useState("");
   const [snoozeHours, setSnoozeHours] = useState("4");
   const [triageDisposition, setTriageDisposition] = useState("schedule_normal");
   const [triageDetails, setTriageDetails] = useState("");
+
+  useEffect(() => {
+    setOwnerId(item?.assignedOwnerBluefolderUserId ? String(item.assignedOwnerBluefolderUserId) : "");
+  }, [item?.assignedOwnerBluefolderUserId, item?.itemId]);
 
   if (!item) {
     return (
@@ -288,14 +301,21 @@ function AttentionDetail({ item, history, actionState, onAction, onOpenServiceRe
 
       <div className="inline-form-row">
         <label className="field slim">
-          <span>Assign owner Discord ID</span>
-          <input value={ownerId} onChange={(event) => setOwnerId(event.target.value)} inputMode="numeric" />
+          <span>Assign owner</span>
+          <select value={ownerId} onChange={(event) => setOwnerId(event.target.value)}>
+            <option value="">Select owner</option>
+            {(ownerOptions || []).map((option) => (
+              <option key={option.bluefolderUserId} value={option.bluefolderUserId}>
+                {formatOwnerOption(option)}
+              </option>
+            ))}
+          </select>
         </label>
         <button
           type="button"
           onClick={() =>
             onAction(item.itemId, "assign", {
-              assignedOwnerDiscordUserId: Number.parseInt(ownerId, 10) || 0,
+              assignedOwnerBluefolderUserId: Number.parseInt(ownerId, 10) || 0,
             })
           }
         >
@@ -404,7 +424,10 @@ function compareAttentionItems(left, right, sortBy) {
     return (Number(right.ageHours || 0) - Number(left.ageHours || 0)) || String(left.reference || "").localeCompare(String(right.reference || ""));
   }
   if (sortBy === "owner_gap") {
-    return Number(Boolean(!left.assignedOwnerDiscordUserId)) < Number(Boolean(!right.assignedOwnerDiscordUserId)) ? 1 : -1;
+    return Number(Boolean(!(left.assignedOwnerBluefolderUserId || left.assignedOwnerDiscordUserId))) <
+      Number(Boolean(!(right.assignedOwnerBluefolderUserId || right.assignedOwnerDiscordUserId)))
+      ? 1
+      : -1;
   }
   return priorityScore(right) - priorityScore(left) || (Number(right.ageHours || 0) - Number(left.ageHours || 0));
 }
@@ -415,11 +438,17 @@ function priorityScore(item) {
   if (bucket === "urgent") score += 100;
   else if (bucket === "stale") score += 50;
   else if (bucket === "warm") score += 25;
-  if (!item.assignedOwnerDiscordUserId) score += 30;
+  if (!(item.assignedOwnerBluefolderUserId || item.assignedOwnerDiscordUserId)) score += 30;
   if (isTriageStage(item.stage)) score += 10;
   return score;
 }
 
 function quickChip(value, expected) {
   return String(value || "").toLowerCase() === expected;
+}
+
+function formatOwnerOption(option) {
+  const label = String(option?.label || "").trim() || `BF ${option?.bluefolderUserId || ""}`.trim();
+  const role = String(option?.role || "").trim();
+  return role ? `${label} (${role})` : label;
 }

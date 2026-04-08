@@ -45,6 +45,7 @@ export default function App() {
   const [boardLoading, setBoardLoading] = useState(true);
 
   const [attention, setAttention] = useState([]);
+  const [attentionOwnerOptions, setAttentionOwnerOptions] = useState([]);
   const [attentionError, setAttentionError] = useState("");
   const [attentionLoading, setAttentionLoading] = useState(false);
   const [attentionLoaded, setAttentionLoaded] = useState(false);
@@ -146,6 +147,7 @@ export default function App() {
     try {
       const payload = await dispatchApi.getAttention();
       setAttention(payload.items || payload.attentionItems || payload || []);
+      setAttentionOwnerOptions(payload.ownerOptions || []);
       setAttentionLoaded(true);
     } catch (error) {
       setAttentionError(formatError(error));
@@ -459,6 +461,7 @@ export default function App() {
       {activeTab === "attention" && (
         <AttentionView
           items={attention}
+          ownerOptions={attentionOwnerOptions}
           loading={attentionLoading}
           error={attentionError}
           initialFilters={preferences.attentionFilters}

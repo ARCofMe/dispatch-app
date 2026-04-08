@@ -9,6 +9,7 @@ export function technicianDisplayLabel(entity, technicianOptions = []) {
   if (option) return option.label;
 
   const bluefolderUserId =
+    entity?.assignedOwnerBluefolderUserId ??
     entity?.ownerBluefolderUserId ??
     entity?.owner_bluefolder_user_id ??
     entity?.technicianBluefolderUserId ??
@@ -44,6 +45,7 @@ function normalizeLabel(label) {
 
 function findTechnicianOption(entity, technicianOptions) {
   const ownerBluefolderUserId =
+    entity?.assignedOwnerBluefolderUserId ??
     entity?.ownerBluefolderUserId ??
     entity?.owner_bluefolder_user_id ??
     entity?.technicianBluefolderUserId ??

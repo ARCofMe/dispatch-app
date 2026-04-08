@@ -25,6 +25,8 @@ Actionable workflow queue with item detail, recent history, and controls for:
   - `clear owner`
   - bulk `clear owner`
 
+  Attention owner assignment now uses a BlueFolder-backed dropdown of dispatch-capable users rather than raw Discord ids. When BlueFolder role metadata is available, the picker labels also show the effective role, such as `dispatch`, `admin`, or `parts`.
+
 - `Service Request`
 Customer detail and merged SR timeline pulled from Ops Hub. SR detail now also renders BlueFolder-aware `statusMeta` context so dispatch can see whether a status is closed, quote-blocked, parts-active, waiting-customer, scheduling, or review-oriented without reinterpreting tenant strings in the browser.
 
