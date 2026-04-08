@@ -187,4 +187,38 @@ describe("AttentionView", () => {
 
     expect(screen.getByText("SR-100")).toBeInTheDocument();
   });
+
+  it("keeps follow-up owner separate from technician in detail", () => {
+    render(
+      <AttentionView
+        items={[]}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={{
+          itemId: "dispatch:SR-300:part_received",
+          srId: 300,
+          reference: "SR-300",
+          stage: "part_received",
+          stageLabel: "Received",
+          nextAction: "Schedule return visit",
+          status: "open",
+          ageBucket: "warm",
+          ownerLabel: "Danny Marquez",
+          technicianLabel: "Danny Marquez",
+        }}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={vi.fn()}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("unassigned")).toBeInTheDocument();
+    expect(screen.getAllByText("Danny Marquez").length).toBeGreaterThan(0);
+  });
 });

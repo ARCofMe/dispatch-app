@@ -262,7 +262,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
       <div className="detail-grid">
         <DetailValue label="Status" value={item.status} />
         <DetailValue label="Age bucket" value={item.ageBucket} />
-        <DetailValue label="Owner" value={item.assignedOwnerLabel || item.ownerLabel || "unassigned"} />
+        <DetailValue label="Owner" value={item.assignedOwnerLabel || "unassigned"} />
         <DetailValue label="Technician" value={item.technicianLabel || "n/a"} />
         <DetailValue label="Acknowledged" value={item.acknowledgedAt || "not yet"} />
         <DetailValue label="Snoozed until" value={item.snoozedUntil || "not snoozed"} />
