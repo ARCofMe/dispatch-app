@@ -37,6 +37,8 @@ function getLocalISODate() {
 }
 
 export default function App() {
+  const boardLoadIdRef = useRef(0);
+  const attentionLoadIdRef = useRef(0);
   const attentionDetailRequestIdRef = useRef(0);
   const serviceRequestLoadIdRef = useRef(0);
   const routesLoadIdRef = useRef(0);
@@ -153,28 +155,39 @@ export default function App() {
   }, [attention, selectedAttention]);
 
   async function loadBoard() {
+    const requestId = boardLoadIdRef.current + 1;
+    boardLoadIdRef.current = requestId;
     setBoardLoading(true);
     setBoardError("");
     try {
-      setBoard(await dispatchApi.getBoard());
+      const payload = await dispatchApi.getBoard();
+      if (boardLoadIdRef.current !== requestId) return;
+      setBoard(payload);
     } catch (error) {
+      if (boardLoadIdRef.current !== requestId) return;
       setBoardError(formatError(error));
     } finally {
+      if (boardLoadIdRef.current !== requestId) return;
       setBoardLoading(false);
     }
   }
 
   async function loadAttention() {
+    const requestId = attentionLoadIdRef.current + 1;
+    attentionLoadIdRef.current = requestId;
     setAttentionLoading(true);
     setAttentionError("");
     try {
       const payload = await dispatchApi.getAttention();
+      if (attentionLoadIdRef.current !== requestId) return;
       setAttention(payload.items || payload.attentionItems || payload || []);
       setAttentionOwnerOptions(payload.ownerOptions || []);
       setAttentionLoaded(true);
     } catch (error) {
+      if (attentionLoadIdRef.current !== requestId) return;
       setAttentionError(formatError(error));
     } finally {
+      if (attentionLoadIdRef.current !== requestId) return;
       setAttentionLoading(false);
     }
   }
@@ -359,7 +372,7 @@ export default function App() {
     setHeatmap(null);
     setActiveTab("routes");
     try {
-      const [previewPayload, heatmapPayload] = await Promise.all([
+      const [previewResult, heatmapResult] = await Promise.allSettled([
         dispatchApi.getRoutePreview(techId, {
           date: nextDate,
           originAddress: nextOriginAddress,
@@ -369,8 +382,22 @@ export default function App() {
         dispatchApi.getRouteHeatmap(techId),
       ]);
       if (routesLoadIdRef.current !== requestId) return;
-      setRoutePreview(previewPayload);
-      setHeatmap(heatmapPayload);
+      const nextErrors = [];
+      if (previewResult.status === "fulfilled") {
+        setRoutePreview(previewResult.value);
+      } else {
+        setRoutePreview(null);
+        nextErrors.push(formatError(previewResult.reason));
+      }
+      if (heatmapResult.status === "fulfilled") {
+        setHeatmap(heatmapResult.value);
+      } else {
+        setHeatmap(null);
+        nextErrors.push(`Heatmap unavailable: ${formatError(heatmapResult.reason)}`);
+      }
+      if (nextErrors.length) {
+        setRoutesError(nextErrors.join(" "));
+      }
     } catch (error) {
       if (routesLoadIdRef.current !== requestId) return;
       setRoutePreview(null);
