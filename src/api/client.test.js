@@ -57,6 +57,28 @@ describe("dispatchApi client", () => {
     vi.useRealTimers();
   });
 
+  it("uses the extended attention timeout for attention requests", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              text: () => Promise.resolve(JSON.stringify({ items: [] })),
+            });
+          }, 31_000);
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const requestPromise = dispatchApi.getAttention();
+    await vi.advanceTimersByTimeAsync(31_000);
+
+    await expect(requestPromise).resolves.toEqual({ items: [] });
+    vi.useRealTimers();
+  });
+
   it("keeps the shorter default timeout for non-route requests", async () => {
     vi.useFakeTimers();
     vi.stubGlobal(

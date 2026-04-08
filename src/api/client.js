@@ -3,6 +3,7 @@ const API_TOKEN = import.meta.env.VITE_OPS_HUB_API_TOKEN || "";
 const DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 30000);
 const ROUTE_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ROUTE_TIMEOUT_MS || 90000);
+const ATTENTION_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ATTENTION_TIMEOUT_MS || 90000);
 
 async function request(path, options = {}) {
   const controller = new AbortController();
@@ -61,7 +62,9 @@ export const dispatchApi = {
       }
     });
     const suffix = params.size ? `?${params.toString()}` : "";
-    return request(`/dispatch/attention${suffix}`);
+    return request(`/dispatch/attention${suffix}`, {
+      timeoutMs: ATTENTION_REQUEST_TIMEOUT_MS,
+    });
   },
   getAttentionItem(itemId) {
     return request(`/dispatch/attention/${encodeURIComponent(itemId)}`);

@@ -42,6 +42,7 @@ Copy `.env.example` to `.env.local` and set:
 - `VITE_OPS_HUB_API_TOKEN`
 - `VITE_DISPATCHER_ID`
 - `VITE_OPS_HUB_API_TIMEOUT_MS` (optional, defaults to `30000`)
+- `VITE_OPS_HUB_ATTENTION_TIMEOUT_MS` (optional, defaults to `90000` for attention queue reads)
 - `VITE_OPS_HUB_ROUTE_TIMEOUT_MS` (optional, defaults to `90000` for route preview, heatmap, and simulation calls)
 
 These values are consumed by [src/api/client.js](./src/api/client.js). The checked-in `.env.example` includes the full supported set.
