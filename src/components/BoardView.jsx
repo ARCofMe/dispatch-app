@@ -36,7 +36,8 @@ export default function BoardView({
   if (!board) return <section className="panel">Board is not loaded yet.</section>;
 
   const metrics = [
-    ["Mapped techs", metricValue(board, "mappedTechs")],
+    ["Visible techs", metricValue(board, "mappedTechs")],
+    ["Discord-linked", metricValue(board, "discordLinkedTechs")],
     ["Active techs", metricValue(board, "activeTechs")],
     ["Visible assignments", metricValue(board, "totalVisibleAssignments")],
     ["Attention jobs", metricValue(board, "attentionJobs")],

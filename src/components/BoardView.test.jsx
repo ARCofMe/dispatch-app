@@ -7,6 +7,7 @@ describe("BoardView", () => {
   it("renders key dispatch board metrics and top attention items", () => {
     const board = {
       mappedTechs: 4,
+      discordLinkedTechs: 1,
       activeTechs: 3,
       totalVisibleAssignments: 11,
       attentionJobs: 5,
@@ -49,7 +50,8 @@ describe("BoardView", () => {
       />
     );
 
-    expect(screen.getByText("Mapped techs")).toBeInTheDocument();
+    expect(screen.getByText("Visible techs")).toBeInTheDocument();
+    expect(screen.getByText("Discord-linked")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByText("quote needed: 2")).toBeInTheDocument();
     expect(screen.getAllByText("Pat Tech").length).toBeGreaterThan(0);
@@ -60,6 +62,7 @@ describe("BoardView", () => {
   it("renders an explicit idle-day message when technicians have no calls yet", () => {
     const board = {
       mappedTechs: 1,
+      discordLinkedTechs: 0,
       activeTechs: 0,
       totalVisibleAssignments: 0,
       attentionJobs: 0,
