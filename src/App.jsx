@@ -129,6 +129,23 @@ export default function App() {
     loadServiceRequest(selectedSrId.trim());
   }, [preferences.rememberLastSr, selectedSrId]);
 
+  useEffect(() => {
+    if (!selectedAttention?.itemId) return;
+    const match = attention.find((item) => item.itemId === selectedAttention.itemId);
+    if (!match) {
+      setSelectedAttention(null);
+      setSelectedAttentionDetail(null);
+      setAttentionActionState(null);
+      return;
+    }
+    if (match !== selectedAttention) {
+      setSelectedAttention(match);
+    }
+    setSelectedAttentionDetail((detail) =>
+      detail?.item?.itemId === match.itemId ? { ...detail, item: { ...detail.item, ...match } } : detail
+    );
+  }, [attention, selectedAttention]);
+
   async function loadBoard() {
     setBoardLoading(true);
     setBoardError("");

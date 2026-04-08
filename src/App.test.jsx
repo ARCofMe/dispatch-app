@@ -2,10 +2,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
-const { dispatchApiMock } = vi.hoisted(() => ({
+  const { dispatchApiMock } = vi.hoisted(() => ({
   dispatchApiMock: {
     getBoard: vi.fn(),
     getAttention: vi.fn(),
+    getAttentionItem: vi.fn(),
     getIntakeFormats: vi.fn(),
     getIntakeProfiles: vi.fn(),
     getServiceRequestCustomer: vi.fn(),
@@ -24,6 +25,7 @@ describe("Dispatch App", () => {
     window.localStorage.clear();
     dispatchApiMock.getBoard.mockReset();
     dispatchApiMock.getAttention.mockReset();
+    dispatchApiMock.getAttentionItem.mockReset();
     dispatchApiMock.getIntakeFormats.mockReset();
     dispatchApiMock.getIntakeProfiles.mockReset();
     dispatchApiMock.getServiceRequestCustomer.mockReset();
@@ -31,6 +33,17 @@ describe("Dispatch App", () => {
     dispatchApiMock.getServiceRequestWork.mockReset();
     dispatchApiMock.getServiceRequestPhotoCompliance.mockReset();
     dispatchApiMock.getAttention.mockResolvedValue({ items: [] });
+    dispatchApiMock.getAttentionItem.mockResolvedValue({
+      item: {
+        itemId: "dispatch:SR-100:quote_needed",
+        reference: "SR-100",
+        stage: "quote_needed",
+        stageLabel: "Quote Needed",
+        nextAction: "Call landlord",
+        status: "open",
+      },
+      history: [],
+    });
     dispatchApiMock.getIntakeFormats.mockResolvedValue({ items: [] });
     dispatchApiMock.getIntakeProfiles.mockResolvedValue({ items: [] });
     dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat", reference: "SR-100" });
@@ -140,5 +153,36 @@ describe("Dispatch App", () => {
     });
     expect(window.localStorage.getItem("dispatch-app-name")).toBeNull();
     expect(document.title).toBe("RouteDesk | ARCoM Ops Hub");
+  });
+
+  it("clears stale attention detail when a refresh drops the selected item", async () => {
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getAttention
+      .mockResolvedValueOnce({
+        items: [
+          {
+            itemId: "dispatch:SR-100:quote_needed",
+            reference: "SR-100",
+            stage: "quote_needed",
+            stageLabel: "Quote Needed",
+            nextAction: "Call landlord",
+            status: "open",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ items: [] });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Attention" }));
+    fireEvent.click(await screen.findByRole("button", { name: /SR-100/i }));
+    expect(await screen.findByRole("heading", { name: "SR-100" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Select an attention item to inspect history and take action.")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("heading", { name: "SR-100" })).not.toBeInTheDocument();
   });
 });
