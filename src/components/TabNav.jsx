@@ -1,5 +1,6 @@
 const TABS = [
   ["board", "Board"],
+  ["triage", "Triage"],
   ["attention", "Attention"],
   ["sr", "Service Request"],
   ["routes", "Routes"],

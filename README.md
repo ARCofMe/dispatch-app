@@ -12,6 +12,9 @@ This project is intentionally separate from `ops-hub`:
 - `Board`
 Queue-first overview for routeable technicians, visible assignments, attention load, and open parts cases. Board rows now surface BlueFolder role hints when available so dispatch/admin users discovered from the BF roster are easier to distinguish from field techs.
 
+- `Triage`
+Service-manager-focused intake and decision queue for new SR triage, missing model/serial follow-up, parts-first candidates, diagnostic-first candidates, and quote-before-schedule work.
+
 - `Attention`
 Actionable workflow queue with item detail, recent history, and controls for:
   - `ack`

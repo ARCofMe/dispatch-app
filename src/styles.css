@@ -153,13 +153,18 @@ input {
 
 .board-layout,
 .attention-layout,
-.intake-layout {
+.intake-layout,
+.triage-stack {
   display: grid;
   gap: 18px;
 }
 
 .attention-layout {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+}
+
+.triage-header {
+  margin-bottom: 18px;
 }
 
 .intake-layout {

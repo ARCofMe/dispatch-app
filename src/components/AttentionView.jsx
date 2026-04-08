@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { isTriageStage } from "./triageStages";
 
 const DEFAULT_FILTERS = {
   stage: "",
@@ -404,16 +405,6 @@ function camelFromSnake(value) {
 function labelFor(key) {
   if (key === "reference") return "Reference";
   return key.charAt(0).toUpperCase() + key.slice(1);
-}
-
-function isTriageStage(stage) {
-  return [
-    "new_sr_triage",
-    "model_serial_needed",
-    "likely_parts_previsit",
-    "diagnostic_required",
-    "previsit_quote_needed",
-  ].includes(stage);
 }
 
 function compareAttentionItems(left, right, sortBy) {

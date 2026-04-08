@@ -4,6 +4,7 @@ import BrandBar from "./components/BrandBar";
 import TabNav from "./components/TabNav";
 import BoardView from "./components/BoardView";
 import AttentionView from "./components/AttentionView";
+import TriageView from "./components/TriageView";
 import ServiceRequestView from "./components/ServiceRequestView";
 import RoutesView from "./components/RoutesView";
 import IntakeView from "./components/IntakeView";
@@ -95,7 +96,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "attention") return;
+    if (activeTab !== "attention" && activeTab !== "triage") return;
     if (attentionLoaded || attentionLoading) return;
     loadAttention();
   }, [activeTab, attentionLoaded, attentionLoading]);
@@ -473,6 +474,33 @@ export default function App() {
           onOpenRoutes={(item) =>
             loadRoutes(item?.ownerBluefolderUserId || item?.technicianBluefolderUserId || item?.bluefolderUserId)
           }
+        />
+      )}
+      {activeTab === "triage" && (
+        <TriageView
+          items={attention}
+          ownerOptions={attentionOwnerOptions}
+          loading={attentionLoading}
+          error={attentionError}
+          initialFilters={preferences.attentionFilters}
+          initialSortBy={preferences.attentionSortBy}
+          onPreferencesChange={({ filters, sortBy }) =>
+            setPreferences((current) => ({
+              ...current,
+              attentionFilters: filters,
+              attentionSortBy: sortBy,
+            }))
+          }
+          onRefresh={loadAttention}
+          onSelectItem={handleAttentionSelect}
+          selectedItem={selectedAttention}
+          selectedItemDetail={selectedAttentionDetail}
+          actionState={attentionActionState}
+          onAction={handleAttentionAction}
+          onBulkAction={handleBulkAttentionAction}
+          onOpenServiceRequest={openServiceRequestFromAttention}
+          onOpenRoutes={openRoutesFromAttention}
+          onOpenServiceRequestById={openServiceRequestById}
         />
       )}
       {activeTab === "attention" && (
