@@ -42,6 +42,22 @@ export default function ServiceRequestView({
       {!loading && !error && normalizedSrId && (
         <div className="sr-grid">
           <article className="metric-card wide">
+            <p>SR status</p>
+            <div className="list-stack compact">
+              <div className="detail-grid">
+                <Detail label="Current" value={customer?.status || work?.serviceRequestStatus || "unknown"} />
+                <Detail label="Category" value={customer?.statusMeta?.categoryLabel || work?.statusMeta?.categoryLabel || "Other"} />
+                <Detail label="Parts active" value={flagText(customer?.statusMeta?.isActiveParts || work?.statusMeta?.isActiveParts)} />
+                <Detail label="Closed" value={flagText(customer?.statusMeta?.isClosed || work?.statusMeta?.isClosed)} />
+              </div>
+              <div className="detail-block">
+                <strong>Operational read</strong>
+                <p>{describeStatusMeta(customer?.statusMeta || work?.statusMeta)}</p>
+              </div>
+            </div>
+          </article>
+
+          <article className="metric-card wide">
             <p>Work panel</p>
             {work ? (
               <div className="list-stack compact">
@@ -64,7 +80,12 @@ export default function ServiceRequestView({
                   <div className="history-entry">
                     <p>{work.partsCase.reference} • {work.partsCase.stageLabel || work.partsCase.stage}</p>
                     <span>
-                      {[work.partsCase.nextAction, work.partsCase.assignedPartsLabel, work.partsCase.ageBucket].filter(Boolean).join(" • ") || "No parts detail"}
+                      {[
+                        work.partsCase.serviceRequestStatus,
+                        work.partsCase.nextAction,
+                        work.partsCase.assignedPartsLabel,
+                        work.partsCase.ageBucket,
+                      ].filter(Boolean).join(" • ") || "No parts detail"}
                     </span>
                   </div>
                 )}
@@ -188,4 +209,19 @@ function Detail({ label, value }) {
 function formatTagList(tags) {
   if (!Array.isArray(tags) || !tags.length) return "none";
   return tags.join(", ");
+}
+
+function flagText(value) {
+  return value ? "yes" : "no";
+}
+
+function describeStatusMeta(meta) {
+  if (!meta || typeof meta !== "object") return "No BlueFolder status classification loaded yet.";
+  if (meta.isClosed) return "This SR is in a closed/completed state and should generally not drive new dispatch or parts work.";
+  if (meta.isQuoteNeeded) return "This SR is blocked on quote approval before it can move forward cleanly.";
+  if (meta.isActiveParts) return "This SR still reflects active parts work and should stay visible to operations until the parts loop is cleared.";
+  if (meta.isWaitingCustomer) return "This SR is waiting on customer-side follow-up, payment, or contact.";
+  if (meta.isScheduling) return "This SR is in a scheduling-oriented state rather than an active blocker state.";
+  if (meta.isReview) return "This SR is sitting in a review/triage state that may need office follow-up.";
+  return "This SR status is known but does not currently map to a stronger operations rule.";
 }

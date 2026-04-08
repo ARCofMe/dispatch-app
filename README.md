@@ -26,7 +26,7 @@ Actionable workflow queue with item detail, recent history, and controls for:
   - bulk `clear owner`
 
 - `Service Request`
-Customer detail and merged SR timeline pulled from Ops Hub.
+Customer detail and merged SR timeline pulled from Ops Hub. SR detail now also renders BlueFolder-aware `statusMeta` context so dispatch can see whether a status is closed, quote-blocked, parts-active, waiting-customer, scheduling, or review-oriented without reinterpreting tenant strings in the browser.
 
 - `Routes`
 Structured route preview and heatmap payloads with a real stop workspace, filter/search, manual reordering, ad-hoc stop drafting, validation/share controls, date selection, saved route preferences, and an optimization toggle backed by Ops Hub. The route tab now renders a Leaflet/OpenStreetMap map when route geometry is available, with backend image fallbacks when it is not.
