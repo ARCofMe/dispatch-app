@@ -8,6 +8,7 @@ export default function ServiceRequestView({
   timeline,
   work,
   photoCompliance,
+  sectionErrors = {},
   smsCapabilities,
   smsHistory,
   smsPreview,
@@ -65,6 +66,7 @@ export default function ServiceRequestView({
         <div className="sr-grid">
           <article className="metric-card wide">
             <p>SR status</p>
+            {!!sectionErrors.work && <p className="error-text">{sectionErrors.work}</p>}
             <div className="list-stack compact">
               <div className="detail-grid">
                 <Detail label="Current" value={customer?.status || work?.serviceRequestStatus || "unknown"} />
@@ -81,6 +83,7 @@ export default function ServiceRequestView({
 
           <article className="metric-card wide">
             <p>Work panel</p>
+            {!!sectionErrors.work && !work && <p className="error-text">{sectionErrors.work}</p>}
             {work ? (
               <div className="list-stack compact">
                 <div className="detail-grid">
@@ -139,6 +142,7 @@ export default function ServiceRequestView({
 
           <article className="metric-card wide">
             <p>Photo compliance</p>
+            {!!sectionErrors.photoCompliance && !photoCompliance && <p className="error-text">{sectionErrors.photoCompliance}</p>}
             {photoCompliance ? (
               <div className="list-stack compact">
                 <div className="detail-grid">
@@ -164,6 +168,7 @@ export default function ServiceRequestView({
 
           <article className="metric-card wide">
             <p>Customer SMS</p>
+            {!!sectionErrors.sms && !smsCapabilities && <p className="error-text">{sectionErrors.sms}</p>}
             {smsCapabilities ? (
               <div className="list-stack compact">
                 <div className="detail-grid">
@@ -223,6 +228,7 @@ export default function ServiceRequestView({
                   </div>
                 )}
                 <div className="history-list">
+                  {!!sectionErrors.smsHistory && !(smsHistory || []).length && <p className="error-text">{sectionErrors.smsHistory}</p>}
                   {(smsHistory || []).map((entry, index) => (
                     <div key={`${entry.sentAt}-${index}`} className="history-entry">
                       <p>{entry.intent || "SMS"} • {entry.status || "unknown"}</p>
@@ -240,6 +246,7 @@ export default function ServiceRequestView({
 
           <article className="metric-card wide">
             <p>Customer</p>
+            {!!sectionErrors.customer && !customer && <p className="error-text">{sectionErrors.customer}</p>}
             {customer ? (
               <div className="list-stack compact">
                 <div className="list-row">
@@ -276,6 +283,7 @@ export default function ServiceRequestView({
 
           <article className="metric-card wide">
             <p>Timeline</p>
+            {!!sectionErrors.timeline && !timelineEntries.length && <p className="error-text">{sectionErrors.timeline}</p>}
             <div className="history-list tall">
               {timelineEntries.map((entry, index) => (
                 <div key={`${entry.occurredAt}-${index}`} className="history-entry">

@@ -159,6 +159,23 @@ describe("Dispatch App", () => {
     expect(screen.getByText("Serial")).toBeInTheDocument();
   });
 
+  it("keeps usable SR sections when only one SR subrequest fails", async () => {
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat Smith", reference: "SR-100" });
+    dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
+    dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
+    dispatchApiMock.getServiceRequestPhotoCompliance.mockRejectedValue(new Error("Photo service unavailable."));
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
+    fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+
+    expect(await screen.findByText("Pat Smith")).toBeInTheDocument();
+    expect(screen.getByText("Work panel")).toBeInTheDocument();
+    expect(screen.getByText("Photo service unavailable.")).toBeInTheDocument();
+  });
+
   it("drops malformed stored preferences instead of crashing on boot", async () => {
     window.localStorage.setItem("dispatch-preferences", "{bad json");
     dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });

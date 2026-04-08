@@ -59,6 +59,7 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [srWork, setSrWork] = useState(null);
   const [srPhotoCompliance, setSrPhotoCompliance] = useState(null);
+  const [srSectionErrors, setSrSectionErrors] = useState({});
   const [srSmsCapabilities, setSrSmsCapabilities] = useState(null);
   const [srSmsHistory, setSrSmsHistory] = useState([]);
   const [srSmsPreview, setSrSmsPreview] = useState(null);
@@ -203,12 +204,13 @@ export default function App() {
     setTimeline([]);
     setSrWork(null);
     setSrPhotoCompliance(null);
+    setSrSectionErrors({});
     setSrSmsCapabilities(null);
     setSrSmsHistory([]);
     setSrSmsPreview(null);
     setSrSmsActionState(null);
     try {
-      const [customerPayload, timelinePayload, workPayload, photoCompliancePayload, smsCapabilitiesPayload, smsHistoryPayload] = await Promise.all([
+      const [customerResult, timelineResult, workResult, photoComplianceResult, smsCapabilitiesResult, smsHistoryResult] = await Promise.allSettled([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
@@ -217,18 +219,69 @@ export default function App() {
         dispatchApi.getServiceRequestSmsHistory(srId),
       ]);
       if (serviceRequestLoadIdRef.current !== requestId) return;
-      setCustomer(customerPayload);
-      setTimeline(timelinePayload);
-      setSrWork(workPayload);
-      setSrPhotoCompliance(photoCompliancePayload);
-      setSrSmsCapabilities(smsCapabilitiesPayload);
-      setSrSmsHistory(smsHistoryPayload?.items || []);
+      const nextSectionErrors = {};
+
+      if (customerResult.status === "fulfilled") {
+        setCustomer(customerResult.value);
+      } else {
+        setCustomer(null);
+        nextSectionErrors.customer = formatError(customerResult.reason);
+      }
+
+      if (timelineResult.status === "fulfilled") {
+        setTimeline(timelineResult.value);
+      } else {
+        setTimeline([]);
+        nextSectionErrors.timeline = formatError(timelineResult.reason);
+      }
+
+      if (workResult.status === "fulfilled") {
+        setSrWork(workResult.value);
+      } else {
+        setSrWork(null);
+        nextSectionErrors.work = formatError(workResult.reason);
+      }
+
+      if (photoComplianceResult.status === "fulfilled") {
+        setSrPhotoCompliance(photoComplianceResult.value);
+      } else {
+        setSrPhotoCompliance(null);
+        nextSectionErrors.photoCompliance = formatError(photoComplianceResult.reason);
+      }
+
+      if (smsCapabilitiesResult.status === "fulfilled") {
+        setSrSmsCapabilities(smsCapabilitiesResult.value);
+      } else {
+        setSrSmsCapabilities(null);
+        nextSectionErrors.sms = formatError(smsCapabilitiesResult.reason);
+      }
+
+      if (smsHistoryResult.status === "fulfilled") {
+        setSrSmsHistory(smsHistoryResult.value?.items || []);
+      } else {
+        setSrSmsHistory([]);
+        nextSectionErrors.smsHistory = formatError(smsHistoryResult.reason);
+      }
+
+      setSrSectionErrors(nextSectionErrors);
+
+      if (
+        customerResult.status === "rejected" &&
+        timelineResult.status === "rejected" &&
+        workResult.status === "rejected" &&
+        photoComplianceResult.status === "rejected" &&
+        smsCapabilitiesResult.status === "rejected" &&
+        smsHistoryResult.status === "rejected"
+      ) {
+        setSrError(nextSectionErrors.customer || nextSectionErrors.work || "Could not load SR detail.");
+      }
     } catch (error) {
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setCustomer(null);
       setTimeline([]);
       setSrWork(null);
       setSrPhotoCompliance(null);
+      setSrSectionErrors({});
       setSrSmsCapabilities(null);
       setSrSmsHistory([]);
       setSrSmsPreview(null);
@@ -596,6 +649,7 @@ export default function App() {
           timeline={timeline}
           work={srWork}
           photoCompliance={srPhotoCompliance}
+          sectionErrors={srSectionErrors}
           smsCapabilities={srSmsCapabilities}
           smsHistory={srSmsHistory}
           smsPreview={srSmsPreview}
