@@ -1,4 +1,5 @@
 const WORKSPACES = [
+  ["opsHub", "OpsHub", "opsHubUrl"],
   ["routeDesk", "RouteDesk", "routeDeskUrl"],
   ["partsApp", "PartsApp", "partsAppUrl"],
   ["fieldDesk", "FieldDesk", "fieldDeskUrl"],
@@ -6,7 +7,13 @@ const WORKSPACES = [
 
 function safeWorkspaceUrl(value) {
   const trimmed = String(value || "").trim();
-  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
+  const normalized = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(normalized);
+    return /^https?:$/i.test(parsed.protocol) && parsed.host ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
 }
 
 export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk" }) {
