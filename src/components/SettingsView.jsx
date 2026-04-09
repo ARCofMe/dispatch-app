@@ -20,6 +20,8 @@ export default function SettingsView({
   apiBase,
   onClearRouteDraft,
   onClearIntakeDraft,
+  workspaceLinks,
+  onWorkspaceLinksChange,
 }) {
   return (
     <section className="panel settings-layout">
@@ -137,6 +139,37 @@ export default function SettingsView({
         <p className="muted">
           These only clear browser-local drafts. They do not touch saved backend intake profiles or workflow state.
         </p>
+      </article>
+
+      <article className="metric-card wide">
+        <p>Ecosystem links</p>
+        <div className="settings-grid">
+          <label className="field route-field">
+            <span>RouteDesk URL</span>
+            <input
+              value={workspaceLinks?.routeDeskUrl || ""}
+              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, routeDeskUrl: event.target.value })}
+              placeholder="https://route.example.com"
+            />
+          </label>
+          <label className="field route-field">
+            <span>PartsApp URL</span>
+            <input
+              value={workspaceLinks?.partsAppUrl || ""}
+              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, partsAppUrl: event.target.value })}
+              placeholder="https://parts.example.com"
+            />
+          </label>
+          <label className="field route-field">
+            <span>FieldDesk URL</span>
+            <input
+              value={workspaceLinks?.fieldDeskUrl || ""}
+              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, fieldDeskUrl: event.target.value })}
+              placeholder="https://field.example.com"
+            />
+          </label>
+        </div>
+        <p className="muted">Used for ecosystem jump buttons in the header. Blank values stay hidden.</p>
       </article>
     </section>
   );

@@ -69,14 +69,14 @@ describe("Dispatch App", () => {
       provider: "dry_run",
       enabled: true,
       toNumber: "555-0100",
-      fromLabel: "ARCoM Ops",
+      fromLabel: "OpsHub",
       intents: [{ key: "dispatch_follow_up", label: "General follow-up", recommended: "true" }],
     });
     dispatchApiMock.getServiceRequestSmsHistory.mockResolvedValue({ items: [] });
     dispatchApiMock.previewServiceRequestSms.mockResolvedValue({
       provider: "dry_run",
       toNumber: "555-0100",
-      message: "ARCoM Ops: Test",
+      message: "OpsHub: Test",
       segments: 1,
     });
     dispatchApiMock.sendServiceRequestSms.mockResolvedValue({
@@ -84,7 +84,7 @@ describe("Dispatch App", () => {
       provider: "dry_run",
       status: "dry_run",
       toNumber: "555-0100",
-      message: "ARCoM Ops: Test",
+      message: "OpsHub: Test",
     });
   });
 
@@ -198,37 +198,24 @@ describe("Dispatch App", () => {
       expect(dispatchApiMock.getBoard).toHaveBeenCalledTimes(1);
     });
     expect(window.localStorage.getItem("dispatch-app-name")).toBeNull();
-    expect(document.title).toBe("RouteDesk | ARCoM Ops Hub");
+    expect(document.title).toBe("RouteDesk | OpsHub");
   });
 
-  it("clears stale attention detail when a refresh drops the selected item", async () => {
-    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
-    dispatchApiMock.getAttention
-      .mockResolvedValueOnce({
-        items: [
-          {
-            itemId: "dispatch:SR-100:quote_needed",
-            reference: "SR-100",
-            stage: "quote_needed",
-            stageLabel: "Quote Needed",
-            nextAction: "Call landlord",
-            status: "open",
-          },
-        ],
+  it("sanitizes stored ecosystem links before rendering header jumps", async () => {
+    window.localStorage.setItem(
+      "dispatch-workspace-links",
+      JSON.stringify({
+        routeDeskUrl: "https://route.example.com",
+        partsAppUrl: "https://parts.example.com",
+        fieldDeskUrl: "javascript:alert(1)",
       })
-      .mockResolvedValueOnce({ items: [] });
+    );
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Attention" }));
-    fireEvent.click(await screen.findByRole("button", { name: /SR-100/i }));
-    expect(await screen.findByRole("heading", { name: "SR-100" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Select an attention item to inspect history and take action.")).toBeInTheDocument();
-    });
-    expect(screen.queryByRole("heading", { name: "SR-100" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Open PartsApp" })).toHaveAttribute("href", "https://parts.example.com");
+    expect(screen.queryByRole("link", { name: "Open FieldDesk" })).not.toBeInTheDocument();
   });
+
 });

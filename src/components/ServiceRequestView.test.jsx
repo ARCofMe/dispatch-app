@@ -66,11 +66,11 @@ describe("ServiceRequestView", () => {
           provider: "dry_run",
           enabled: true,
           toNumber: "555-0100",
-          fromLabel: "ARCoM Ops",
+          fromLabel: "OpsHub",
           intents: [{ key: "dispatch_follow_up", label: "General follow-up", recommended: "true" }],
         }}
         smsHistory={[]}
-        smsPreview={{ provider: "dry_run", toNumber: "555-0100", message: "ARCoM Ops: Test", segments: 1 }}
+        smsPreview={{ provider: "dry_run", toNumber: "555-0100", message: "OpsHub: Test", segments: 1 }}
         smsActionState={null}
         loading={false}
         error=""

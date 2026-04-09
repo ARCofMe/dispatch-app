@@ -175,7 +175,7 @@ export default function ServiceRequestView({
                   <Detail label="Provider" value={smsCapabilities.provider || "unknown"} />
                   <Detail label="Enabled" value={smsCapabilities.enabled ? "yes" : "no"} />
                   <Detail label="To number" value={smsCapabilities.toNumber || "n/a"} />
-                  <Detail label="Sender" value={smsCapabilities.fromLabel || "ARCoM Ops"} />
+                  <Detail label="Sender" value={smsCapabilities.fromLabel || "OpsHub"} />
                 </div>
                 {!!smsCapabilities.reason && <p className="muted">{smsCapabilities.reason}</p>}
                 <label className="field">

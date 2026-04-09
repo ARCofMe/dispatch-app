@@ -43,7 +43,7 @@ export default function RouteMapPanel({ stops = [], path = [], imageUrl = "", se
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitRouteBounds markers={markers} path={pathLatLng} />
-        {pathLatLng.length > 1 && <Polyline positions={pathLatLng} pathOptions={{ color: "#1f8a78", weight: 5, opacity: 0.82 }} />}
+        {pathLatLng.length > 1 && <Polyline positions={pathLatLng} pathOptions={{ color: "#f59e0b", weight: 5, opacity: 0.82 }} />}
         {markers.map((marker, index) => {
           const isSelected = String(marker.srId || "") === String(selectedStopId || "");
           return (
@@ -143,8 +143,8 @@ function normalizeCoordinatePoint(point) {
 }
 
 function buildMarkerIcon(label, selected) {
-  const background = selected ? "#c78b2c" : "#164e46";
-  const color = selected ? "#081311" : "#f8faf7";
+  const background = selected ? "#3b82f6" : "#f59e0b";
+  const color = "#0f172a";
   return L.divIcon({
     className: "route-stop-div-icon",
     html: `<div class="route-stop-icon${selected ? " selected" : ""}" style="background:${background};color:${color};">${label}</div>`,
