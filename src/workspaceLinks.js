@@ -1,7 +1,6 @@
 export const WORKSPACE_LINK_DEFINITIONS = [
-  { key: "opsHubUrl", appKey: "opsHub", label: "OpsHub" },
   { key: "routeDeskUrl", appKey: "routeDesk", label: "RouteDesk" },
-  { key: "partsAppUrl", appKey: "partsApp", label: "PartsApp" },
+  { key: "partsAppUrl", appKey: "partsDesk", label: "PartsDesk" },
   { key: "fieldDeskUrl", appKey: "fieldDesk", label: "FieldDesk" },
 ];
 

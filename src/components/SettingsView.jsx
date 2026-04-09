@@ -153,14 +153,6 @@ export default function SettingsView({
         </p>
         <div className="settings-grid">
           <label className="field route-field">
-            <span>OpsHub URL</span>
-            <input
-              value={workspaceLinks?.opsHubUrl || ""}
-              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, opsHubUrl: event.target.value })}
-              placeholder="ops.example.com"
-            />
-          </label>
-          <label className="field route-field">
             <span>RouteDesk URL</span>
             <input
               value={workspaceLinks?.routeDeskUrl || ""}
@@ -169,7 +161,7 @@ export default function SettingsView({
             />
           </label>
           <label className="field route-field">
-            <span>PartsApp URL</span>
+            <span>PartsDesk URL</span>
             <input
               value={workspaceLinks?.partsAppUrl || ""}
               onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, partsAppUrl: event.target.value })}
