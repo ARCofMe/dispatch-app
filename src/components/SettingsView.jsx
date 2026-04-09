@@ -185,7 +185,10 @@ export default function SettingsView({
             />
           </label>
         </div>
-        <p className="muted">Bare domains are normalized to `https://`. Invalid or unsafe URLs stay hidden.</p>
+        <p className="muted">
+          Bare domains are normalized to `https://`. Invalid or unsafe URLs stay hidden. Saved values override the
+          launcher defaults seeded from your env file.
+        </p>
         <div className="settings-grid">
           {ecosystemStatus.map((item) => (
             <div key={item.appKey} className="detail-value">

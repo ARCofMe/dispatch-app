@@ -80,6 +80,13 @@ docker compose up -d --build
 
 By default the container serves on `http://localhost:4173`.
 
+For presentation-friendly cross-app launchers, seed these in `.env.local`:
+
+- `VITE_OPSHUB_URL`
+- `VITE_ROUTEDESK_URL`
+- `VITE_PARTSAPP_URL`
+- `VITE_FIELDDESK_URL`
+
 ## Notes
 
 - RouteDesk depends on Ops Hub for all workflow and BlueFolder-derived data.
