@@ -1,22 +1,8 @@
-const WORKSPACES = [
-  ["opsHub", "OpsHub", "opsHubUrl"],
-  ["routeDesk", "RouteDesk", "routeDeskUrl"],
-  ["partsApp", "PartsApp", "partsAppUrl"],
-  ["fieldDesk", "FieldDesk", "fieldDeskUrl"],
-];
-
-function safeWorkspaceUrl(value) {
-  const trimmed = String(value || "").trim();
-  const normalized = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const parsed = new URL(normalized);
-    return /^https?:$/i.test(parsed.protocol) && parsed.host ? parsed.toString() : "";
-  } catch {
-    return "";
-  }
-}
+import { getWorkspaceLinkStatus } from "../workspaceLinks";
 
 export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk" }) {
+  const workspaces = getWorkspaceLinkStatus(workspaceLinks, currentApp);
+
   return (
     <header className="brand-bar">
       <div className="brand-bar-top">
@@ -36,22 +22,16 @@ export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk"
         Smart routes. Better days. Own the dispatch board, work the queue, and shape the field day before it slips.
       </p>
       <div className="brand-link-row">
-        {WORKSPACES.map(([key, label, linkKey]) =>
-          key === currentApp ? (
-            <span key={key} className="queue-chip">
+        {workspaces.map(({ appKey, label, href, current }) =>
+          current ? (
+            <span key={appKey} className="queue-chip">
               {label}
             </span>
-          ) : safeWorkspaceUrl(workspaceLinks?.[linkKey]) ? (
-            <a
-              key={key}
-              className="button-link secondary-button"
-              href={safeWorkspaceUrl(workspaceLinks?.[linkKey])}
-              target="_blank"
-              rel="noreferrer"
-            >
+          ) : href ? (
+            <a key={appKey} className="button-link secondary-button" href={href} target="_blank" rel="noreferrer">
               Open {label}
             </a>
-          ) : null
+          ) : null,
         )}
       </div>
     </header>

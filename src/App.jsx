@@ -10,6 +10,7 @@ import RoutesView from "./components/RoutesView";
 import IntakeView from "./components/IntakeView";
 import SettingsView from "./components/SettingsView";
 import { buildTechnicianOptions } from "./components/labelUtils";
+import { normalizeWorkspaceLinks } from "./workspaceLinks";
 
 const THEME_MODE_KEY = "dispatch-theme-mode";
 const DISPATCH_PREFERENCES_KEY = "dispatch-preferences";
@@ -34,28 +35,6 @@ const DEFAULT_WORKSPACE_LINKS = {
   partsAppUrl: import.meta.env.VITE_PARTSAPP_URL || "",
   fieldDeskUrl: import.meta.env.VITE_FIELDDESK_URL || "",
 };
-
-function normalizeWorkspaceLinks(links) {
-  const source = links && typeof links === "object" ? links : {};
-  return {
-    opsHubUrl: sanitizeWorkspaceUrl(source.opsHubUrl ?? DEFAULT_WORKSPACE_LINKS.opsHubUrl),
-    routeDeskUrl: sanitizeWorkspaceUrl(source.routeDeskUrl ?? DEFAULT_WORKSPACE_LINKS.routeDeskUrl),
-    partsAppUrl: sanitizeWorkspaceUrl(source.partsAppUrl ?? DEFAULT_WORKSPACE_LINKS.partsAppUrl),
-    fieldDeskUrl: sanitizeWorkspaceUrl(source.fieldDeskUrl ?? DEFAULT_WORKSPACE_LINKS.fieldDeskUrl),
-  };
-}
-
-function sanitizeWorkspaceUrl(value) {
-  const trimmed = String(value || "").trim();
-  if (!trimmed) return "";
-  const normalized = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const parsed = new URL(normalized);
-    return /^https?:$/i.test(parsed.protocol) && parsed.host ? parsed.toString() : "";
-  } catch {
-    return "";
-  }
-}
 
 function resolveThemeMode(themeMode) {
   if (themeMode === "dark") return "dark";
@@ -917,7 +896,7 @@ function readStoredPreferences() {
 function readStoredWorkspaceLinks() {
   const parsed = readStoredJson(window.localStorage, WORKSPACE_LINKS_KEY);
   if (!parsed || typeof parsed !== "object") return normalizeWorkspaceLinks(DEFAULT_WORKSPACE_LINKS);
-  return normalizeWorkspaceLinks(parsed);
+  return normalizeWorkspaceLinks(parsed, DEFAULT_WORKSPACE_LINKS);
 }
 
 function readStoredJson(storage, key) {
