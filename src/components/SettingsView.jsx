@@ -27,9 +27,43 @@ export default function SettingsView({
 }) {
   const ecosystemStatus = getWorkspaceLinkStatus(workspaceLinks, "routeDesk");
   const configuredCount = ecosystemStatus.filter((item) => item.configured).length;
+  const preflightChecks = [
+    { label: "API base set", ready: Boolean(apiBase) },
+    { label: "Dispatcher ID set", ready: Boolean(dispatcherId) },
+    { label: "Default technician selected", ready: Boolean(defaultRouteTechnicianId) },
+    { label: "Auto-load default technician", ready: Boolean(autoLoadDefaultRouteTech) },
+    { label: "PartsDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "partsDesk")?.configured) },
+    { label: "FieldDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "fieldDesk")?.configured) },
+  ];
+  const criticalChecks = preflightChecks.filter((item) => item.label !== "Auto-load default technician");
+  const readyCount = preflightChecks.filter((item) => item.ready).length;
+  const isPresentationReady = criticalChecks.every((item) => item.ready);
 
   return (
     <section className="panel settings-layout">
+      <article className="metric-card wide">
+        <p className="section-kicker">Presentation preflight</p>
+        <h2 className="settings-title">Readiness</h2>
+        <p className="settings-copy">
+          Confirm the dispatch workspace is actually safe to present before you leave Settings. This catches missing
+          identity, missing launchers, and incomplete route defaults in one place.
+        </p>
+        <div className="settings-grid">
+          <Detail label="Overall status" value={isPresentationReady ? "Ready for presentation" : "Needs attention"} />
+          <Detail label="Checks passed" value={`${readyCount} / ${preflightChecks.length}`} />
+          <Detail label="Sibling apps" value={`${configuredCount} / ${ecosystemStatus.length - 1} linked`} />
+          <Detail label="Default route tech" value={defaultRouteTechnicianId || "not selected"} />
+        </div>
+        <div className="settings-grid">
+          {preflightChecks.map((item) => (
+            <div key={item.label} className="detail-value">
+              <span>{item.label}</span>
+              <strong>{item.ready ? "Ready" : "Missing"}</strong>
+            </div>
+          ))}
+        </div>
+      </article>
+
       <article className="metric-card wide">
         <p className="section-kicker">Operator settings</p>
         <h2 className="settings-title">Workspace</h2>
