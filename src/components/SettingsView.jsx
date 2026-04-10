@@ -27,6 +27,8 @@ export default function SettingsView({
 }) {
   const ecosystemStatus = getWorkspaceLinkStatus(workspaceLinks, "routeDesk");
   const configuredCount = ecosystemStatus.filter((item) => item.configured).length;
+  const siblingStatus = ecosystemStatus.filter((item) => !item.current);
+  const configuredSiblingCount = siblingStatus.filter((item) => item.configured).length;
   const preflightChecks = [
     { label: "API base set", ready: Boolean(apiBase) },
     { label: "Dispatcher ID set", ready: Boolean(dispatcherId) },
@@ -51,7 +53,7 @@ export default function SettingsView({
         <div className="settings-grid">
           <Detail label="Overall status" value={isPresentationReady ? "Ready for presentation" : "Needs attention"} />
           <Detail label="Checks passed" value={`${readyCount} / ${preflightChecks.length}`} />
-          <Detail label="Sibling apps" value={`${configuredCount} / ${ecosystemStatus.length - 1} linked`} />
+          <Detail label="Sibling apps" value={`${configuredSiblingCount} / ${siblingStatus.length} linked`} />
           <Detail label="Default route tech" value={defaultRouteTechnicianId || "not selected"} />
         </div>
         <div className="settings-grid">
