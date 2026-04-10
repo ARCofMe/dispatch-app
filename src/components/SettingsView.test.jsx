@@ -41,6 +41,7 @@ describe("SettingsView", () => {
     expect(screen.getByText("Needs attention")).toBeInTheDocument();
     expect(screen.getByText("4 / 6")).toBeInTheDocument();
     expect(screen.getByText("FieldDesk launcher ready")).toBeInTheDocument();
+    expect(screen.getByText("Next fixes: Default technician selected, FieldDesk launcher ready")).toBeInTheDocument();
     expect(screen.getAllByText("Missing").length).toBeGreaterThan(0);
   });
 });
