@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 4175,
+    allowedHosts: ["routedesk.ops-hub.org"],
   },
   test: {
     environment: "jsdom",
