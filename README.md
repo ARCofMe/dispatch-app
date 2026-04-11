@@ -36,6 +36,9 @@ Create `.env.local` from `.env.example` and set:
 - `VITE_OPS_HUB_API_TOKEN`
 - `VITE_DISPATCHER_ID`
 
+For the field/presentation environment, set `VITE_OPS_HUB_API_BASE=https://ops-hub.org`.
+Use `http://127.0.0.1:8787` only for local development against a local OpsHub process.
+
 Optional:
 
 - `VITE_OPS_HUB_API_TIMEOUT_MS`
