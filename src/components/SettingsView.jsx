@@ -19,6 +19,7 @@ export default function SettingsView({
   openSrOnAttentionSelect,
   onOpenSrOnAttentionSelectChange,
   dispatcherId,
+  onDispatcherIdChange,
   apiBase,
   onClearRouteDraft,
   onClearIntakeDraft,
@@ -79,10 +80,21 @@ export default function SettingsView({
         </p>
         <div className="settings-grid">
           <Detail label="API base" value={apiBase || "n/a"} />
-          <Detail label="Dispatcher ID" value={dispatcherId || "not set"} />
+          <label className="field route-field">
+            <span>Dispatcher ID</span>
+            <input
+              value={dispatcherId || ""}
+              onChange={(event) => onDispatcherIdChange?.(event.target.value)}
+              placeholder="Your dispatcher/admin user ID"
+            />
+          </label>
           <Detail label="Workspace" value="RouteDesk" />
           <Detail label="Theme mode" value={themeMode} />
         </div>
+        <p className="muted">
+          Stored per browser under <code>routedesk-dispatcher-id</code>. Do not bake one dispatcher into a shared
+          production bundle.
+        </p>
       </article>
 
       <article className="metric-card wide">

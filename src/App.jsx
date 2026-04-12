@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { dispatchApi } from "./api/client";
+import { dispatchApi, getDispatcherId, setDispatcherId } from "./api/client";
 import BrandBar from "./components/BrandBar";
 import TabNav from "./components/TabNav";
 import BoardView from "./components/BoardView";
@@ -108,6 +108,7 @@ export default function App() {
   const [intakeImportLoading, setIntakeImportLoading] = useState(false);
   const [intakeImportError, setIntakeImportError] = useState("");
   const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem(THEME_MODE_KEY) || "dark");
+  const [dispatcherId, setDispatcherIdState] = useState(() => getDispatcherId());
   const [preferences, setPreferences] = useState(() => readStoredPreferences());
   const [workspaceLinks, setWorkspaceLinks] = useState(() => readStoredWorkspaceLinks());
 
@@ -846,7 +847,8 @@ export default function App() {
               openSrOnAttentionSelect: value,
             }))
           }
-          dispatcherId={import.meta.env.VITE_DISPATCHER_ID || ""}
+          dispatcherId={dispatcherId}
+          onDispatcherIdChange={(value) => setDispatcherIdState(setDispatcherId(value))}
           apiBase={import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787"}
           onClearRouteDraft={() => {
             window.localStorage.removeItem(ROUTE_DRAFT_KEY);

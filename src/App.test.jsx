@@ -22,6 +22,16 @@ import App from "./App";
 
 vi.mock("./api/client", () => ({
   dispatchApi: dispatchApiMock,
+  getDispatcherId: () => window.localStorage.getItem("routedesk-dispatcher-id") || "",
+  setDispatcherId: (value) => {
+    const cleaned = `${value || ""}`.trim();
+    if (cleaned) {
+      window.localStorage.setItem("routedesk-dispatcher-id", cleaned);
+    } else {
+      window.localStorage.removeItem("routedesk-dispatcher-id");
+    }
+    return cleaned;
+  },
 }));
 
 describe("Dispatch App", () => {

@@ -1,6 +1,7 @@
 const API_BASE = (import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787").replace(/\/$/, "");
 const API_TOKEN = import.meta.env.VITE_OPS_HUB_API_TOKEN || "";
-const DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
+export const DISPATCHER_ID_STORAGE_KEY = "routedesk-dispatcher-id";
+const DEFAULT_DISPATCHER_ID = import.meta.env.VITE_DISPATCHER_ID || "";
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_API_TIMEOUT_MS || 30000);
 const ROUTE_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ROUTE_TIMEOUT_MS || 90000);
 const ATTENTION_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ATTENTION_TIMEOUT_MS || 90000);
@@ -16,7 +17,7 @@ async function request(path, options = {}) {
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${API_TOKEN}`,
-        "X-Dispatch-Subject": DISPATCHER_ID,
+        "X-Dispatch-Subject": getDispatcherId(),
         ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...(options.headers || {}),
       },
@@ -185,6 +186,21 @@ export const dispatchApi = {
     });
   },
 };
+
+export function getDispatcherId() {
+  const stored = window.localStorage.getItem(DISPATCHER_ID_STORAGE_KEY);
+  return (stored || DEFAULT_DISPATCHER_ID || "").trim();
+}
+
+export function setDispatcherId(value) {
+  const cleaned = `${value || ""}`.trim();
+  if (cleaned) {
+    window.localStorage.setItem(DISPATCHER_ID_STORAGE_KEY, cleaned);
+  } else {
+    window.localStorage.removeItem(DISPATCHER_ID_STORAGE_KEY);
+  }
+  return cleaned;
+}
 
 function parsePayload(text) {
   if (!text) return null;

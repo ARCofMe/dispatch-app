@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import SettingsView from "./SettingsView";
 
@@ -22,6 +22,7 @@ describe("SettingsView", () => {
         openSrOnAttentionSelect={false}
         onOpenSrOnAttentionSelectChange={vi.fn()}
         dispatcherId="42"
+        onDispatcherIdChange={vi.fn()}
         apiBase="https://api.example.com"
         onClearRouteDraft={vi.fn()}
         onClearIntakeDraft={vi.fn()}
@@ -43,5 +44,39 @@ describe("SettingsView", () => {
     expect(screen.getByText("FieldDesk launcher ready")).toBeInTheDocument();
     expect(screen.getByText("Next fixes: Default technician selected, FieldDesk launcher ready")).toBeInTheDocument();
     expect(screen.getAllByText("Missing").length).toBeGreaterThan(0);
+  });
+
+  it("edits the per-browser dispatcher id from settings", () => {
+    const onDispatcherIdChange = vi.fn();
+    render(
+      <SettingsView
+        themeMode="dark"
+        onThemeModeChange={vi.fn()}
+        technicianOptions={[]}
+        defaultRouteTechnicianId=""
+        onDefaultRouteTechnicianChange={vi.fn()}
+        autoLoadDefaultRouteTech
+        onAutoLoadDefaultRouteTechChange={vi.fn()}
+        routeOptimizeByDefault={false}
+        onRouteOptimizeByDefaultChange={vi.fn()}
+        rememberLastSr
+        onRememberLastSrChange={vi.fn()}
+        restoreLastSrOnLaunch={false}
+        onRestoreLastSrOnLaunchChange={vi.fn()}
+        openSrOnAttentionSelect={false}
+        onOpenSrOnAttentionSelectChange={vi.fn()}
+        dispatcherId=""
+        onDispatcherIdChange={onDispatcherIdChange}
+        apiBase="https://api.example.com"
+        onClearRouteDraft={vi.fn()}
+        onClearIntakeDraft={vi.fn()}
+        workspaceLinks={{ routeDeskUrl: "", partsAppUrl: "", fieldDeskUrl: "" }}
+        onWorkspaceLinksChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Dispatcher ID"), { target: { value: "dispatcher-42" } });
+
+    expect(onDispatcherIdChange).toHaveBeenCalledWith("dispatcher-42");
   });
 });

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { dispatchApi } from "./client";
+import { DISPATCHER_ID_STORAGE_KEY, dispatchApi, getDispatcherId, setDispatcherId } from "./client";
 
 describe("dispatchApi client", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.removeItem(DISPATCHER_ID_STORAGE_KEY);
   });
 
   it("omits json content-type on GET requests", async () => {
@@ -18,6 +19,28 @@ describe("dispatchApi client", () => {
     const [, options] = fetchMock.mock.calls[0];
     expect(options.headers["Content-Type"]).toBeUndefined();
     expect(options.headers["X-Dispatch-Subject"]).toBeTypeOf("string");
+  });
+
+  it("uses the per-browser dispatcher id for dispatch requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ mappedTechs: 1 })),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    setDispatcherId("dispatcher-42");
+    await dispatchApi.getBoard();
+
+    const [, options] = fetchMock.mock.calls[0];
+    expect(options.headers["X-Dispatch-Subject"]).toBe("dispatcher-42");
+    expect(getDispatcherId()).toBe("dispatcher-42");
+  });
+
+  it("clears the per-browser dispatcher id when blanked", () => {
+    setDispatcherId("dispatcher-42");
+    setDispatcherId("");
+
+    expect(window.localStorage.getItem(DISPATCHER_ID_STORAGE_KEY)).toBeNull();
   });
 
   it("adds a clearer dispatcher message for 403 responses", async () => {
