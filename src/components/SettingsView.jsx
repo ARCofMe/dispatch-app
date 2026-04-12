@@ -32,7 +32,7 @@ export default function SettingsView({
   const configuredSiblingCount = siblingStatus.filter((item) => item.configured).length;
   const preflightChecks = [
     { label: "API base set", ready: Boolean(apiBase) },
-    { label: "Dispatcher ID set", ready: Boolean(dispatcherId) },
+    { label: "Operator ID set", ready: Boolean(dispatcherId) },
     { label: "Default technician selected", ready: Boolean(defaultRouteTechnicianId) },
     { label: "Auto-load default technician", ready: Boolean(autoLoadDefaultRouteTech) },
     { label: "PartsDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "partsDesk")?.configured) },
@@ -81,19 +81,19 @@ export default function SettingsView({
         <div className="settings-grid">
           <Detail label="API base" value={apiBase || "n/a"} />
           <label className="field route-field">
-            <span>Dispatcher ID</span>
+            <span>OpsHub operator ID</span>
             <input
               value={dispatcherId || ""}
               onChange={(event) => onDispatcherIdChange?.(event.target.value)}
-              placeholder="Your dispatcher/admin user ID"
+              placeholder="Example: route-desk"
             />
           </label>
           <Detail label="Workspace" value="RouteDesk" />
           <Detail label="Theme mode" value={themeMode} />
         </div>
         <p className="muted">
-          Stored per browser under <code>routedesk-dispatcher-id</code>. Do not bake one dispatcher into a shared
-          production bundle.
+          Stored per browser under <code>routedesk-dispatcher-id</code>. Use an OpsHub dispatcher/admin operator ID;
+          linked Discord IDs still work for compatibility but are not required.
         </p>
       </article>
 

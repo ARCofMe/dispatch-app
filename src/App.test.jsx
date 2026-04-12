@@ -104,14 +104,14 @@ describe("Dispatch App", () => {
 
   it("shows the hardened dispatcher auth error on initial board load", async () => {
     dispatchApiMock.getBoard.mockRejectedValue(
-      new Error("Dispatcher or admin identity could not be resolved. Check the dispatcher/admin user ID allowlist."),
+      new Error("Dispatcher or admin identity could not be resolved. Check the OpsHub dispatcher/admin operator allowlist."),
     );
 
     render(<App />);
 
     await waitFor(() => {
       expect(
-        screen.getByText("Dispatcher or admin identity could not be resolved. Check the dispatcher/admin user ID allowlist."),
+        screen.getByText("Dispatcher or admin identity could not be resolved. Check the OpsHub dispatcher/admin operator allowlist."),
       ).toBeInTheDocument();
     });
   });

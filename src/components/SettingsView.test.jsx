@@ -75,7 +75,7 @@ describe("SettingsView", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Dispatcher ID"), { target: { value: "dispatcher-42" } });
+    fireEvent.change(screen.getByLabelText("OpsHub operator ID"), { target: { value: "dispatcher-42" } });
 
     expect(onDispatcherIdChange).toHaveBeenCalledWith("dispatcher-42");
   });

@@ -54,7 +54,7 @@ describe("dispatchApi client", () => {
     );
 
     await expect(dispatchApi.getBoard()).rejects.toThrow(
-      "Dispatcher or admin identity could not be resolved. Check the dispatcher/admin user ID allowlist.",
+      "Dispatcher or admin identity could not be resolved. Check the OpsHub dispatcher/admin operator allowlist.",
     );
   });
 

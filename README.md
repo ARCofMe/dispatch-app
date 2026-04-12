@@ -38,8 +38,9 @@ Create `.env.local` from `.env.example` and set:
 
 For the field/presentation environment, set `VITE_OPS_HUB_API_BASE=https://ops-hub.org`.
 Use `http://127.0.0.1:8787` only for local development against a local OpsHub process.
-For shared presentation deployments, leave `VITE_DISPATCHER_ID` blank and have each dispatcher set their own ID in RouteDesk `Settings`.
+For shared presentation deployments, leave `VITE_DISPATCHER_ID` blank and have each dispatcher set their own OpsHub operator ID in RouteDesk `Settings`.
 RouteDesk stores that identity per browser under `routedesk-dispatcher-id`.
+The preferred value is an OpsHub dispatcher/admin operator ID from `OPS_HUB_DISPATCHER_OPERATOR_IDS` or `OPS_HUB_ADMIN_OPERATOR_IDS`; linked Discord user IDs still work for compatibility.
 
 Optional:
 
