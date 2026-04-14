@@ -1,11 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import RoutesView from "./RoutesView";
 
 describe("RoutesView", () => {
-  it("filters route stops, carries the selected date, and opens service requests", () => {
+  it("filters route stops, carries the selected date, and opens service requests", async () => {
     const onLoad = vi.fn();
     const onOpenServiceRequestById = vi.fn();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
 
     render(
       <RoutesView
@@ -46,6 +48,8 @@ describe("RoutesView", () => {
     expect(screen.getByText("enabled")).toBeInTheDocument();
     expect(screen.getByText("24.5")).toBeInTheDocument();
     expect(screen.getByText("Static map fallback")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy route brief" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("RouteDesk brief for Pat Tech")));
     expect(screen.getByDisplayValue("Pat Tech")).toBeInTheDocument();
     expect(screen.getByDisplayValue("2026-04-05")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Filter stops"), { target: { value: "auburn" } });

@@ -755,6 +755,13 @@ export default function RoutesView({
                 >
                   Copy stop manifest
                 </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => handleCopy(buildRouteBrief(routePreview, mapStatus, validation), "Copied route brief.")}
+                >
+                  Copy route brief
+                </button>
                 {routePreview?.routeUrl && (
                   <a className="route-link button-link" href={routePreview.routeUrl} target="_blank" rel="noreferrer">
                     Open route in maps
@@ -912,6 +919,18 @@ function buildManifest(stops) {
   return stops
     .map((stop, index) => `${index + 1}. ${stop.label} | ${stop.subject || "Service Request"} | ${stop.address}`)
     .join("\n");
+}
+
+function buildRouteBrief(routePreview, mapStatus, validation) {
+  if (!routePreview) return "";
+  return [
+    `RouteDesk brief for ${routePreview.technicianLabel || "technician"} on ${routePreview.routeDate || "today"}`,
+    `Stops: ${(routePreview.stops || []).length}`,
+    `Map: ${mapStatus?.label || "unknown"}`,
+    `Late stops: ${validation?.lateCount ?? 0}`,
+    `Suggested first stop: ${validation?.suggestedFirstStop || "n/a"}`,
+    `First/last: ${(routePreview.stops || [])[0]?.label || "n/a"} -> ${(routePreview.stops || []).at(-1)?.label || "n/a"}`,
+  ].join("\n");
 }
 
 function formatMetric(value) {
