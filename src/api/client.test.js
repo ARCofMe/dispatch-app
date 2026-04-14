@@ -53,9 +53,21 @@ describe("dispatchApi client", () => {
       }),
     );
 
-    await expect(dispatchApi.getBoard()).rejects.toThrow(
-      "Dispatcher or admin identity could not be resolved. Check the OpsHub dispatcher/admin operator allowlist.",
+    await expect(dispatchApi.getBoard()).rejects.toThrow("routedesk-dispatcher-id browser setting.");
+  });
+
+  it("includes the sent dispatcher operator id in 403 responses", async () => {
+    setDispatcherId("wrong-dispatcher");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve(JSON.stringify({ success: false, message: "Dispatcher or admin identity could not be resolved." })),
+      }),
     );
+
+    await expect(dispatchApi.getBoard()).rejects.toThrow('Sent operator ID "wrong-dispatcher".');
   });
 
   it("uses the extended route timeout for route preview requests", async () => {

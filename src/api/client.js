@@ -219,6 +219,12 @@ function buildErrorMessage(status, payload, text) {
     `HTTP ${status}`;
 
   if (status === 401) return `${message} Check the Ops Hub API token.`;
-  if (status === 403) return `${message} Check the OpsHub dispatcher/admin operator allowlist.`;
+  if (status === 403) return `${message} ${buildDispatcherIdentityHint()}`;
   return message;
+}
+
+function buildDispatcherIdentityHint() {
+  const current = getDispatcherId();
+  const identity = current ? `Sent operator ID "${current}".` : "No RouteDesk operator ID is set in this browser.";
+  return `${identity} Check the OpsHub dispatcher/admin operator allowlist and the ${DISPATCHER_ID_STORAGE_KEY} browser setting.`;
 }
