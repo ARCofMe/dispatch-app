@@ -52,6 +52,14 @@ export default function AttentionView({
     });
     return filtered.sort((left, right) => compareAttentionItems(left, right, sortBy));
   }, [filters, items, sortBy]);
+  const actionableVisibleIds = visibleItems
+    .filter((item) => item.status === "open" && !item.readOnly)
+    .slice(0, 20)
+    .map((item) => item.itemId);
+  const selectedActionableIds = selectedIds.filter((itemId) => {
+    const item = visibleItems.find((candidate) => candidate.itemId === itemId);
+    return item && !item.readOnly;
+  });
 
   return (
     <section className="panel attention-layout">
@@ -88,7 +96,7 @@ export default function AttentionView({
             <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
             <button
               type="button"
-              onClick={() => setSelectedIds(visibleItems.slice(0, 25).map((item) => item.itemId))}
+              onClick={() => setSelectedIds(visibleItems.filter((item) => !item.readOnly).slice(0, 25).map((item) => item.itemId))}
             >
               Select visible
             </button>
@@ -97,14 +105,9 @@ export default function AttentionView({
             </button>
             <button
               type="button"
+              disabled={!actionableVisibleIds.length}
               onClick={() => {
-                onBulkAction(
-                  "ack",
-                  visibleItems
-                    .slice(0, 20)
-                    .filter((item) => item.status === "open")
-                    .map((item) => item.itemId)
-                );
+                onBulkAction("ack", actionableVisibleIds);
                 setSelectedIds([]);
               }}
             >
@@ -112,9 +115,9 @@ export default function AttentionView({
             </button>
             <button
               type="button"
-              disabled={!selectedIds.length}
+              disabled={!selectedActionableIds.length}
               onClick={() => {
-                onBulkAction("ack", selectedIds);
+                onBulkAction("ack", selectedActionableIds);
                 setSelectedIds([]);
               }}
             >
@@ -140,12 +143,12 @@ export default function AttentionView({
             </label>
             <button
               type="button"
-              disabled={!selectedIds.length}
-              onClick={() => onBulkAction("assign", selectedIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
+              disabled={!selectedActionableIds.length}
+              onClick={() => onBulkAction("assign", selectedActionableIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
             >
               Assign selected
             </button>
-            <button type="button" disabled={!selectedIds.length} onClick={() => onBulkAction("clear_owner", selectedIds)}>
+            <button type="button" disabled={!selectedActionableIds.length} onClick={() => onBulkAction("clear_owner", selectedActionableIds)}>
               Clear owner
             </button>
             <label className="field slim">
@@ -158,8 +161,8 @@ export default function AttentionView({
             </label>
             <button
               type="button"
-              disabled={!selectedIds.length}
-              onClick={() => onBulkAction("snooze", selectedIds, { hours: Number.parseInt(bulkSnoozeHours, 10) || 1 })}
+              disabled={!selectedActionableIds.length}
+              onClick={() => onBulkAction("snooze", selectedActionableIds, { hours: Number.parseInt(bulkSnoozeHours, 10) || 1 })}
             >
               Snooze selected
             </button>
@@ -180,6 +183,7 @@ export default function AttentionView({
                 <label className="check-field">
                   <input
                     type="checkbox"
+                    disabled={item.readOnly}
                     checked={selectedIds.includes(item.itemId)}
                     onChange={(event) => {
                       setSelectedIds((current) =>
@@ -201,6 +205,7 @@ export default function AttentionView({
               </button>
               <div className="chip-list">
                 {quickChip(item.ageBucket || item.age_bucket, "urgent") && <span className="queue-chip danger-chip">Urgent</span>}
+                {item.readOnly && <span className="queue-chip">Discovery</span>}
                 {!item.assignedOwnerBluefolderUserId && !item.assignedOwnerDiscordUserId && <span className="queue-chip">Owner gap</span>}
                 {isTriageStage(item.stage) && <span className="queue-chip">Triage</span>}
               </div>
@@ -228,6 +233,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
   const [snoozeHours, setSnoozeHours] = useState("4");
   const [triageDisposition, setTriageDisposition] = useState("schedule_normal");
   const [triageDetails, setTriageDetails] = useState("");
+  const isReadOnly = Boolean(item?.readOnly);
 
   useEffect(() => {
     setOwnerId(item?.assignedOwnerBluefolderUserId ? String(item.assignedOwnerBluefolderUserId) : "");
@@ -258,6 +264,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         {item.details && <p className="muted">Details: {item.details}</p>}
         {item.location && <p className="muted">Location: {item.location}</p>}
         {item.routeLabel && <p className="muted">Window: {item.routeLabel}</p>}
+        {isReadOnly && <p className="muted">Read-only discovery candidate. Open the SR to decide the next workflow action.</p>}
       </div>
 
       <div className="detail-grid">
@@ -270,13 +277,13 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
       </div>
 
       <div className="action-row">
-        <button type="button" onClick={() => onAction(item.itemId, "ack")}>
+        <button type="button" disabled={isReadOnly} onClick={() => onAction(item.itemId, "ack")}>
           Ack
         </button>
-        <button type="button" onClick={() => onAction(item.itemId, "reopen")}>
+        <button type="button" disabled={isReadOnly} onClick={() => onAction(item.itemId, "reopen")}>
           Reopen
         </button>
-        <button type="button" onClick={() => onAction(item.itemId, "unsnooze")}>
+        <button type="button" disabled={isReadOnly} onClick={() => onAction(item.itemId, "unsnooze")}>
           Unsnooze
         </button>
         <button type="button" onClick={() => onOpenServiceRequest(item)}>
@@ -294,6 +301,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         </label>
         <button
           type="button"
+          disabled={isReadOnly}
           onClick={() => onAction(item.itemId, "snooze", { hours: Number.parseInt(snoozeHours, 10) || 1 })}
         >
           Apply snooze
@@ -314,6 +322,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         </label>
         <button
           type="button"
+          disabled={isReadOnly}
           onClick={() =>
             onAction(item.itemId, "assign", {
               assignedOwnerBluefolderUserId: Number.parseInt(ownerId, 10) || 0,
@@ -322,7 +331,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         >
           Assign
         </button>
-        <button type="button" onClick={() => onAction(item.itemId, "clear_owner")}>
+        <button type="button" disabled={isReadOnly} onClick={() => onAction(item.itemId, "clear_owner")}>
           Clear owner
         </button>
       </div>
@@ -352,6 +361,7 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
             </label>
             <button
               type="button"
+              disabled={isReadOnly}
               onClick={() => onAction(item.itemId, "triage_disposition", { disposition: triageDisposition, details: triageDetails })}
             >
               Apply triage

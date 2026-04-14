@@ -50,6 +50,14 @@ function getLocalISODate() {
   return `${year}-${month}-${day}`;
 }
 
+function shallowEqual(left = {}, right = {}) {
+  const keys = new Set([...Object.keys(left || {}), ...Object.keys(right || {})]);
+  for (const key of keys) {
+    if ((left || {})[key] !== (right || {})[key]) return false;
+  }
+  return true;
+}
+
 export default function App() {
   const boardLoadIdRef = useRef(0);
   const attentionLoadIdRef = useRef(0);
@@ -549,9 +557,13 @@ export default function App() {
 
   function handleAttentionSelect(item) {
     setSelectedAttention(item);
-    setSelectedAttentionDetail(null);
     setAttentionActionState(null);
-    loadAttentionDetail(item.itemId);
+    if (item.readOnly) {
+      setSelectedAttentionDetail({ item, history: [] });
+    } else {
+      setSelectedAttentionDetail(null);
+      loadAttentionDetail(item.itemId);
+    }
     const reference = item.reference || item.srReference || "";
     const srId = reference.replace(/^SR-/i, "");
     if (srId) {
@@ -581,6 +593,19 @@ export default function App() {
   function openRoutesFromAttention(item) {
     const techId = item.ownerBluefolderUserId || item.owner_bluefolder_user_id || item.technicianBluefolderUserId;
     loadRoutes(techId);
+  }
+
+  function updateAttentionPreferences({ filters, sortBy }) {
+    setPreferences((current) => {
+      if (current.attentionSortBy === sortBy && shallowEqual(current.attentionFilters, filters)) {
+        return current;
+      }
+      return {
+        ...current,
+        attentionFilters: filters,
+        attentionSortBy: sortBy,
+      };
+    });
   }
 
   const technicianOptions = buildTechnicianOptions(board);
@@ -668,13 +693,7 @@ export default function App() {
           error={attentionError}
           initialFilters={preferences.attentionFilters}
           initialSortBy={preferences.attentionSortBy}
-          onPreferencesChange={({ filters, sortBy }) =>
-            setPreferences((current) => ({
-              ...current,
-              attentionFilters: filters,
-              attentionSortBy: sortBy,
-            }))
-          }
+          onPreferencesChange={updateAttentionPreferences}
           onRefresh={loadAttention}
           onSelectItem={handleAttentionSelect}
           selectedItem={selectedAttention}
@@ -695,13 +714,7 @@ export default function App() {
           error={attentionError}
           initialFilters={preferences.attentionFilters}
           initialSortBy={preferences.attentionSortBy}
-          onPreferencesChange={({ filters, sortBy }) =>
-            setPreferences((current) => ({
-              ...current,
-              attentionFilters: filters,
-              attentionSortBy: sortBy,
-            }))
-          }
+          onPreferencesChange={updateAttentionPreferences}
           onRefresh={loadAttention}
           onSelectItem={handleAttentionSelect}
           selectedItem={selectedAttention}

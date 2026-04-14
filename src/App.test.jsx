@@ -228,4 +228,28 @@ describe("Dispatch App", () => {
     expect(screen.queryByRole("link", { name: "Open FieldDesk" })).not.toBeInTheDocument();
   });
 
+  it("opens read-only discovery attention items without requesting persisted detail", async () => {
+    const discoveryItem = {
+      itemId: "discovery:SR-400",
+      srId: 400,
+      reference: "SR-400",
+      stage: "bluefolder_discovery",
+      stageLabel: "BlueFolder Discovery",
+      nextAction: "Review this BlueFolder SR",
+      status: "open",
+      ageBucket: "fresh",
+      readOnly: true,
+    };
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getAttention.mockResolvedValue({ items: [discoveryItem] });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Attention" }));
+    fireEvent.click(await screen.findByText("Review this BlueFolder SR"));
+
+    expect(await screen.findByText("Read-only discovery candidate. Open the SR to decide the next workflow action.")).toBeInTheDocument();
+    expect(dispatchApiMock.getAttentionItem).not.toHaveBeenCalled();
+  });
+
 });

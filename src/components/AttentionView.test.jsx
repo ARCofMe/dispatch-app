@@ -221,4 +221,51 @@ describe("AttentionView", () => {
     expect(screen.getByText("unassigned")).toBeInTheDocument();
     expect(screen.getAllByText("Danny Marquez").length).toBeGreaterThan(0);
   });
+
+  it("marks discovery items read-only while leaving SR navigation available", () => {
+    const onBulkAction = vi.fn();
+    const onAction = vi.fn();
+    const onOpenServiceRequest = vi.fn();
+    const discoveryItem = {
+      itemId: "discovery:SR-400",
+      srId: 400,
+      reference: "SR-400",
+      stage: "bluefolder_discovery",
+      stageLabel: "BlueFolder Discovery",
+      nextAction: "Review this BlueFolder SR",
+      status: "open",
+      ageBucket: "fresh",
+      readOnly: true,
+    };
+
+    render(
+      <AttentionView
+        items={[discoveryItem]}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={discoveryItem}
+        selectedItemDetail={{ item: discoveryItem, history: [] }}
+        actionState={null}
+        onAction={onAction}
+        onBulkAction={onBulkAction}
+        onOpenServiceRequest={onOpenServiceRequest}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Discovery")).toBeInTheDocument();
+    expect(screen.getByText("Read-only discovery candidate. Open the SR to decide the next workflow action.")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).toBeDisabled();
+
+    fireEvent.click(screen.getByText("Ack visible"));
+    expect(onBulkAction).not.toHaveBeenCalled();
+
+    expect(screen.getByRole("button", { name: "Ack" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Apply snooze" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Open SR" }));
+    expect(onOpenServiceRequest).toHaveBeenCalledWith(discoveryItem);
+  });
 });
