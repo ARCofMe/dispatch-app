@@ -131,6 +131,33 @@ export default function RoutesView({
     };
   }, [routePreview?.stops]);
 
+  const mapStatus = useMemo(() => {
+    const hasPath = Array.isArray(routePreview?.path) && routePreview.path.length > 1;
+    const hasStopCoords = (routePreview?.stops || []).some((stop) => hasUsableCoordinates(stop));
+    if (hasPath || hasStopCoords) {
+      return {
+        label: "Interactive map",
+        detail: "Route geometry or stop coordinates are available for the embedded map.",
+      };
+    }
+    if (routePreview?.imageUrl) {
+      return {
+        label: "Static map fallback",
+        detail: "OpsHub returned a static map image because BlueFolder stops do not include usable coordinates yet.",
+      };
+    }
+    if (routePreview?.routeUrl) {
+      return {
+        label: "External route only",
+        detail: "No embedded geometry or static image is available; use the external route link.",
+      };
+    }
+    return {
+      label: "Map unavailable",
+      detail: "Load a route with mappable addresses or check OpsHub map/geocoding configuration.",
+    };
+  }, [routePreview]);
+
   function handleLoad() {
     onTechnicianIdChange(draftTechId);
     onRouteDateChange?.(draftRouteDate);
@@ -387,7 +414,13 @@ export default function RoutesView({
           <article className="metric-card wide">
             <div className="section-head">
               <p>Route map</p>
-              <span className="muted">Uses the Ops Hub route path and stop geometry already returned by the backend.</span>
+              <span className="muted">{mapStatus.detail}</span>
+            </div>
+            <div className="route-map-status">
+              <span>{mapStatus.label}</span>
+              <small>
+                Path points: {(routePreview?.path || []).length} | Coordinate stops: {(routePreview?.stops || []).filter(hasUsableCoordinates).length} | Static image: {routePreview?.imageUrl ? "yes" : "no"}
+              </small>
             </div>
             <RouteMapPanel
               stops={routePreview?.stops || []}
@@ -706,6 +739,12 @@ function inferCityLabel(address) {
     .map((part) => part.trim())
     .filter(Boolean);
   return parts.length >= 2 ? parts[parts.length - 2] : parts[0] || "";
+}
+
+function hasUsableCoordinates(stop) {
+  const lat = Number(stop?.lat ?? stop?.latitude ?? stop?.coords?.[0]);
+  const lng = Number(stop?.lng ?? stop?.lon ?? stop?.longitude ?? stop?.coords?.[1]);
+  return Number.isFinite(lat) && Number.isFinite(lng);
 }
 
 function buildManifest(stops) {

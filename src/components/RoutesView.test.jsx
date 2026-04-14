@@ -18,6 +18,7 @@ describe("RoutesView", () => {
           optimized: true,
           metrics: { total_distance_miles: 24.5, total_drive_minutes: 61, total_labor_minutes: 120, total_minutes: 181 },
           routeUrl: "https://maps.example/route",
+          imageUrl: "https://maps.example/static.png",
           stops: [
             { label: "SR-100", srId: "100", subject: "Dryer no heat", address: "123 Main St, Lewiston, ME 04240" },
             { label: "SR-101", srId: "101", subject: "Dishwasher leak", address: "456 Oak St, Auburn, ME 04210" },
@@ -44,6 +45,7 @@ describe("RoutesView", () => {
 
     expect(screen.getByText("enabled")).toBeInTheDocument();
     expect(screen.getByText("24.5")).toBeInTheDocument();
+    expect(screen.getByText("Static map fallback")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Pat Tech")).toBeInTheDocument();
     expect(screen.getByDisplayValue("2026-04-05")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Filter stops"), { target: { value: "auburn" } });
