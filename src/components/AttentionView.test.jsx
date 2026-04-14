@@ -256,7 +256,7 @@ describe("AttentionView", () => {
       />
     );
 
-    expect(screen.getByText("Discovery")).toBeInTheDocument();
+    expect(screen.getAllByText("Discovery").length).toBeGreaterThan(0);
     expect(screen.getByText("Read-only discovery candidate. Open the SR to decide the next workflow action.")).toBeInTheDocument();
     expect(screen.getByRole("checkbox")).toBeDisabled();
 
@@ -267,5 +267,54 @@ describe("AttentionView", () => {
     expect(screen.getByRole("button", { name: "Apply snooze" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Open SR" }));
     expect(onOpenServiceRequest).toHaveBeenCalledWith(discoveryItem);
+  });
+
+  it("surfaces attention health and can jump to discovery-only filtering", () => {
+    render(
+      <AttentionView
+        items={[
+          {
+            itemId: "discovery:SR-400",
+            reference: "SR-400",
+            stage: "bluefolder_discovery",
+            stageLabel: "BlueFolder Discovery",
+            nextAction: "Review this BlueFolder SR",
+            status: "open",
+            ageBucket: "fresh",
+            readOnly: true,
+          },
+          {
+            itemId: "dispatch:SR-401:quote_needed",
+            reference: "SR-401",
+            stage: "quote_needed",
+            stageLabel: "Quote Needed",
+            nextAction: "Quote repair",
+            status: "open",
+            ageBucket: "urgent",
+          },
+        ]}
+        meta={{ scannedJobs: 9, discoveryJobs: 1 }}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={null}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={vi.fn()}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("OpsHub scanned 9 jobs for this queue.")).toBeInTheDocument();
+    expect(screen.getAllByText("Discovery").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByText("Discovery only"));
+
+    expect(screen.getByText("SR-400")).toBeInTheDocument();
+    expect(screen.queryByText("SR-401")).not.toBeInTheDocument();
   });
 });

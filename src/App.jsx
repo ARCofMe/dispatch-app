@@ -70,6 +70,7 @@ export default function App() {
   const [boardLoading, setBoardLoading] = useState(true);
 
   const [attention, setAttention] = useState([]);
+  const [attentionMeta, setAttentionMeta] = useState(null);
   const [attentionOwnerOptions, setAttentionOwnerOptions] = useState([]);
   const [attentionError, setAttentionError] = useState("");
   const [attentionLoading, setAttentionLoading] = useState(false);
@@ -220,6 +221,11 @@ export default function App() {
       const payload = await dispatchApi.getAttention();
       if (attentionLoadIdRef.current !== requestId) return;
       setAttention(payload.items || payload.attentionItems || payload || []);
+      setAttentionMeta({
+        scannedJobs: payload.scannedJobs,
+        discoveryJobs: payload.discoveryJobs,
+        filters: payload.filters,
+      });
       setAttentionOwnerOptions(payload.ownerOptions || []);
       setAttentionLoaded(true);
     } catch (error) {
@@ -688,6 +694,7 @@ export default function App() {
       {activeTab === "triage" && (
         <TriageView
           items={attention}
+          meta={attentionMeta}
           ownerOptions={attentionOwnerOptions}
           loading={attentionLoading}
           error={attentionError}
@@ -709,6 +716,7 @@ export default function App() {
       {activeTab === "attention" && (
         <AttentionView
           items={attention}
+          meta={attentionMeta}
           ownerOptions={attentionOwnerOptions}
           loading={attentionLoading}
           error={attentionError}

@@ -10,6 +10,7 @@ const DEFAULT_FILTERS = {
 
 export default function AttentionView({
   items,
+  meta = null,
   ownerOptions = [],
   loading,
   error,
@@ -60,10 +61,41 @@ export default function AttentionView({
     const item = visibleItems.find((candidate) => candidate.itemId === itemId);
     return item && !item.readOnly;
   });
+  const queueSummary = useMemo(() => {
+    const allItems = items || [];
+    return {
+      open: allItems.filter((item) => item.status === "open").length,
+      discovery: allItems.filter((item) => item.readOnly).length,
+      urgent: allItems.filter((item) => (item.ageBucket || item.age_bucket) === "urgent").length,
+      ownerGaps: allItems.filter((item) => !item.assignedOwnerBluefolderUserId && !item.assignedOwnerDiscordUserId).length,
+      visible: visibleItems.length,
+    };
+  }, [items, visibleItems.length]);
 
   return (
     <section className="panel attention-layout">
       <div className="attention-column">
+        <div className="board-grid compact attention-summary-grid">
+          <article className="metric-card">
+            <p>Open</p>
+            <strong>{queueSummary.open}</strong>
+          </article>
+          <article className="metric-card">
+            <p>Discovery</p>
+            <strong>{meta?.discoveryJobs ?? queueSummary.discovery}</strong>
+          </article>
+          <article className="metric-card">
+            <p>Urgent</p>
+            <strong>{queueSummary.urgent}</strong>
+          </article>
+          <article className="metric-card">
+            <p>Visible</p>
+            <strong>{queueSummary.visible}</strong>
+          </article>
+        </div>
+        {meta?.scannedJobs !== undefined && (
+          <p className="muted">OpsHub scanned {meta.scannedJobs} job{Number(meta.scannedJobs) === 1 ? "" : "s"} for this queue.</p>
+        )}
         <div className="attention-toolbar">
           <div className="filter-grid">
             {Object.keys(DEFAULT_FILTERS).map((key) => (
@@ -94,6 +126,9 @@ export default function AttentionView({
           </div>
           <div className="action-row">
             <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
+            <button type="button" onClick={() => setFilters((current) => ({ ...current, stage: "bluefolder_discovery" }))}>
+              Discovery only
+            </button>
             <button
               type="button"
               onClick={() => setSelectedIds(visibleItems.filter((item) => !item.readOnly).slice(0, 25).map((item) => item.itemId))}
