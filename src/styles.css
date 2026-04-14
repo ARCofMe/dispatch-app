@@ -613,6 +613,18 @@ input {
   font-weight: 700;
 }
 
+.route-stop-detail-editor {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 28%),
+    color-mix(in srgb, var(--subtle-surface) 84%, transparent);
+}
+
 .route-stop-row-selected,
 .route-tech-row-selected {
   border-color: var(--accent);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import RouteMapPanel from "./RouteMapPanel";
 
 const ROUTE_DRAFT_KEY = "dispatch-route-draft";
+const BLUEFOLDER_ACCOUNT_NAME = import.meta.env.VITE_BLUEFOLDER_ACCOUNT_NAME || "";
 
 export default function RoutesView({
   routePreview,
@@ -37,6 +38,8 @@ export default function RoutesView({
   const [hideCompleted, setHideCompleted] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [draggedStopId, setDraggedStopId] = useState("");
+  const [expandedStopId, setExpandedStopId] = useState("");
+  const [stopEdits, setStopEdits] = useState({});
   const [newStop, setNewStop] = useState({
     name: "",
     address: "",
@@ -268,6 +271,49 @@ export default function RoutesView({
         .map(getStopIdentity),
     });
     setRouteStatus("Removed stop from route draft.");
+  }
+
+  function updateStopEdit(stopId, patch) {
+    setStopEdits((current) => ({
+      ...current,
+      [stopId]: {
+        ...(current[stopId] || {}),
+        ...patch,
+      },
+    }));
+  }
+
+  function stopEditValue(stop, key) {
+    const stopId = getStopIdentity(stop);
+    const edits = stopEdits[stopId] || {};
+    if (edits[key] !== undefined) return edits[key];
+    if (key === "duration_minutes") return String(stop.duration_minutes ?? stop.durationMinutes ?? "");
+    if (key === "window_start") return stop.window_start || stop.windowStart || "";
+    if (key === "window_end") return stop.window_end || stop.windowEnd || "";
+    if (key === "status") return stop.status || "scheduled";
+    return "";
+  }
+
+  function applyStopEdit(stop) {
+    const stopId = getStopIdentity(stop);
+    const edits = stopEdits[stopId] || {};
+    const durationText = edits.duration_minutes ?? stopEditValue(stop, "duration_minutes");
+    const updatedStops = (routePreview?.stops || []).map((candidate) =>
+      getStopIdentity(candidate) === stopId
+        ? {
+            ...candidate,
+            duration_minutes: durationText === "" ? undefined : Number(durationText),
+            window_start: (edits.window_start ?? stopEditValue(stop, "window_start")) || undefined,
+            window_end: (edits.window_end ?? stopEditValue(stop, "window_end")) || undefined,
+            status: edits.status ?? stopEditValue(stop, "status"),
+          }
+        : candidate
+    );
+    simulateRoute({
+      existingStops: updatedStops,
+      manualOrder: updatedStops.map(getStopIdentity),
+    });
+    setRouteStatus("Stop details updated in route draft.");
   }
 
   function reorderStop(dragStopId, targetStopId) {
@@ -543,10 +589,71 @@ export default function RoutesView({
                       <button type="button" className="secondary-button" onClick={() => removeStop(stopId)}>
                         Remove
                       </button>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => setExpandedStopId((current) => (current === stopId ? "" : stopId))}
+                      >
+                        {expandedStopId === stopId ? "Hide details" : "Details"}
+                      </button>
                       <button type="button" className="secondary-button" onClick={() => stop.srId && onOpenServiceRequestById?.(stop.srId)}>
                         Open SR
                       </button>
                     </div>
+                    {expandedStopId === stopId && (
+                      <div className="route-stop-detail-editor">
+                        <div className="detail-grid">
+                          <Detail label="Service Request" value={stop.srId || stop.id || "draft"} />
+                          <Detail label="Window label" value={stop.routeLabel || stop.window || "n/a"} />
+                          <label className="field">
+                            <span>On-site minutes</span>
+                            <input
+                              inputMode="numeric"
+                              value={stopEditValue(stop, "duration_minutes")}
+                              onChange={(event) => updateStopEdit(stopId, { duration_minutes: event.target.value })}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Window start</span>
+                            <input
+                              type="time"
+                              value={stopEditValue(stop, "window_start")}
+                              onChange={(event) => updateStopEdit(stopId, { window_start: event.target.value })}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Window end</span>
+                            <input
+                              type="time"
+                              value={stopEditValue(stop, "window_end")}
+                              onChange={(event) => updateStopEdit(stopId, { window_end: event.target.value })}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Status</span>
+                            <select
+                              value={stopEditValue(stop, "status")}
+                              onChange={(event) => updateStopEdit(stopId, { status: event.target.value })}
+                            >
+                              <option value="scheduled">scheduled</option>
+                              <option value="in-progress">in-progress</option>
+                              <option value="complete">complete</option>
+                              <option value="draft">draft</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div className="action-row compact-row">
+                          <button type="button" onClick={() => applyStopEdit(stop)}>
+                            Apply stop edits
+                          </button>
+                          {buildBlueFolderUrl(stop) && (
+                            <a className="route-link button-link" href={buildBlueFolderUrl(stop)} target="_blank" rel="noreferrer">
+                              Open in BlueFolder
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )})}
                 {!visibleStops.length && <p className="muted">No stops match the current filter.</p>}
@@ -792,6 +899,12 @@ function hasUsableCoordinates(stop) {
 
 function getStopIdentity(stop) {
   return String(stop?.id || stop?.srId || stop?.service_request_id || stop?.label || stop?.address || "");
+}
+
+function buildBlueFolderUrl(stop) {
+  const srId = stop?.srId || stop?.service_request_id || stop?.id;
+  if (!BLUEFOLDER_ACCOUNT_NAME || !srId || String(srId).startsWith("adhoc-")) return "";
+  return `https://${BLUEFOLDER_ACCOUNT_NAME}.bluefolder.com/service/srLog.aspx?srid=${encodeURIComponent(srId)}`;
 }
 
 function buildManifest(stops) {

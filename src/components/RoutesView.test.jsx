@@ -115,4 +115,68 @@ describe("RoutesView", () => {
     );
     expect(screen.getByText("Route draft reordered. Optimization disabled for this manual sequence.")).toBeInTheDocument();
   });
+
+  it("edits stop details through route simulation", () => {
+    const onSimulateRoute = vi.fn();
+
+    render(
+      <RoutesView
+        routePreview={{
+          technicianLabel: "Pat Tech",
+          stops: [
+            {
+              id: "a",
+              label: "SR-100",
+              srId: "100",
+              subject: "Dryer no heat",
+              address: "123 Main St, Lewiston, ME 04240",
+              duration_minutes: 30,
+              window_start: "08:00",
+              window_end: "12:00",
+              status: "scheduled",
+            },
+          ],
+        }}
+        heatmap={null}
+        loading={false}
+        error=""
+        technicianId="9001"
+        routeDate="2026-04-05"
+        technicianOptions={[{ value: "9001", label: "Pat Tech" }]}
+        originAddress="Lewiston, ME"
+        destinationAddress="Auburn, ME"
+        optimize={false}
+        onRouteDateChange={vi.fn()}
+        onTechnicianIdChange={vi.fn()}
+        onOriginAddressChange={vi.fn()}
+        onDestinationAddressChange={vi.fn()}
+        onOptimizeChange={vi.fn()}
+        onLoad={vi.fn()}
+        onSimulateRoute={onSimulateRoute}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText("Details"));
+    fireEvent.change(screen.getAllByLabelText("On-site minutes")[0], { target: { value: "45" } });
+    fireEvent.change(screen.getAllByLabelText("Window start")[0], { target: { value: "09:00" } });
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "in-progress" } });
+    fireEvent.click(screen.getByText("Apply stop edits"));
+
+    expect(onSimulateRoute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        existingStops: [
+          expect.objectContaining({
+            id: "a",
+            duration_minutes: 45,
+            window_start: "09:00",
+            window_end: "12:00",
+            status: "in-progress",
+          }),
+        ],
+        manualOrder: ["a"],
+      }),
+    );
+    expect(screen.getByText("Stop details updated in route draft.")).toBeInTheDocument();
+  });
 });
