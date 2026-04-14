@@ -65,4 +65,54 @@ describe("RoutesView", () => {
     fireEvent.click(screen.getByText("Open SR"));
     expect(onOpenServiceRequestById).toHaveBeenCalledWith("101");
   });
+
+  it("reorders stops by drag/drop through route simulation and disables optimization", () => {
+    const onSimulateRoute = vi.fn();
+    const onOptimizeChange = vi.fn();
+
+    render(
+      <RoutesView
+        routePreview={{
+          technicianLabel: "Pat Tech",
+          routeUrl: "https://maps.example/route",
+          stops: [
+            { id: "a", label: "SR-100", srId: "100", subject: "Dryer no heat", address: "123 Main St, Lewiston, ME 04240" },
+            { id: "b", label: "SR-101", srId: "101", subject: "Dishwasher leak", address: "456 Oak St, Auburn, ME 04210" },
+          ],
+        }}
+        heatmap={null}
+        loading={false}
+        error=""
+        technicianId="9001"
+        routeDate="2026-04-05"
+        technicianOptions={[{ value: "9001", label: "Pat Tech" }]}
+        originAddress="Lewiston, ME"
+        destinationAddress="Auburn, ME"
+        optimize
+        onRouteDateChange={vi.fn()}
+        onTechnicianIdChange={vi.fn()}
+        onOriginAddressChange={vi.fn()}
+        onDestinationAddressChange={vi.fn()}
+        onOptimizeChange={onOptimizeChange}
+        onLoad={vi.fn()}
+        onSimulateRoute={onSimulateRoute}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    const source = screen.getAllByText(/SR-100/)[0].closest(".route-stop-row");
+    const target = screen.getAllByText(/SR-101/)[0].closest(".route-stop-row");
+    fireEvent.dragStart(source);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+
+    expect(onOptimizeChange).toHaveBeenCalledWith(false);
+    expect(onSimulateRoute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        manualOrder: ["b", "a"],
+        optimize: false,
+      }),
+    );
+    expect(screen.getByText("Route draft reordered. Optimization disabled for this manual sequence.")).toBeInTheDocument();
+  });
 });

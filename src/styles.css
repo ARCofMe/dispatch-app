@@ -594,6 +594,25 @@ input {
   align-items: start;
 }
 
+.route-stop-row[draggable="true"] {
+  cursor: grab;
+}
+
+.route-stop-row[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.route-drag-hint {
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .route-stop-row-selected,
 .route-tech-row-selected {
   border-color: var(--accent);

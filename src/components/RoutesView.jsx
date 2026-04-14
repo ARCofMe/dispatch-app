@@ -36,6 +36,7 @@ export default function RoutesView({
   const [selectedStopId, setSelectedStopId] = useState("");
   const [hideCompleted, setHideCompleted] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [draggedStopId, setDraggedStopId] = useState("");
   const [newStop, setNewStop] = useState({
     name: "",
     address: "",
@@ -94,6 +95,7 @@ export default function RoutesView({
         .some((value) => String(value).toLowerCase().includes(needle))
     );
   }, [hideCompleted, routePreview?.stops, stopFilter]);
+  const canDragReorder = Boolean(routePreview?.stops?.length) && !stopFilter.trim() && !hideCompleted;
 
   const filteredTechnicians = useMemo(() => {
     const needle = techFilter.trim().toLowerCase();
@@ -177,6 +179,7 @@ export default function RoutesView({
     addedStops = [],
     removedIds = [],
     manualOrder,
+    optimizeOverride,
   } = {}) {
     if (!onSimulateRoute) return;
     const defaultOrder = existingStops
@@ -188,7 +191,7 @@ export default function RoutesView({
       routeDate: draftRouteDate,
       originAddress: draftOriginAddress,
       destinationAddress: draftDestinationAddress,
-      optimize: draftOptimize,
+      optimize: optimizeOverride ?? draftOptimize,
       existingStops,
       addedStops,
       removedIds,
@@ -227,22 +230,25 @@ export default function RoutesView({
 
   function shiftStop(stopId, direction) {
     const stops = [...(routePreview?.stops || [])];
-    const index = stops.findIndex((stop) => String(stop.id || stop.srId || "") === String(stopId));
+    const index = stops.findIndex((stop) => getStopIdentity(stop) === String(stopId));
     if (index < 0) return;
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= stops.length) return;
     const reordered = [...stops];
     const [moved] = reordered.splice(index, 1);
     reordered.splice(nextIndex, 0, moved);
+    onOptimizeChange?.(false);
+    setDraftOptimize(false);
     simulateRoute({
       existingStops: reordered,
-      manualOrder: reordered.map((stop) => String(stop.id || stop.srId || "")),
+      manualOrder: reordered.map(getStopIdentity),
+      optimizeOverride: false,
     });
   }
 
   function toggleStopComplete(stopId) {
     const stops = (routePreview?.stops || []).map((stop) =>
-      String(stop.id || stop.srId || "") === String(stopId)
+      getStopIdentity(stop) === String(stopId)
         ? { ...stop, status: stop.status === "complete" ? "scheduled" : "complete" }
         : stop
     );
@@ -258,10 +264,29 @@ export default function RoutesView({
       existingStops: stops,
       removedIds: [String(stopId)],
       manualOrder: stops
-        .filter((stop) => String(stop.id || stop.srId || "") !== String(stopId))
-        .map((stop) => String(stop.id || stop.srId || "")),
+        .filter((stop) => getStopIdentity(stop) !== String(stopId))
+        .map(getStopIdentity),
     });
     setRouteStatus("Removed stop from route draft.");
+  }
+
+  function reorderStop(dragStopId, targetStopId) {
+    if (!canDragReorder || !dragStopId || !targetStopId || dragStopId === targetStopId) return;
+    const stops = [...(routePreview?.stops || [])];
+    const sourceIndex = stops.findIndex((stop) => getStopIdentity(stop) === String(dragStopId));
+    const targetIndex = stops.findIndex((stop) => getStopIdentity(stop) === String(targetStopId));
+    if (sourceIndex < 0 || targetIndex < 0) return;
+    const reordered = [...stops];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    onOptimizeChange?.(false);
+    setDraftOptimize(false);
+    simulateRoute({
+      existingStops: reordered,
+      manualOrder: reordered.map(getStopIdentity),
+      optimizeOverride: false,
+    });
+    setRouteStatus("Route draft reordered. Optimization disabled for this manual sequence.");
   }
 
   async function addAdHocStop() {
@@ -457,7 +482,12 @@ export default function RoutesView({
             </div>
             {routePreview ? (
               <div className="list-stack compact">
-                {visibleStops.map((stop, index) => (
+                {!canDragReorder && routePreview?.stops?.length > 1 && (
+                  <p className="muted">Drag reorder is available when filters and hide-completed are off.</p>
+                )}
+                {visibleStops.map((stop, index) => {
+                  const stopId = getStopIdentity(stop);
+                  return (
                   <div
                     key={`${stop.srId}-${stop.address}-${index}`}
                     className={
@@ -465,11 +495,24 @@ export default function RoutesView({
                         ? "list-row route-stop-row route-stop-row-selected"
                         : "list-row route-stop-row"
                     }
+                    draggable={canDragReorder}
+                    onDragStart={() => canDragReorder && setDraggedStopId(stopId)}
+                    onDragOver={(event) => {
+                      if (!canDragReorder) return;
+                      event.preventDefault();
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      reorderStop(draggedStopId, stopId);
+                      setDraggedStopId("");
+                    }}
+                    onDragEnd={() => setDraggedStopId("")}
                   >
                     <div>
                       <strong>
                         {index + 1}. {stop.label}
                       </strong>
+                      {canDragReorder && <span className="route-drag-hint">Drag to reorder</span>}
                       <p>{stop.subject || "Service Request"}</p>
                       <p className="muted">{stop.address}</p>
                     </div>
@@ -480,10 +523,10 @@ export default function RoutesView({
                           .join(" • ") || "No area label"}
                       </span>
                       <div className="route-stop-actions">
-                        <button type="button" className="secondary-button" onClick={() => shiftStop(stop.id || stop.srId, -1)}>
+                        <button type="button" className="secondary-button" onClick={() => shiftStop(stopId, -1)}>
                           Up
                         </button>
-                        <button type="button" className="secondary-button" onClick={() => shiftStop(stop.id || stop.srId, 1)}>
+                        <button type="button" className="secondary-button" onClick={() => shiftStop(stopId, 1)}>
                           Down
                         </button>
                       </div>
@@ -494,10 +537,10 @@ export default function RoutesView({
                       >
                         Focus on map
                       </button>
-                      <button type="button" className="secondary-button" onClick={() => toggleStopComplete(stop.id || stop.srId)}>
+                      <button type="button" className="secondary-button" onClick={() => toggleStopComplete(stopId)}>
                         {stop.status === "complete" ? "Reopen" : "Complete"}
                       </button>
-                      <button type="button" className="secondary-button" onClick={() => removeStop(stop.id || stop.srId)}>
+                      <button type="button" className="secondary-button" onClick={() => removeStop(stopId)}>
                         Remove
                       </button>
                       <button type="button" className="secondary-button" onClick={() => stop.srId && onOpenServiceRequestById?.(stop.srId)}>
@@ -505,7 +548,7 @@ export default function RoutesView({
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
                 {!visibleStops.length && <p className="muted">No stops match the current filter.</p>}
               </div>
             ) : (
@@ -745,6 +788,10 @@ function hasUsableCoordinates(stop) {
   const lat = Number(stop?.lat ?? stop?.latitude ?? stop?.coords?.[0]);
   const lng = Number(stop?.lng ?? stop?.lon ?? stop?.longitude ?? stop?.coords?.[1]);
   return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
+function getStopIdentity(stop) {
+  return String(stop?.id || stop?.srId || stop?.service_request_id || stop?.label || stop?.address || "");
 }
 
 function buildManifest(stops) {
