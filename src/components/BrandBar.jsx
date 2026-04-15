@@ -1,4 +1,12 @@
 import { getWorkspaceLinkStatus } from "../workspaceLinks";
+import Icon from "./Icon";
+
+const WORKSPACE_ICONS = {
+  opsHub: "brain",
+  routeDesk: "route",
+  partsDesk: "parts",
+  fieldDesk: "field",
+};
 
 export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk" }) {
   const workspaces = getWorkspaceLinkStatus(workspaceLinks, currentApp);
@@ -6,16 +14,27 @@ export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk"
   return (
     <header className="brand-bar">
       <div className="brand-bar-top">
-        <div>
-          <p className="brand-kicker">OpsHub ecosystem</p>
-          <h1 className="brand-wordmark">
-            <span className="brand-wordmark-primary">Route</span>
-            <span className="brand-wordmark-accent">Desk</span>
-          </h1>
+        <div className="brand-identity">
+          <div className="brand-mark-card" aria-hidden="true">
+            <Icon name="route" className="brand-mark-icon" />
+          </div>
+          <div>
+            <p className="brand-kicker">OpsHub ecosystem</p>
+            <h1 className="brand-wordmark">
+              <span className="brand-wordmark-primary">Route</span>
+              <span className="brand-wordmark-accent">Desk</span>
+            </h1>
+          </div>
         </div>
         <div className="brand-context">
-          <span className="status-pill">OpsHub brain</span>
-          <span className="queue-chip">Route orchestration</span>
+          <span className="status-pill">
+            <Icon name="brain" className="pill-icon" />
+            OpsHub brain
+          </span>
+          <span className="queue-chip">
+            <Icon name="routes" className="pill-icon" />
+            Route orchestration
+          </span>
         </div>
       </div>
       <p className="brand-copy">
@@ -25,10 +44,12 @@ export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk"
         {workspaces.map(({ appKey, label, href, current }) =>
           current ? (
             <span key={appKey} className="queue-chip">
+              <Icon name={WORKSPACE_ICONS[appKey] ?? "ops"} className="pill-icon" />
               {label}
             </span>
           ) : href ? (
             <a key={appKey} className="button-link secondary-button" href={href} target="_blank" rel="noreferrer">
+              <Icon name={WORKSPACE_ICONS[appKey] ?? "external"} className="button-icon" />
               Open {label}
             </a>
           ) : null,
