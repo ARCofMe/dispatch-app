@@ -35,6 +35,7 @@ export default function SettingsView({
     { label: "Operator ID set", ready: Boolean(dispatcherId) },
     { label: "Default technician selected", ready: Boolean(defaultRouteTechnicianId) },
     { label: "Auto-load default technician", ready: Boolean(autoLoadDefaultRouteTech) },
+    { label: "OpsHub launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "opsHub")?.configured) },
     { label: "PartsDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "partsDesk")?.configured) },
     { label: "FieldDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "fieldDesk")?.configured) },
   ];
@@ -204,6 +205,14 @@ export default function SettingsView({
           {configuredCount} of {ecosystemStatus.length} workspaces configured.
         </p>
         <div className="settings-grid">
+          <label className="field route-field">
+            <span>OpsHub URL</span>
+            <input
+              value={workspaceLinks?.opsHubUrl || ""}
+              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, opsHubUrl: event.target.value })}
+              placeholder="ops-hub.org"
+            />
+          </label>
           <label className="field route-field">
             <span>RouteDesk URL</span>
             <input

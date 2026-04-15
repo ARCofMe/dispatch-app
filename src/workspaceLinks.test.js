@@ -15,9 +15,10 @@ describe("workspaceLinks", () => {
     expect(
       normalizeWorkspaceLinks(
         { routeDeskUrl: "https://route.example.com", partsAppUrl: "bad url" },
-        { fieldDeskUrl: "field.example.com" },
+        { opsHubUrl: "ops.example.com", fieldDeskUrl: "field.example.com" },
       ),
     ).toEqual({
+      opsHubUrl: "https://ops.example.com/",
       routeDeskUrl: "https://route.example.com/",
       partsAppUrl: "",
       fieldDeskUrl: "https://field.example.com/",
@@ -26,9 +27,14 @@ describe("workspaceLinks", () => {
 
   it("reports ecosystem status for presentation surfaces", () => {
     const status = getWorkspaceLinkStatus(
-      { partsAppUrl: "https://parts.example.com" },
+      { opsHubUrl: "https://ops.example.com", partsAppUrl: "https://parts.example.com" },
       "routeDesk",
     );
+    expect(status.find((item) => item.appKey === "opsHub")).toMatchObject({
+      configured: true,
+      href: "https://ops.example.com/",
+      current: false,
+    });
     expect(status.find((item) => item.appKey === "routeDesk")).toMatchObject({
       configured: false,
       current: true,
