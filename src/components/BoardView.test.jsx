@@ -111,4 +111,37 @@ describe("BoardView", () => {
     expect(screen.getByText("No calls assigned yet for the current day. Routes can wait until the board fills in.")).toBeInTheDocument();
     expect(screen.getByText("No calls on deck")).toBeInTheDocument();
   });
+
+  it("does not crash when list fields are malformed", () => {
+    render(
+      <BoardView
+        board={{
+          visibleOperators: 1,
+          mappedTechs: 1,
+          discordLinkedTechs: 0,
+          activeTechs: 0,
+          totalVisibleAssignments: 0,
+          attentionJobs: 0,
+          openPartsCases: 0,
+          scannedJobs: 0,
+          attentionMetrics: { queueCounts: {} },
+          technicianLoad: { bad: "shape" },
+          topAttention: { bad: "shape" },
+          openPartsCaseItems: { bad: "shape" },
+        }}
+        loading={false}
+        error=""
+        technicianOptions={[]}
+        onOpenAttention={vi.fn()}
+        onOpenAttentionItem={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Board state")).toBeInTheDocument();
+    expect(screen.getByText("No technician load data yet.")).toBeInTheDocument();
+    expect(screen.getByText("No attention items yet.")).toBeInTheDocument();
+    expect(screen.getByText("No open parts cases.")).toBeInTheDocument();
+  });
 });
