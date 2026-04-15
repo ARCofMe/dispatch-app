@@ -431,32 +431,26 @@ export default function App() {
     setHeatmap(null);
     setActiveTab("routes");
     try {
-      const [previewResult, heatmapResult] = await Promise.allSettled([
-        dispatchApi.getRoutePreview(techId, {
-          date: nextDate,
-          originAddress: nextOriginAddress,
-          destinationAddress: nextDestinationAddress,
-          optimize: nextOptimize,
-        }),
-        dispatchApi.getRouteHeatmap(techId),
-      ]);
+      const preview = await dispatchApi.getRoutePreview(techId, {
+        date: nextDate,
+        originAddress: nextOriginAddress,
+        destinationAddress: nextDestinationAddress,
+        optimize: nextOptimize,
+      });
       if (routesLoadIdRef.current !== requestId) return;
-      const nextErrors = [];
-      if (previewResult.status === "fulfilled") {
-        setRoutePreview(previewResult.value);
-      } else {
-        setRoutePreview(null);
-        nextErrors.push(formatError(previewResult.reason));
-      }
-      if (heatmapResult.status === "fulfilled") {
-        setHeatmap(heatmapResult.value);
-      } else {
-        setHeatmap(null);
-        nextErrors.push(`Heatmap unavailable: ${formatError(heatmapResult.reason)}`);
-      }
-      if (nextErrors.length) {
-        setRoutesError(nextErrors.join(" "));
-      }
+      setRoutePreview(preview);
+      setRoutesLoading(false);
+      dispatchApi
+        .getRouteHeatmap(techId)
+        .then((payload) => {
+          if (routesLoadIdRef.current !== requestId) return;
+          setHeatmap(payload);
+        })
+        .catch((error) => {
+          if (routesLoadIdRef.current !== requestId) return;
+          setHeatmap(null);
+          setRoutesError(`Route loaded. Heatmap unavailable: ${formatError(error)}`);
+        });
     } catch (error) {
       if (routesLoadIdRef.current !== requestId) return;
       setRoutePreview(null);
