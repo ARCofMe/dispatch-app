@@ -122,7 +122,7 @@ export default function App() {
   const [manualIntakeResult, setManualIntakeResult] = useState(null);
   const [manualIntakeLoading, setManualIntakeLoading] = useState(false);
   const [manualIntakeError, setManualIntakeError] = useState("");
-  const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem(THEME_MODE_KEY) || "dark");
+  const [themeMode, setThemeMode] = useState(() => safeLocalStorageGet(THEME_MODE_KEY) || "dark");
   const [dispatcherId, setDispatcherIdState] = useState(() => getDispatcherId());
   const [preferences, setPreferences] = useState(() => readStoredPreferences());
   const [workspaceLinks, setWorkspaceLinks] = useState(() => readStoredWorkspaceLinks());
@@ -140,7 +140,7 @@ export default function App() {
   }, [activeTab, attentionLoaded, attentionLoading]);
 
   useEffect(() => {
-    window.localStorage.setItem(THEME_MODE_KEY, themeMode);
+    safeLocalStorageSet(THEME_MODE_KEY, themeMode);
     document.documentElement.dataset.theme = resolveThemeMode(themeMode);
   }, [themeMode]);
 
@@ -156,21 +156,21 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    window.localStorage.removeItem("dispatch-app-name");
+    safeLocalStorageRemove("dispatch-app-name");
     document.title = "RouteDesk | OpsHub";
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(DISPATCH_PREFERENCES_KEY, JSON.stringify(preferences));
+    safeLocalStorageSet(DISPATCH_PREFERENCES_KEY, JSON.stringify(preferences));
   }, [preferences]);
 
   useEffect(() => {
-    window.localStorage.setItem(WORKSPACE_LINKS_KEY, JSON.stringify(workspaceLinks));
+    safeLocalStorageSet(WORKSPACE_LINKS_KEY, JSON.stringify(workspaceLinks));
   }, [workspaceLinks]);
 
   useEffect(() => {
     if (!preferences.restoreLastSrOnLaunch) return;
-    const lastSr = window.localStorage.getItem(LAST_SR_KEY) || "";
+    const lastSr = safeLocalStorageGet(LAST_SR_KEY) || "";
     if (!lastSr.trim()) return;
     setSelectedSrId((current) => current || lastSr.trim());
   }, [preferences.restoreLastSrOnLaunch]);
@@ -178,7 +178,7 @@ export default function App() {
   useEffect(() => {
     if (!selectedSrId.trim()) return;
     if (preferences.rememberLastSr) {
-      window.localStorage.setItem(LAST_SR_KEY, selectedSrId.trim());
+      safeLocalStorageSet(LAST_SR_KEY, selectedSrId.trim());
     }
     loadServiceRequest(selectedSrId.trim());
   }, [preferences.rememberLastSr, selectedSrId]);
@@ -910,10 +910,10 @@ export default function App() {
           onDispatcherIdChange={(value) => setDispatcherIdState(setDispatcherId(value))}
           apiBase={import.meta.env.VITE_OPS_HUB_API_BASE || "http://127.0.0.1:8787"}
           onClearRouteDraft={() => {
-            window.localStorage.removeItem(ROUTE_DRAFT_KEY);
+            safeLocalStorageRemove(ROUTE_DRAFT_KEY);
           }}
           onClearIntakeDraft={() => {
-            window.localStorage.removeItem(INTAKE_DRAFT_KEY);
+            safeLocalStorageRemove(INTAKE_DRAFT_KEY);
           }}
           workspaceLinks={workspaceLinks}
           onWorkspaceLinksChange={(value) => setWorkspaceLinks(normalizeWorkspaceLinks(value))}
@@ -966,7 +966,31 @@ function readStoredJson(storage, key) {
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
-    storage.removeItem(key);
+    safeLocalStorageRemove(key);
     return null;
+  }
+}
+
+function safeLocalStorageGet(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return "";
+  }
+}
+
+function safeLocalStorageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Browser storage can be disabled; app state should remain usable in memory.
+  }
+}
+
+function safeLocalStorageRemove(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Browser storage can be disabled; clearing should not crash the app.
   }
 }

@@ -24,13 +24,23 @@ import App from "./App";
 
 vi.mock("./api/client", () => ({
   dispatchApi: dispatchApiMock,
-  getDispatcherId: () => window.localStorage.getItem("routedesk-dispatcher-id") || "",
+  getDispatcherId: () => {
+    try {
+      return window.localStorage.getItem("routedesk-dispatcher-id") || "";
+    } catch {
+      return "";
+    }
+  },
   setDispatcherId: (value) => {
     const cleaned = `${value || ""}`.trim();
-    if (cleaned) {
-      window.localStorage.setItem("routedesk-dispatcher-id", cleaned);
-    } else {
-      window.localStorage.removeItem("routedesk-dispatcher-id");
+    try {
+      if (cleaned) {
+        window.localStorage.setItem("routedesk-dispatcher-id", cleaned);
+      } else {
+        window.localStorage.removeItem("routedesk-dispatcher-id");
+      }
+    } catch {
+      // Match production storage tolerance.
     }
     return cleaned;
   },
@@ -215,6 +225,24 @@ describe("Dispatch App", () => {
     });
     expect(window.localStorage.getItem("dispatch-app-name")).toBeNull();
     expect(document.title).toBe("RouteDesk | OpsHub");
+  });
+
+  it("keeps rendering when browser storage is blocked", async () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+
+    render(<App />);
+
+    expect(await screen.findByText("RouteDesk")).toBeInTheDocument();
+    expect(dispatchApiMock.getBoard).toHaveBeenCalledTimes(1);
   });
 
   it("sanitizes stored ecosystem links before rendering header jumps", async () => {
