@@ -188,18 +188,42 @@ export const dispatchApi = {
 };
 
 export function getDispatcherId() {
-  const stored = window.localStorage.getItem(DISPATCHER_ID_STORAGE_KEY);
+  const stored = readLocalStorage(DISPATCHER_ID_STORAGE_KEY);
   return (stored || DEFAULT_DISPATCHER_ID || "").trim();
 }
 
 export function setDispatcherId(value) {
   const cleaned = `${value || ""}`.trim();
   if (cleaned) {
-    window.localStorage.setItem(DISPATCHER_ID_STORAGE_KEY, cleaned);
+    writeLocalStorage(DISPATCHER_ID_STORAGE_KEY, cleaned);
   } else {
-    window.localStorage.removeItem(DISPATCHER_ID_STORAGE_KEY);
+    removeLocalStorage(DISPATCHER_ID_STORAGE_KEY);
   }
   return cleaned;
+}
+
+function readLocalStorage(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return "";
+  }
+}
+
+function writeLocalStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Browser storage can be blocked; keep the UI usable with env/default identity.
+  }
+}
+
+function removeLocalStorage(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Browser storage can be blocked; clearing should not crash the app.
+  }
 }
 
 function parsePayload(text) {

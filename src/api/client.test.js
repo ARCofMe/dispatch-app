@@ -43,6 +43,25 @@ describe("dispatchApi client", () => {
     expect(window.localStorage.getItem(DISPATCHER_ID_STORAGE_KEY)).toBeNull();
   });
 
+  it("keeps dispatcher identity helpers safe when browser storage is blocked", () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+
+    expect(getDispatcherId()).toEqual(expect.any(String));
+    expect(setDispatcherId("dispatcher-42")).toBe("dispatcher-42");
+    expect(setDispatcherId("")).toBe("");
+    expect(getItemSpy).toHaveBeenCalled();
+    expect(setItemSpy).toHaveBeenCalled();
+    expect(removeItemSpy).toHaveBeenCalled();
+  });
+
   it("adds a clearer dispatcher message for 403 responses", async () => {
     vi.stubGlobal(
       "fetch",
