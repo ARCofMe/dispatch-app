@@ -33,6 +33,7 @@ export default function IntakeView({
   manualImportLoading = false,
   manualImportError = "",
   onManualImport = () => Promise.resolve(null),
+  onOpenServiceRequestById,
 }) {
   const [spreadsheetPath, setSpreadsheetPath] = useState("");
   const [spreadsheetName, setSpreadsheetName] = useState("");
@@ -338,6 +339,17 @@ export default function IntakeView({
                 ))}
               </div>
               <p className={manualResult.success ? "muted" : "error-text"}>{summarizeImportResult(manualResult.result || {}) || "No service request id returned."}</p>
+              {manualResult.result?.service_request_id && (
+                <div className="action-row">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onOpenServiceRequestById?.(manualResult.result.service_request_id)}
+                  >
+                    Open created SR
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

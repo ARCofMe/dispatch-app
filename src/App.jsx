@@ -856,6 +856,7 @@ export default function App() {
           manualImportLoading={manualIntakeLoading}
           manualImportError={manualIntakeError}
           onManualImport={importManualServiceRequest}
+          onOpenServiceRequestById={openServiceRequestById}
         />
       )}
       {activeTab === "settings" && (
