@@ -169,6 +169,18 @@ export const dispatchApi = {
       body,
     });
   },
+  previewManualServiceRequest(body) {
+    return request("/dispatch/intake/manual/preview", {
+      method: "POST",
+      body,
+    });
+  },
+  importManualServiceRequest(body) {
+    return request("/dispatch/intake/manual/import", {
+      method: "POST",
+      body,
+    });
+  },
   postAttentionAction(itemId, action, body = {}) {
     return request(`/dispatch/attention/${encodeURIComponent(itemId)}/${action}`, {
       method: "POST",

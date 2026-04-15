@@ -116,6 +116,12 @@ export default function App() {
   const [intakeImportResult, setIntakeImportResult] = useState(null);
   const [intakeImportLoading, setIntakeImportLoading] = useState(false);
   const [intakeImportError, setIntakeImportError] = useState("");
+  const [manualIntakePreview, setManualIntakePreview] = useState(null);
+  const [manualIntakePreviewLoading, setManualIntakePreviewLoading] = useState(false);
+  const [manualIntakePreviewError, setManualIntakePreviewError] = useState("");
+  const [manualIntakeResult, setManualIntakeResult] = useState(null);
+  const [manualIntakeLoading, setManualIntakeLoading] = useState(false);
+  const [manualIntakeError, setManualIntakeError] = useState("");
   const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem(THEME_MODE_KEY) || "dark");
   const [dispatcherId, setDispatcherIdState] = useState(() => getDispatcherId());
   const [preferences, setPreferences] = useState(() => readStoredPreferences());
@@ -535,6 +541,35 @@ export default function App() {
     }
   }
 
+  async function previewManualServiceRequest(body) {
+    setManualIntakePreviewLoading(true);
+    setManualIntakePreviewError("");
+    try {
+      const payload = await dispatchApi.previewManualServiceRequest(body);
+      setManualIntakePreview(payload);
+      setManualIntakeResult(null);
+      return payload;
+    } catch (error) {
+      setManualIntakePreviewError(formatError(error));
+    } finally {
+      setManualIntakePreviewLoading(false);
+    }
+  }
+
+  async function importManualServiceRequest(body) {
+    setManualIntakeLoading(true);
+    setManualIntakeError("");
+    try {
+      const payload = await dispatchApi.importManualServiceRequest(body);
+      setManualIntakeResult(payload);
+      return payload;
+    } catch (error) {
+      setManualIntakeError(formatError(error));
+    } finally {
+      setManualIntakeLoading(false);
+    }
+  }
+
   async function saveIntakeProfile(body) {
     const payload = await dispatchApi.saveIntakeProfile(body);
     await loadIntakeProfiles();
@@ -813,6 +848,14 @@ export default function App() {
           onUploadSpreadsheet={uploadIntakeSpreadsheet}
           onSaveProfile={saveIntakeProfile}
           onDeleteProfile={deleteIntakeProfile}
+          manualPreview={manualIntakePreview}
+          manualPreviewLoading={manualIntakePreviewLoading}
+          manualPreviewError={manualIntakePreviewError}
+          onManualPreview={previewManualServiceRequest}
+          manualResult={manualIntakeResult}
+          manualImportLoading={manualIntakeLoading}
+          manualImportError={manualIntakeError}
+          onManualImport={importManualServiceRequest}
         />
       )}
       {activeTab === "settings" && (

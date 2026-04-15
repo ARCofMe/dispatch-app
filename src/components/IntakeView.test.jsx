@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import IntakeView from "./IntakeView";
 
@@ -129,5 +129,56 @@ describe("IntakeView", () => {
 
     expect(screen.queryByText("Could not load intake presets.")).not.toBeInTheDocument();
     expect(screen.getByText("vendor-b")).toBeInTheDocument();
+  });
+
+  it("submits manual service requests for preview before create", async () => {
+    const onManualPreview = vi.fn(() => Promise.resolve({ success: true }));
+
+    render(
+      <IntakeView
+        formats={{ items: [] }}
+        formatsLoading={false}
+        formatsError=""
+        profiles={{ items: [] }}
+        profilesLoading={false}
+        profilesError=""
+        onRefreshProfiles={vi.fn()}
+        analysis={null}
+        analysisLoading={false}
+        analysisError=""
+        onAnalyze={vi.fn()}
+        preview={null}
+        previewLoading={false}
+        previewError=""
+        onPreview={vi.fn()}
+        importResult={null}
+        importLoading={false}
+        importError=""
+        onImport={vi.fn()}
+        onUploadSpreadsheet={vi.fn()}
+        onSaveProfile={vi.fn(() => Promise.resolve({ success: true }))}
+        onDeleteProfile={vi.fn(() => Promise.resolve({ success: true }))}
+        onManualPreview={onManualPreview}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Customer name"), { target: { value: "Pat Smith" } });
+    fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "2075551212" } });
+    fireEvent.change(screen.getByLabelText("Street address"), { target: { value: "123 Main St" } });
+    fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "No heat" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preview manual SR" }));
+
+    await waitFor(() =>
+      expect(onManualPreview).toHaveBeenCalledWith({
+        duplicateMode: "error",
+        request: {
+          customerName: "Pat Smith",
+          customerPhone: "2075551212",
+          address: "123 Main St",
+          state: "ME",
+          subject: "No heat",
+        },
+      })
+    );
   });
 });

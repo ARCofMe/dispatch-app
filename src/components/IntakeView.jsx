@@ -25,6 +25,14 @@ export default function IntakeView({
   onUploadSpreadsheet,
   onSaveProfile,
   onDeleteProfile,
+  manualPreview = null,
+  manualPreviewLoading = false,
+  manualPreviewError = "",
+  onManualPreview = () => Promise.resolve(null),
+  manualResult = null,
+  manualImportLoading = false,
+  manualImportError = "",
+  onManualImport = () => Promise.resolve(null),
 }) {
   const [spreadsheetPath, setSpreadsheetPath] = useState("");
   const [spreadsheetName, setSpreadsheetName] = useState("");
@@ -42,6 +50,26 @@ export default function IntakeView({
   const [uploading, setUploading] = useState(false);
   const [confirmPreviewed, setConfirmPreviewed] = useState(false);
   const [allowValidationOverride, setAllowValidationOverride] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    contactFirstName: "",
+    contactLastName: "",
+    address: "",
+    city: "",
+    state: "ME",
+    postalCode: "",
+    subject: "",
+    description: "",
+    priority: "",
+    status: "",
+    externalId: "",
+  });
+  const [manualDuplicateMode, setManualDuplicateMode] = useState("error");
+  const [manualPreviewFingerprint, setManualPreviewFingerprint] = useState("");
+  const [manualConfirmed, setManualConfirmed] = useState(false);
+  const [manualAllowValidationOverride, setManualAllowValidationOverride] = useState(false);
 
   const sortedMatches = useMemo(() => analysis?.adapterMatches || [], [analysis]);
 
@@ -61,6 +89,17 @@ export default function IntakeView({
     Number(preview?.rowCount || 0) > 0;
   const hasBlockingValidationErrors = (analysis?.validationIssues || []).some((item) => item.level === "error");
   const intakeReadyForImport = previewMatchesCurrentRequest && confirmPreviewed && (!hasBlockingValidationErrors || allowValidationOverride);
+  const manualRequest = compactObject(manualForm);
+  const manualFingerprint = JSON.stringify({ request: manualRequest, duplicateMode: manualDuplicateMode });
+  const manualPreviewFresh = manualPreviewFingerprint === manualFingerprint && Boolean(manualPreview);
+  const manualBlockingIssues = (manualPreview?.validationIssues || []).filter((item) => item.level === "error");
+  const manualDuplicateAction = manualPreview?.plan?.service_request_action || "";
+  const manualDuplicateBlocked = manualDuplicateAction === "error_duplicate";
+  const manualReadyForImport =
+    manualPreviewFresh &&
+    manualConfirmed &&
+    (!manualBlockingIssues.length || manualAllowValidationOverride) &&
+    !manualDuplicateBlocked;
 
   useEffect(() => {
     const draft = loadDraft();
@@ -97,6 +136,15 @@ export default function IntakeView({
     setAllowValidationOverride(false);
   }, [spreadsheetPath, formatName, fieldMapPath, rowStart, rowEnd, limit, duplicateMode, previewMode]);
 
+  useEffect(() => {
+    setManualConfirmed(false);
+    setManualAllowValidationOverride(false);
+  }, [manualFingerprint]);
+
+  function updateManualField(key, value) {
+    setManualForm((current) => ({ ...current, [key]: value }));
+  }
+
   return (
     <section className="panel intake-layout">
       <div className="attention-column">
@@ -109,6 +157,189 @@ export default function IntakeView({
             Analyze inbound spreadsheets before import. This is the first frontend slice of the ServiceSmith workflow
             now living in Ops Hub.
           </p>
+        </div>
+
+        <div className="detail-panel manual-intake-panel">
+          <div className="section-head">
+            <div>
+              <p className="section-kicker">Manual entry</p>
+              <h3>Create service request</h3>
+            </div>
+            <span className="status-pill">Preview required</span>
+          </div>
+          <p className="muted">
+            Dispatch can enter a one-off request here. RouteDesk checks customer/location/contact matches and duplicate
+            tickets before any BlueFolder write happens.
+          </p>
+          <div className="filter-grid intake-grid">
+            <ManualField label="Customer name" value={manualForm.customerName} onChange={(value) => updateManualField("customerName", value)} wide />
+            <ManualField label="Phone" value={manualForm.customerPhone} onChange={(value) => updateManualField("customerPhone", value)} />
+            <ManualField label="Email" value={manualForm.customerEmail} onChange={(value) => updateManualField("customerEmail", value)} wide />
+            <ManualField label="Contact first" value={manualForm.contactFirstName} onChange={(value) => updateManualField("contactFirstName", value)} />
+            <ManualField label="Contact last" value={manualForm.contactLastName} onChange={(value) => updateManualField("contactLastName", value)} />
+            <ManualField label="Street address" value={manualForm.address} onChange={(value) => updateManualField("address", value)} wide />
+            <ManualField label="City" value={manualForm.city} onChange={(value) => updateManualField("city", value)} />
+            <ManualField label="State" value={manualForm.state} onChange={(value) => updateManualField("state", value)} />
+            <ManualField label="Zip" value={manualForm.postalCode} onChange={(value) => updateManualField("postalCode", value)} />
+            <ManualField label="Subject" value={manualForm.subject} onChange={(value) => updateManualField("subject", value)} wide />
+            <label className="field intake-span">
+              <span>Description</span>
+              <textarea
+                value={manualForm.description}
+                onChange={(event) => updateManualField("description", event.target.value)}
+                placeholder="Dispatcher notes, symptoms, access info, or customer request."
+              />
+            </label>
+            <ManualField label="External ID" value={manualForm.externalId} onChange={(value) => updateManualField("externalId", value)} />
+            <ManualField label="Priority" value={manualForm.priority} onChange={(value) => updateManualField("priority", value)} />
+            <ManualField label="Status" value={manualForm.status} onChange={(value) => updateManualField("status", value)} />
+            <label className="field">
+              <span>Duplicate mode</span>
+              <select value={manualDuplicateMode} onChange={(event) => setManualDuplicateMode(event.target.value)}>
+                <option value="error">Block duplicate</option>
+                <option value="skip">Skip existing</option>
+                <option value="allow">Allow duplicate</option>
+              </select>
+            </label>
+          </div>
+          <div className="action-row">
+            <button
+              type="button"
+              disabled={!manualForm.customerName.trim() || !manualForm.subject.trim() || manualPreviewLoading}
+              onClick={() =>
+                onManualPreview({ request: manualRequest, duplicateMode: manualDuplicateMode }).then((payload) =>
+                  payload ? setManualPreviewFingerprint(manualFingerprint) : undefined
+                )
+              }
+            >
+              Preview manual SR
+            </button>
+            <button
+              type="button"
+              disabled={!manualReadyForImport || manualImportLoading}
+              onClick={() => {
+                if (!window.confirm(`Create this service request for ${manualForm.customerName || "this customer"} in BlueFolder?`)) {
+                  return;
+                }
+                onManualImport({
+                  request: manualRequest,
+                  duplicateMode: manualDuplicateMode,
+                  confirmed: true,
+                  allowValidationOverride: manualAllowValidationOverride,
+                });
+              }}
+            >
+              Create in BlueFolder
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setManualForm({
+                  customerName: "",
+                  customerPhone: "",
+                  customerEmail: "",
+                  contactFirstName: "",
+                  contactLastName: "",
+                  address: "",
+                  city: "",
+                  state: "ME",
+                  postalCode: "",
+                  subject: "",
+                  description: "",
+                  priority: "",
+                  status: "",
+                  externalId: "",
+                });
+                setManualPreviewFingerprint("");
+                setManualConfirmed(false);
+                setManualAllowValidationOverride(false);
+              }}
+            >
+              Clear manual form
+            </button>
+          </div>
+          {manualPreviewLoading && <p>Checking BlueFolder matches…</p>}
+          {manualPreviewError && <p className="error-text">{manualPreviewError}</p>}
+          {manualImportLoading && <p>Creating service request…</p>}
+          {manualImportError && <p className="error-text">{manualImportError}</p>}
+          {manualPreview && (
+            <div className="detail-block">
+              <div className="section-head">
+                <strong>Manual preview</strong>
+                <span className={manualDuplicateBlocked ? "status-pill danger" : "status-pill"}>
+                  {manualDuplicateAction || "planned"}
+                </span>
+              </div>
+              {!manualPreviewFresh && <p className="muted">Manual preview is stale. Preview again before creating.</p>}
+              {manualDuplicateBlocked && (
+                <p className="error-text">A matching service request already exists. Change duplicate mode only if this is intentional.</p>
+              )}
+              <div className="detail-grid">
+                <Detail label="Customer" value={manualPreview.plan?.customer_action} />
+                <Detail label="Location" value={manualPreview.plan?.location_action} />
+                <Detail label="Contact" value={manualPreview.plan?.contact_action} />
+                <Detail label="Ticket" value={manualPreview.plan?.service_request_action} />
+              </div>
+              <div className="chip-list">
+                {manualPreview.plan?.existing_customer_id && (
+                  <span className="queue-chip">Customer {manualPreview.plan.existing_customer_id}</span>
+                )}
+                {manualPreview.plan?.existing_location_id && (
+                  <span className="queue-chip">Location {manualPreview.plan.existing_location_id}</span>
+                )}
+                {manualPreview.plan?.existing_contact_id && (
+                  <span className="queue-chip">Contact {manualPreview.plan.existing_contact_id}</span>
+                )}
+                {manualPreview.plan?.existing_service_request_id && (
+                  <span className="queue-chip danger-chip">Existing SR {manualPreview.plan.existing_service_request_id}</span>
+                )}
+                {manualPreview.row?.external_id && <span className="queue-chip">External ID {manualPreview.row.external_id}</span>}
+              </div>
+              {!!(manualPreview.validationIssues || []).length && (
+                <div className="history-list">
+                  {(manualPreview.validationIssues || []).map((issue, index) => (
+                    <div key={`${issue.row}-${index}`} className="history-entry">
+                      <p>{issue.level}</p>
+                      <span>{issue.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="action-row">
+                <label className="check-field">
+                  <input
+                    type="checkbox"
+                    checked={manualConfirmed}
+                    onChange={(event) => setManualConfirmed(event.target.checked)}
+                    disabled={!manualPreviewFresh || manualDuplicateBlocked}
+                  />
+                  <span>I reviewed the customer match and duplicate result</span>
+                </label>
+                {!!manualBlockingIssues.length && (
+                  <label className="check-field">
+                    <input
+                      type="checkbox"
+                      checked={manualAllowValidationOverride}
+                      onChange={(event) => setManualAllowValidationOverride(event.target.checked)}
+                    />
+                    <span>Allow create despite validation errors</span>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+          {manualResult && (
+            <div className="detail-block">
+              <strong>Manual create result</strong>
+              <div className="chip-list">
+                {Object.entries(manualResult.summary || {}).map(([key, value]) => (
+                  <span key={key} className="queue-chip">{key}: {value}</span>
+                ))}
+              </div>
+              <p className={manualResult.success ? "muted" : "error-text"}>{summarizeImportResult(manualResult.result || {}) || "No service request id returned."}</p>
+            </div>
+          )}
         </div>
 
         <div className="detail-panel">
@@ -554,6 +785,15 @@ function Detail({ label, value }) {
   );
 }
 
+function ManualField({ label, value, onChange, wide = false }) {
+  return (
+    <label className={wide ? "field intake-span" : "field"}>
+      <span>{label}</span>
+      <input value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
 function summarizeRow(row) {
   return [
     row.customer_name,
@@ -628,4 +868,10 @@ function downloadJson(filename, payload) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function compactObject(value) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined && item !== null && `${item}`.trim() !== "")
+  );
 }

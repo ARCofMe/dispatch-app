@@ -9,6 +9,8 @@ import App from "./App";
     getAttentionItem: vi.fn(),
     getIntakeFormats: vi.fn(),
     getIntakeProfiles: vi.fn(),
+    previewManualServiceRequest: vi.fn(),
+    importManualServiceRequest: vi.fn(),
     getServiceRequestCustomer: vi.fn(),
     getServiceRequestTimeline: vi.fn(),
     getServiceRequestWork: vi.fn(),
@@ -42,6 +44,8 @@ describe("Dispatch App", () => {
     dispatchApiMock.getAttentionItem.mockReset();
     dispatchApiMock.getIntakeFormats.mockReset();
     dispatchApiMock.getIntakeProfiles.mockReset();
+    dispatchApiMock.previewManualServiceRequest.mockReset();
+    dispatchApiMock.importManualServiceRequest.mockReset();
     dispatchApiMock.getServiceRequestCustomer.mockReset();
     dispatchApiMock.getServiceRequestTimeline.mockReset();
     dispatchApiMock.getServiceRequestWork.mockReset();
@@ -64,6 +68,8 @@ describe("Dispatch App", () => {
     });
     dispatchApiMock.getIntakeFormats.mockResolvedValue({ items: [] });
     dispatchApiMock.getIntakeProfiles.mockResolvedValue({ items: [] });
+    dispatchApiMock.previewManualServiceRequest.mockResolvedValue({ success: true });
+    dispatchApiMock.importManualServiceRequest.mockResolvedValue({ success: true });
     dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat", reference: "SR-100" });
     dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
     dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
