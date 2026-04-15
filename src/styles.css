@@ -836,6 +836,49 @@ input {
   margin-right: 2px;
 }
 
+.command-brief {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 18%, transparent), transparent 34%),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.72));
+}
+
+.brief-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.brief-card {
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--panel-border));
+  border-radius: 18px;
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.brief-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brief-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.brief-card p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
 .tab-button {
   gap: 8px;
   transition:
@@ -880,6 +923,10 @@ a:focus-visible {
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
+  .brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -900,6 +947,10 @@ a:focus-visible {
   .brand-mark-icon {
     width: 34px;
     height: 34px;
+  }
+
+  .brief-grid {
+    grid-template-columns: 1fr;
   }
 
   .filter-grid {

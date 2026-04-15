@@ -53,13 +53,19 @@ describe("BoardView", () => {
     );
 
     expect(screen.getByText("Visible techs")).toBeInTheDocument();
+    expect(screen.getByText("Dispatch command brief")).toBeInTheDocument();
+    expect(screen.getByText("Work the board in this order")).toBeInTheDocument();
+    expect(screen.getByText("First risk")).toBeInTheDocument();
+    expect(screen.getByText("Loaded tech")).toBeInTheDocument();
+    expect(screen.getByText("Hot queue")).toBeInTheDocument();
+    expect(screen.getByText("Parts drag")).toBeInTheDocument();
     expect(screen.getByText("Visible BF users")).toBeInTheDocument();
     expect(screen.getByText("Discord-linked")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByText("quote needed: 2")).toBeInTheDocument();
     expect(screen.getAllByText("Pat Tech").length).toBeGreaterThan(0);
     expect(screen.getByText("Technician · Lewiston, ME")).toBeInTheDocument();
-    expect(screen.getByText("SR-100")).toBeInTheDocument();
+    expect(screen.getAllByText("SR-100").length).toBeGreaterThan(0);
     expect(screen.getByText("Fast jumps")).toBeInTheDocument();
   });
 

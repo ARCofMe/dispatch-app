@@ -21,6 +21,59 @@ function allTechniciansIdle(payload) {
   return technicianLoad.length > 0 && technicianLoad.every((tech) => Number(tech.assignmentCount || 0) === 0);
 }
 
+function commandBrief(board) {
+  const load = board?.technicianLoad || [];
+  const topTech = load
+    .filter((tech) => Number(tech.assignmentCount || 0) > 0)
+    .sort((left, right) => Number(right.assignmentCount || 0) - Number(left.assignmentCount || 0))[0];
+  const topAttention = board?.topAttention?.[0];
+  const queues = queueEntries(board);
+  const hotQueue = queues.sort((left, right) => Number(right.value || 0) - Number(left.value || 0))[0];
+  const items = [];
+
+  if (topAttention) {
+    items.push({
+      label: "First risk",
+      value: topAttention.reference,
+      detail: topAttention.nextAction || topAttention.stageLabel || topAttention.stage || "Open attention item",
+    });
+  }
+
+  if (topTech) {
+    items.push({
+      label: "Loaded tech",
+      value: topTech.technicianLabel || "Technician",
+      detail: `${topTech.assignmentCount || 0} jobs${topTech.nextJob?.summary ? ` · Next: ${topTech.nextJob.summary}` : ""}`,
+    });
+  }
+
+  if (hotQueue) {
+    items.push({
+      label: "Hot queue",
+      value: hotQueue.key.replaceAll("_", " "),
+      detail: `${hotQueue.value} item${Number(hotQueue.value) === 1 ? "" : "s"} waiting`,
+    });
+  }
+
+  if (Number(board?.openPartsCases || 0) > 0) {
+    items.push({
+      label: "Parts drag",
+      value: String(board.openPartsCases),
+      detail: "Open parts cases can block dispatch completion",
+    });
+  }
+
+  if (!items.length) {
+    items.push({
+      label: "Board state",
+      value: "Clean",
+      detail: "No attention, route load, or parts blockers detected.",
+    });
+  }
+
+  return items.slice(0, 4);
+}
+
 function boardRoleLabel(tech) {
   const role = String(tech?.bluefolderRole || "").trim().toLowerCase();
   if (!role) return null;
@@ -55,9 +108,33 @@ export default function BoardView({
     ["Open parts cases", metricValue(board, "openPartsCases")],
     ["Scanned jobs", metricValue(board, "scannedJobs")],
   ];
+  const briefItems = commandBrief(board);
 
   return (
     <section className="panel board-layout">
+      <div className="board-grid secondary">
+        <article className="metric-card wide command-brief">
+          <div className="section-head compact">
+            <div>
+              <p className="section-kicker">Dispatch command brief</p>
+              <h2>Work the board in this order</h2>
+            </div>
+            <button type="button" onClick={onOpenAttention}>
+              Open attention
+            </button>
+          </div>
+          <div className="brief-grid">
+            {briefItems.map((item) => (
+              <div key={item.label} className="brief-card">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <p>{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </div>
+
       <div className="board-grid">
         {metrics.map(([label, value]) => (
           <article key={label} className="metric-card">
