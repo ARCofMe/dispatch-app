@@ -61,6 +61,7 @@ export default function IntakeView({
     city: "",
     state: "ME",
     postalCode: "",
+    requestedWindow: "",
     subject: "",
     description: "",
     priority: "",
@@ -182,6 +183,7 @@ export default function IntakeView({
             <ManualField label="City" value={manualForm.city} onChange={(value) => updateManualField("city", value)} />
             <ManualField label="State" value={manualForm.state} onChange={(value) => updateManualField("state", value)} />
             <ManualField label="Zip" value={manualForm.postalCode} onChange={(value) => updateManualField("postalCode", value)} />
+            <ManualField label="Requested window" value={manualForm.requestedWindow} onChange={(value) => updateManualField("requestedWindow", value)} />
             <ManualField label="Subject" value={manualForm.subject} onChange={(value) => updateManualField("subject", value)} wide />
             <label className="field intake-span">
               <span>Description</span>
@@ -246,6 +248,7 @@ export default function IntakeView({
                   city: "",
                   state: "ME",
                   postalCode: "",
+                  requestedWindow: "",
                   subject: "",
                   description: "",
                   priority: "",

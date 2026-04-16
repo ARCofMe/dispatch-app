@@ -165,6 +165,7 @@ describe("IntakeView", () => {
     fireEvent.change(screen.getByLabelText("Customer name"), { target: { value: "Pat Smith" } });
     fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "2075551212" } });
     fireEvent.change(screen.getByLabelText("Street address"), { target: { value: "123 Main St" } });
+    fireEvent.change(screen.getByLabelText("Requested window"), { target: { value: "8 AM - 10 AM" } });
     fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "No heat" } });
     fireEvent.click(screen.getByRole("button", { name: "Preview manual SR" }));
 
@@ -176,6 +177,7 @@ describe("IntakeView", () => {
           customerPhone: "2075551212",
           address: "123 Main St",
           state: "ME",
+          requestedWindow: "8 AM - 10 AM",
           subject: "No heat",
         },
       })
