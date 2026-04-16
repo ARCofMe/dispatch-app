@@ -224,4 +224,47 @@ describe("IntakeView", () => {
 
     expect(onOpenServiceRequestById).toHaveBeenCalledWith("96285");
   });
+
+  it("keeps the intake form usable when browser draft storage is blocked", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+
+    render(
+      <IntakeView
+        formats={{ items: [] }}
+        formatsLoading={false}
+        formatsError=""
+        profiles={{ items: [] }}
+        profilesLoading={false}
+        profilesError=""
+        onRefreshProfiles={vi.fn()}
+        analysis={null}
+        analysisLoading={false}
+        analysisError=""
+        onAnalyze={vi.fn()}
+        preview={null}
+        previewLoading={false}
+        previewError=""
+        onPreview={vi.fn()}
+        importResult={null}
+        importLoading={false}
+        importError=""
+        onImport={vi.fn()}
+        onUploadSpreadsheet={vi.fn()}
+        onSaveProfile={vi.fn(() => Promise.resolve({ success: true }))}
+        onDeleteProfile={vi.fn(() => Promise.resolve({ success: true }))}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Customer name"), { target: { value: "Pat Smith" } });
+
+    expect(screen.getByDisplayValue("Pat Smith")).toBeInTheDocument();
+  });
 });

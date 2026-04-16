@@ -854,24 +854,36 @@ function summarizeImportResult(item) {
 }
 
 function loadDraft() {
-  return readStoredJson(localStorage, DRAFT_STORAGE_KEY);
+  return readStoredJson(DRAFT_STORAGE_KEY);
 }
 
 function saveDraft(value) {
-  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(value));
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // Browser storage may be disabled; the in-memory form state should continue working.
+  }
 }
 
 function clearDraft() {
-  localStorage.removeItem(DRAFT_STORAGE_KEY);
+  safeRemoveStoredItem(DRAFT_STORAGE_KEY);
 }
 
-function readStoredJson(storage, key) {
+function readStoredJson(key) {
   try {
-    const raw = storage.getItem(key);
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
-    storage.removeItem(key);
+    safeRemoveStoredItem(key);
     return null;
+  }
+}
+
+function safeRemoveStoredItem(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Browser storage may be disabled; clearing should not crash the app.
   }
 }
 
