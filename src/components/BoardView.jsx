@@ -96,10 +96,11 @@ export default function BoardView({
   onOpenAttentionItem,
   onOpenServiceRequest,
   onOpenRoutes,
+  onRefresh,
   technicianOptions = [],
 }) {
   if (loading) return <section className="panel">Loading board…</section>;
-  if (error) return <section className="panel error-panel">{error}</section>;
+  if (error && !board) return <section className="panel error-panel">{error}</section>;
   if (!board) return <section className="panel">Board is not loaded yet.</section>;
 
   const metrics = [
@@ -129,6 +130,9 @@ export default function BoardView({
             <button type="button" onClick={onOpenAttention}>
               Open attention
             </button>
+            <button type="button" onClick={onRefresh}>
+              Refresh board
+            </button>
           </div>
           <div className="brief-grid">
             {briefItems.map((item) => (
@@ -141,6 +145,8 @@ export default function BoardView({
           </div>
         </article>
       </div>
+
+      {error && <p className="error-text">Showing last board snapshot. Refresh failed: {error}</p>}
 
       <div className="board-grid">
         {metrics.map(([label, value]) => (

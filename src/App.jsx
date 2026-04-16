@@ -17,6 +17,7 @@ const DISPATCH_PREFERENCES_KEY = "dispatch-preferences";
 const LAST_SR_KEY = "dispatch-last-sr";
 const INTAKE_DRAFT_KEY = "dispatch-intake-draft";
 const ROUTE_DRAFT_KEY = "dispatch-route-draft";
+const BOARD_CACHE_KEY = "dispatch-board-cache";
 const WORKSPACE_LINKS_KEY = "dispatch-workspace-links";
 const DEFAULT_PREFERENCES = {
   attentionFilters: { stage: "", age: "", status: "", reference: "" },
@@ -65,7 +66,7 @@ export default function App() {
   const serviceRequestLoadIdRef = useRef(0);
   const routesLoadIdRef = useRef(0);
   const [activeTab, setActiveTab] = useState("board");
-  const [board, setBoard] = useState(null);
+  const [board, setBoard] = useState(() => readStoredBoard());
   const [boardError, setBoardError] = useState("");
   const [boardLoading, setBoardLoading] = useState(true);
 
@@ -209,6 +210,7 @@ export default function App() {
       const payload = await dispatchApi.getBoard();
       if (boardLoadIdRef.current !== requestId) return;
       setBoard(payload);
+      writeStoredBoard(payload);
     } catch (error) {
       if (boardLoadIdRef.current !== requestId) return;
       setBoardError(formatError(error));
@@ -718,6 +720,7 @@ export default function App() {
           onOpenRoutes={(item) =>
             loadRoutes(item?.ownerBluefolderUserId || item?.technicianBluefolderUserId || item?.bluefolderUserId)
           }
+          onRefresh={loadBoard}
         />
       )}
       {activeTab === "triage" && (
@@ -958,6 +961,16 @@ function readStoredWorkspaceLinks() {
   const parsed = readStoredJson(window.localStorage, WORKSPACE_LINKS_KEY);
   if (!parsed || typeof parsed !== "object") return normalizeWorkspaceLinks(DEFAULT_WORKSPACE_LINKS);
   return normalizeWorkspaceLinks(parsed, DEFAULT_WORKSPACE_LINKS);
+}
+
+function readStoredBoard() {
+  const parsed = readStoredJson(window.localStorage, BOARD_CACHE_KEY);
+  return parsed && typeof parsed === "object" ? parsed : null;
+}
+
+function writeStoredBoard(value) {
+  if (!value || typeof value !== "object") return;
+  safeLocalStorageSet(BOARD_CACHE_KEY, JSON.stringify(value));
 }
 
 function readStoredJson(storage, key) {

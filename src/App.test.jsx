@@ -132,6 +132,32 @@ describe("Dispatch App", () => {
     });
   });
 
+  it("keeps a cached board visible when refresh fails", async () => {
+    window.localStorage.setItem(
+      "dispatch-board-cache",
+      JSON.stringify({
+        visibleOperators: 2,
+        mappedTechs: 1,
+        discordLinkedTechs: 0,
+        activeTechs: 1,
+        totalVisibleAssignments: 3,
+        attentionJobs: 1,
+        openPartsCases: 0,
+        scannedJobs: 3,
+        attentionMetrics: { queueCounts: {} },
+        technicianLoad: [],
+        topAttention: [],
+        openPartsCaseItems: [],
+      }),
+    );
+    dispatchApiMock.getBoard.mockRejectedValue(new Error("OpsHub temporarily unavailable."));
+
+    render(<App />);
+
+    expect(await screen.findByText("Dispatch command brief")).toBeInTheDocument();
+    expect(screen.getByText("Showing last board snapshot. Refresh failed: OpsHub temporarily unavailable.")).toBeInTheDocument();
+  });
+
   it("clears stale service request detail when a later load fails", async () => {
     dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
     dispatchApiMock.getServiceRequestCustomer
