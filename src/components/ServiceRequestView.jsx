@@ -186,7 +186,7 @@ export default function ServiceRequestView({
                         <div className="history-list">
                           {complaintIntelligence.commonResolutions.map((note, index) => (
                             <div key={`${note}-${index}`} className="history-entry">
-                              <small>{note}</small>
+                              <small>{truncateText(note, 320)}</small>
                             </div>
                           ))}
                         </div>
@@ -195,7 +195,7 @@ export default function ServiceRequestView({
                     {!!complaintIntelligence.request?.complaintText && (
                       <div className="detail-block">
                         <strong>Raw complaint</strong>
-                        <p>{complaintIntelligence.request.complaintText}</p>
+                        <p>{truncateText(complaintIntelligence.request.complaintText, 700)}</p>
                       </div>
                     )}
                   </>
@@ -396,6 +396,12 @@ function formatScore(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return "";
   return `${Math.round(numeric * 100)}% match`;
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value || "").trim();
+  if (!text || text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trim()}...`;
 }
 
 function describeStatusMeta(meta) {
