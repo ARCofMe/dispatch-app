@@ -168,4 +168,18 @@ describe("dispatchApi client", () => {
     expect(options.method).toBe("POST");
     expect(JSON.parse(options.body)).toEqual({ intent: "dispatch_follow_up", customMessage: "Test" });
   });
+
+  it("loads complaint intelligence for a service request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ available: true, srId: "100" })),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await dispatchApi.getServiceRequestComplaintIntelligence(100);
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain("/dispatch/sr/100/complaint_intelligence");
+    expect(options.method).toBe("GET");
+  });
 });

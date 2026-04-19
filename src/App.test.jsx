@@ -15,6 +15,7 @@ import App from "./App";
     getServiceRequestTimeline: vi.fn(),
     getServiceRequestWork: vi.fn(),
     getServiceRequestPhotoCompliance: vi.fn(),
+    getServiceRequestComplaintIntelligence: vi.fn(),
     getServiceRequestSmsCapabilities: vi.fn(),
     getServiceRequestSmsHistory: vi.fn(),
     previewServiceRequestSms: vi.fn(),
@@ -60,6 +61,7 @@ describe("Dispatch App", () => {
     dispatchApiMock.getServiceRequestTimeline.mockReset();
     dispatchApiMock.getServiceRequestWork.mockReset();
     dispatchApiMock.getServiceRequestPhotoCompliance.mockReset();
+    dispatchApiMock.getServiceRequestComplaintIntelligence.mockReset();
     dispatchApiMock.getServiceRequestSmsCapabilities.mockReset();
     dispatchApiMock.getServiceRequestSmsHistory.mockReset();
     dispatchApiMock.previewServiceRequestSms.mockReset();
@@ -90,6 +92,14 @@ describe("Dispatch App", () => {
       shouldNotify: false,
       foundTags: ["Model", "Serial"],
       missingTags: [],
+    });
+    dispatchApiMock.getServiceRequestComplaintIntelligence.mockResolvedValue({
+      available: false,
+      integrationStatus: "unconfigured",
+      message: "Complaint Intelligence database is not configured.",
+      complaintTags: [],
+      recommendations: [],
+      commonResolutions: [],
     });
     dispatchApiMock.getServiceRequestSmsCapabilities.mockResolvedValue({
       provider: "dry_run",
@@ -209,6 +219,36 @@ describe("Dispatch App", () => {
     expect(await screen.findByText("Photo compliance")).toBeInTheDocument();
     expect(screen.getByText("Missing required archived photos.")).toBeInTheDocument();
     expect(screen.getByText("Serial")).toBeInTheDocument();
+  });
+
+  it("shows complaint intelligence in service request detail", async () => {
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat Smith", reference: "SR-100" });
+    dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
+    dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
+    dispatchApiMock.getServiceRequestComplaintIntelligence.mockResolvedValue({
+      available: true,
+      request: {
+        modelNumber: "RF1",
+        brand: "Samsung",
+        applianceType: "refrigerator",
+        complaintText: "not cooling",
+      },
+      complaintTags: [{ tag: "no_cool", confidence: 1, source: "rules" }],
+      similarRequestCount: 2,
+      recommendations: [{ item: "FAN-1", itemType: "part", matchingRequestCount: 2, score: 1 }],
+      commonResolutions: ["Replaced evaporator fan"],
+    });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
+    fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+
+    expect(await screen.findByText("Complaint Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("FAN-1")).toBeInTheDocument();
+    expect(screen.getByText("no_cool")).toBeInTheDocument();
+    expect(dispatchApiMock.getServiceRequestComplaintIntelligence).toHaveBeenCalledWith("100");
   });
 
   it("keeps usable SR sections when only one SR subrequest fails", async () => {

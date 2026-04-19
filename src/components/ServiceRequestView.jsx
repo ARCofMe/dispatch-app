@@ -8,6 +8,7 @@ export default function ServiceRequestView({
   timeline,
   work,
   photoCompliance,
+  complaintIntelligence,
   sectionErrors = {},
   smsCapabilities,
   smsHistory,
@@ -137,6 +138,76 @@ export default function ServiceRequestView({
               </div>
             ) : (
               <p className="muted">Choose an SR to load work context.</p>
+            )}
+          </article>
+
+          <article className="metric-card wide">
+            <p>Complaint Intelligence</p>
+            {!!sectionErrors.complaintIntelligence && !complaintIntelligence && (
+              <p className="error-text">{sectionErrors.complaintIntelligence}</p>
+            )}
+            {complaintIntelligence ? (
+              <div className="list-stack compact">
+                {complaintIntelligence.available ? (
+                  <>
+                    <div className="detail-grid">
+                      <Detail label="Model" value={complaintIntelligence.request?.modelNumber} />
+                      <Detail label="Brand" value={complaintIntelligence.request?.brand} />
+                      <Detail label="Appliance" value={complaintIntelligence.request?.applianceType} />
+                      <Detail label="Similar SRs" value={complaintIntelligence.similarRequestCount} />
+                    </div>
+                    <div className="detail-block">
+                      <strong>Complaint tags</strong>
+                      <div className="chip-list">
+                        {(complaintIntelligence.complaintTags || []).map((tag) => (
+                          <span key={tag.tag} className="queue-chip">{tag.tag}</span>
+                        ))}
+                        {!(complaintIntelligence.complaintTags || []).length && (
+                          <span className="muted">No complaint tags found.</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="history-list">
+                      {(complaintIntelligence.recommendations || []).map((item) => (
+                        <div key={`${item.itemType}-${item.item}`} className="history-entry">
+                          <p>{item.item}</p>
+                          <span>
+                            {[item.itemType, `${item.matchingRequestCount || 0} matching SRs`, formatScore(item.score)].filter(Boolean).join(" • ")}
+                          </span>
+                        </div>
+                      ))}
+                      {!(complaintIntelligence.recommendations || []).length && (
+                        <p className="muted">No historical part recommendations yet.</p>
+                      )}
+                    </div>
+                    {!!(complaintIntelligence.commonResolutions || []).length && (
+                      <div className="detail-block">
+                        <strong>Common resolutions</strong>
+                        <div className="history-list">
+                          {complaintIntelligence.commonResolutions.map((note, index) => (
+                            <div key={`${note}-${index}`} className="history-entry">
+                              <small>{note}</small>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!!complaintIntelligence.request?.complaintText && (
+                      <div className="detail-block">
+                        <strong>Raw complaint</strong>
+                        <p>{complaintIntelligence.request.complaintText}</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="detail-block">
+                    <strong>{complaintIntelligence.integrationStatus || "unavailable"}</strong>
+                    <p>{complaintIntelligence.message || "Complaint Intelligence is not available for this SR."}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="muted">No Complaint Intelligence detail loaded.</p>
             )}
           </article>
 
@@ -319,6 +390,12 @@ function formatTagList(tags) {
 
 function flagText(value) {
   return value ? "yes" : "no";
+}
+
+function formatScore(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "";
+  return `${Math.round(numeric * 100)}% match`;
 }
 
 function describeStatusMeta(meta) {

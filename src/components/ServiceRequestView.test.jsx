@@ -10,6 +10,7 @@ describe("ServiceRequestView", () => {
         customer={null}
         timeline={[]}
         work={null}
+        complaintIntelligence={null}
         smsCapabilities={null}
         smsHistory={[]}
         smsPreview={null}
@@ -62,6 +63,19 @@ describe("ServiceRequestView", () => {
           },
           nextActions: ["Call landlord", "Track ETA"],
         }}
+        complaintIntelligence={{
+          available: true,
+          request: {
+            modelNumber: "RF1",
+            brand: "Samsung",
+            applianceType: "refrigerator",
+            complaintText: "not cooling",
+          },
+          complaintTags: [{ tag: "no_cool", confidence: 1, source: "rules" }],
+          similarRequestCount: 2,
+          recommendations: [{ item: "FAN-1", itemType: "part", matchingRequestCount: 2, score: 1 }],
+          commonResolutions: ["Replaced evaporator fan"],
+        }}
         smsCapabilities={{
           provider: "dry_run",
           enabled: true,
@@ -87,6 +101,9 @@ describe("ServiceRequestView", () => {
     expect(screen.getByText("Call landlord")).toBeInTheDocument();
     expect(screen.getByText("Track ETA")).toBeInTheDocument();
     expect(screen.getByText("Customer SMS")).toBeInTheDocument();
+    expect(screen.getByText("Complaint Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("FAN-1")).toBeInTheDocument();
+    expect(screen.getByText("no_cool")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Preview SMS"));
     expect(onPreviewSms).toHaveBeenCalledWith("dispatch_follow_up", "");
     fireEvent.click(screen.getByText("Send SMS"));

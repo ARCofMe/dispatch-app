@@ -85,6 +85,7 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [srWork, setSrWork] = useState(null);
   const [srPhotoCompliance, setSrPhotoCompliance] = useState(null);
+  const [srComplaintIntelligence, setSrComplaintIntelligence] = useState(null);
   const [srSectionErrors, setSrSectionErrors] = useState({});
   const [srSmsCapabilities, setSrSmsCapabilities] = useState(null);
   const [srSmsHistory, setSrSmsHistory] = useState([]);
@@ -270,17 +271,27 @@ export default function App() {
     setTimeline([]);
     setSrWork(null);
     setSrPhotoCompliance(null);
+    setSrComplaintIntelligence(null);
     setSrSectionErrors({});
     setSrSmsCapabilities(null);
     setSrSmsHistory([]);
     setSrSmsPreview(null);
     setSrSmsActionState(null);
     try {
-      const [customerResult, timelineResult, workResult, photoComplianceResult, smsCapabilitiesResult, smsHistoryResult] = await Promise.allSettled([
+      const [
+        customerResult,
+        timelineResult,
+        workResult,
+        photoComplianceResult,
+        complaintIntelligenceResult,
+        smsCapabilitiesResult,
+        smsHistoryResult,
+      ] = await Promise.allSettled([
         dispatchApi.getServiceRequestCustomer(srId),
         dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
         dispatchApi.getServiceRequestPhotoCompliance(srId),
+        dispatchApi.getServiceRequestComplaintIntelligence(srId),
         dispatchApi.getServiceRequestSmsCapabilities(srId),
         dispatchApi.getServiceRequestSmsHistory(srId),
       ]);
@@ -315,6 +326,13 @@ export default function App() {
         nextSectionErrors.photoCompliance = formatError(photoComplianceResult.reason);
       }
 
+      if (complaintIntelligenceResult.status === "fulfilled") {
+        setSrComplaintIntelligence(complaintIntelligenceResult.value);
+      } else {
+        setSrComplaintIntelligence(null);
+        nextSectionErrors.complaintIntelligence = formatError(complaintIntelligenceResult.reason);
+      }
+
       if (smsCapabilitiesResult.status === "fulfilled") {
         setSrSmsCapabilities(smsCapabilitiesResult.value);
       } else {
@@ -334,6 +352,7 @@ export default function App() {
         setTimeline([]);
         setSrWork(null);
         setSrPhotoCompliance(null);
+        setSrComplaintIntelligence(null);
         setSrSmsCapabilities(null);
         setSrSmsHistory([]);
         setSrSmsPreview(null);
@@ -350,6 +369,7 @@ export default function App() {
         timelineResult.status === "rejected" &&
         workResult.status === "rejected" &&
         photoComplianceResult.status === "rejected" &&
+        complaintIntelligenceResult.status === "rejected" &&
         smsCapabilitiesResult.status === "rejected" &&
         smsHistoryResult.status === "rejected"
       ) {
@@ -361,6 +381,7 @@ export default function App() {
       setTimeline([]);
       setSrWork(null);
       setSrPhotoCompliance(null);
+      setSrComplaintIntelligence(null);
       setSrSectionErrors({});
       setSrSmsCapabilities(null);
       setSrSmsHistory([]);
@@ -774,6 +795,7 @@ export default function App() {
           timeline={timeline}
           work={srWork}
           photoCompliance={srPhotoCompliance}
+          complaintIntelligence={srComplaintIntelligence}
           sectionErrors={srSectionErrors}
           smsCapabilities={srSmsCapabilities}
           smsHistory={srSmsHistory}

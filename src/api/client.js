@@ -100,6 +100,9 @@ export const dispatchApi = {
   getServiceRequestPhotoCompliance(srId) {
     return request(`/dispatch/sr/${srId}/photo_compliance`);
   },
+  getServiceRequestComplaintIntelligence(srId) {
+    return request(`/dispatch/sr/${srId}/complaint_intelligence`);
+  },
   getRoutePreview(bluefolderUserId, options = {}) {
     const params = new URLSearchParams({
       bluefolder_user_id: `${bluefolderUserId}`,
