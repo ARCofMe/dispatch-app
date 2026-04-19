@@ -28,6 +28,13 @@ export default function ServiceRequestView({
   const smsIntents = Array.isArray(smsCapabilities?.intents) ? smsCapabilities.intents : [];
   const [smsIntent, setSmsIntent] = useState("");
   const [smsDraft, setSmsDraft] = useState("");
+  const evidencePacket = complaintIntelligence?.evidencePacket && typeof complaintIntelligence.evidencePacket === "object"
+    ? complaintIntelligence.evidencePacket
+    : null;
+  const classification = evidencePacket?.classification || {};
+  const diagnosticQuestions = Array.isArray(evidencePacket?.diagnosticQuestions) ? evidencePacket.diagnosticQuestions : [];
+  const matchScope = classification.matchScope || complaintIntelligence?.matchScope;
+  const confidence = evidencePacket?.confidence || complaintIntelligence?.confidence;
 
   useEffect(() => {
     setSmsIntent("");
@@ -155,6 +162,7 @@ export default function ServiceRequestView({
                       <Detail label="Brand" value={complaintIntelligence.request?.brand} />
                       <Detail label="Appliance" value={complaintIntelligence.request?.applianceType} />
                       <Detail label="Similar SRs" value={complaintIntelligence.similarRequestCount} />
+                      <Detail label="Evidence" value={formatEvidenceLabel(matchScope, confidence)} />
                     </div>
                     <div className="detail-block">
                       <strong>Complaint tags</strong>
@@ -180,6 +188,18 @@ export default function ServiceRequestView({
                         <p className="muted">No historical part recommendations yet.</p>
                       )}
                     </div>
+                    {!!diagnosticQuestions.length && (
+                      <div className="detail-block">
+                        <strong>Triage questions</strong>
+                        <div className="history-list">
+                          {diagnosticQuestions.slice(0, 4).map((question, index) => (
+                            <div key={`${question}-${index}`} className="history-entry">
+                              <small>{question}</small>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {!!(complaintIntelligence.commonResolutions || []).length && (
                       <div className="detail-block">
                         <strong>Common resolutions</strong>
@@ -396,6 +416,16 @@ function formatScore(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return "";
   return `${Math.round(numeric * 100)}% match`;
+}
+
+function formatEvidenceLabel(matchScope, confidence) {
+  const values = [formatMatchScope(matchScope), confidence].filter(Boolean);
+  return values.length ? values.join(" • ") : "unknown";
+}
+
+function formatMatchScope(matchScope) {
+  const value = String(matchScope || "").replace(/_/g, " ").trim();
+  return value || "";
 }
 
 function truncateText(value, maxLength) {

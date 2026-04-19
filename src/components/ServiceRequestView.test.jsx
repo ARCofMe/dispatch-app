@@ -75,6 +75,11 @@ describe("ServiceRequestView", () => {
           similarRequestCount: 2,
           recommendations: [{ item: "FAN-1", itemType: "part", matchingRequestCount: 2, score: 1 }],
           commonResolutions: ["Replaced evaporator fan"],
+          evidencePacket: {
+            classification: { matchScope: "exact_model" },
+            confidence: "limited",
+            diagnosticQuestions: ["Is the evaporator fan running?"],
+          },
         }}
         smsCapabilities={{
           provider: "dry_run",
@@ -104,6 +109,9 @@ describe("ServiceRequestView", () => {
     expect(screen.getByText("Complaint Intelligence")).toBeInTheDocument();
     expect(screen.getByText("FAN-1")).toBeInTheDocument();
     expect(screen.getByText("no_cool")).toBeInTheDocument();
+    expect(screen.getByText("exact model • limited")).toBeInTheDocument();
+    expect(screen.getByText("Triage questions")).toBeInTheDocument();
+    expect(screen.getByText("Is the evaporator fan running?")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Preview SMS"));
     expect(onPreviewSms).toHaveBeenCalledWith("dispatch_follow_up", "");
     fireEvent.click(screen.getByText("Send SMS"));
