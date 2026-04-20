@@ -257,9 +257,19 @@ function buildErrorMessage(status, payload, text) {
     text ||
     `HTTP ${status}`;
 
-  if (status === 401) return `${message} Check the Ops Hub API token.`;
-  if (status === 403) return `${message} ${buildDispatcherIdentityHint()}`;
-  return message;
+  const safeMessage = sanitizeBackendMessage(message);
+
+  if (status === 401) return `${safeMessage} Check the Ops Hub API token.`;
+  if (status === 403) return `${safeMessage} ${buildDispatcherIdentityHint()}`;
+  return safeMessage;
+}
+
+function sanitizeBackendMessage(message) {
+  const text = String(message || "").trim();
+  if (text.includes("Task <Task") || text.includes("attached to a different loop")) {
+    return "Ops Hub hit an internal refresh error while loading this section. Refresh the SR or retry after the API restarts.";
+  }
+  return text;
 }
 
 function buildDispatcherIdentityHint() {

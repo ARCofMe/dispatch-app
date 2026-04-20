@@ -89,6 +89,27 @@ describe("dispatchApi client", () => {
     await expect(dispatchApi.getBoard()).rejects.toThrow('Sent operator ID "wrong-dispatcher".');
   });
 
+  it("sanitizes internal asyncio task errors from Ops Hub responses", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              success: false,
+              message:
+                "Task <Task pending name='Task-211'> got Future <Task pending name='Task-212'> attached to a different loop",
+            }),
+          ),
+      }),
+    );
+
+    await expect(dispatchApi.getServiceRequestWork(100)).rejects.toThrow("internal refresh error");
+    await expect(dispatchApi.getServiceRequestWork(100)).rejects.not.toThrow("Task <Task");
+  });
+
   it("uses the extended route timeout for route preview requests", async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn().mockImplementation(
