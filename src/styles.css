@@ -275,6 +275,12 @@ input {
   display: none;
 }
 
+.section-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
 .route-signal-card {
   grid-column: span 6;
 }

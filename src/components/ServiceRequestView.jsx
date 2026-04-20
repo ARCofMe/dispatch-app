@@ -10,6 +10,7 @@ export default function ServiceRequestView({
   photoCompliance,
   complaintIntelligence,
   sectionErrors = {},
+  sectionLoading = {},
   smsCapabilities,
   smsHistory,
   smsPreview,
@@ -20,6 +21,7 @@ export default function ServiceRequestView({
   onOpenRoutes,
   onPreviewSms,
   onSendSms,
+  onLoadSection,
   onOpenAttentionItem,
   technicianOptions = [],
 }) {
@@ -35,6 +37,7 @@ export default function ServiceRequestView({
   const diagnosticQuestions = Array.isArray(evidencePacket?.diagnosticQuestions) ? evidencePacket.diagnosticQuestions : [];
   const matchScope = classification.matchScope || complaintIntelligence?.matchScope;
   const confidence = evidencePacket?.confidence || complaintIntelligence?.confidence;
+  const smsLoaded = Boolean(smsCapabilities) || Boolean((smsHistory || []).length);
 
   useEffect(() => {
     setSmsIntent("");
@@ -253,8 +256,8 @@ export default function ServiceRequestView({
                   </>
                 ) : (
                   <div className="detail-block">
-                    <strong>{complaintIntelligence.integrationStatus || "unavailable"}</strong>
-                    <p>{complaintIntelligence.message || "Complaint Intelligence is not available for this SR."}</p>
+                    <strong>{formatComplaintStatus(complaintIntelligence.integrationStatus)}</strong>
+                    <p>{describeComplaintIntelligenceUnavailable(complaintIntelligence, normalizedSrId)}</p>
                   </div>
                 )}
               </div>
@@ -263,8 +266,16 @@ export default function ServiceRequestView({
             )}
           </article>
 
-          <details className="metric-card wide disclosure-card">
+          <details
+            className="metric-card wide disclosure-card"
+            onToggle={(event) => {
+              if (event.currentTarget.open && !photoCompliance && !sectionLoading.photoCompliance) {
+                onLoadSection?.("photoCompliance");
+              }
+            }}
+          >
             <summary>Photo compliance</summary>
+            {!!sectionLoading.photoCompliance && <p className="muted">Loading photo compliance from Ops Hub...</p>}
             {!!sectionErrors.photoCompliance && !photoCompliance && <p className="error-text">{sectionErrors.photoCompliance}</p>}
             {photoCompliance ? (
               <div className="list-stack compact">
@@ -285,12 +296,25 @@ export default function ServiceRequestView({
                 </div>
               </div>
             ) : (
-              <p className="muted">No photo compliance detail loaded.</p>
+              <SectionEmpty
+                message="Open this section to check mailbox photos and required tags."
+                error={sectionErrors.photoCompliance}
+                loading={sectionLoading.photoCompliance}
+                onRetry={() => onLoadSection?.("photoCompliance")}
+              />
             )}
           </details>
 
-          <details className="metric-card wide disclosure-card">
+          <details
+            className="metric-card wide disclosure-card"
+            onToggle={(event) => {
+              if (event.currentTarget.open && !smsLoaded && !sectionLoading.sms) {
+                onLoadSection?.("sms");
+              }
+            }}
+          >
             <summary>Customer SMS</summary>
+            {!!sectionLoading.sms && <p className="muted">Loading SMS capabilities and history...</p>}
             {!!sectionErrors.sms && !smsCapabilities && <p className="error-text">{sectionErrors.sms}</p>}
             {smsCapabilities ? (
               <div className="list-stack compact">
@@ -363,12 +387,25 @@ export default function ServiceRequestView({
                 </div>
               </div>
             ) : (
-              <p className="muted">No SMS detail loaded.</p>
+              <SectionEmpty
+                message="Open this section to check SMS readiness and history."
+                error={sectionErrors.sms}
+                loading={sectionLoading.sms}
+                onRetry={() => onLoadSection?.("sms")}
+              />
             )}
           </details>
 
-          <details className="metric-card wide disclosure-card">
+          <details
+            className="metric-card wide disclosure-card"
+            onToggle={(event) => {
+              if (event.currentTarget.open && !customer && !sectionLoading.customer) {
+                onLoadSection?.("customer");
+              }
+            }}
+          >
             <summary>Customer</summary>
+            {!!sectionLoading.customer && <p className="muted">Loading customer context...</p>}
             {!!sectionErrors.customer && !customer && <p className="error-text">{sectionErrors.customer}</p>}
             {customer ? (
               <div className="list-stack compact">
@@ -400,12 +437,25 @@ export default function ServiceRequestView({
                 </div>
               </div>
             ) : (
-              <p className="muted">Choose an SR to load customer detail.</p>
+              <SectionEmpty
+                message="Customer context loads first, but can be retried here if BlueFolder was slow."
+                error={sectionErrors.customer}
+                loading={sectionLoading.customer}
+                onRetry={() => onLoadSection?.("customer")}
+              />
             )}
           </details>
 
-          <details className="metric-card wide disclosure-card">
+          <details
+            className="metric-card wide disclosure-card"
+            onToggle={(event) => {
+              if (event.currentTarget.open && !timelineEntries.length && !sectionLoading.timeline) {
+                onLoadSection?.("timeline");
+              }
+            }}
+          >
             <summary>Timeline</summary>
+            {!!sectionLoading.timeline && <p className="muted">Loading SR timeline...</p>}
             {!!sectionErrors.timeline && !timelineEntries.length && <p className="error-text">{sectionErrors.timeline}</p>}
             <div className="history-list tall">
               {timelineEntries.map((entry, index) => (
@@ -417,7 +467,14 @@ export default function ServiceRequestView({
                   {entry.details && <small>{entry.details}</small>}
                 </div>
               ))}
-              {!timelineEntries.length && <p className="muted">No timeline loaded.</p>}
+              {!timelineEntries.length && (
+                <SectionEmpty
+                  message="Open this section to load the SR event history."
+                  error={sectionErrors.timeline}
+                  loading={sectionLoading.timeline}
+                  onRetry={() => onLoadSection?.("timeline")}
+                />
+              )}
             </div>
           </details>
         </div>
@@ -433,6 +490,32 @@ function Detail({ label, value }) {
       <strong>{value || "n/a"}</strong>
     </div>
   );
+}
+
+function SectionEmpty({ message, error, loading, onRetry }) {
+  if (loading) return null;
+  return (
+    <div className="section-empty">
+      <p className="muted">{message}</p>
+      {!!error && (
+        <button type="button" className="secondary-button" onClick={onRetry}>
+          Retry section
+        </button>
+      )}
+    </div>
+  );
+}
+
+function formatComplaintStatus(status) {
+  const value = String(status || "").replace(/_/g, " ").trim();
+  return value ? value[0].toUpperCase() + value.slice(1) : "Unavailable";
+}
+
+function describeComplaintIntelligenceUnavailable(payload, srId) {
+  if (payload?.integrationStatus === "not_found") {
+    return `No Complaint Intelligence record has been ingested for SR ${srId} yet. The SR can still be triaged from BlueFolder context.`;
+  }
+  return payload?.message || "Complaint Intelligence is not available for this SR.";
 }
 
 function formatTagList(tags) {

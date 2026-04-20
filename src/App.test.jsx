@@ -217,7 +217,9 @@ describe("Dispatch App", () => {
     fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
 
     expect(await screen.findByText("Photo compliance")).toBeInTheDocument();
-    expect(screen.getByText("Missing required archived photos.")).toBeInTheDocument();
+    expect(dispatchApiMock.getServiceRequestPhotoCompliance).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Photo compliance"));
+    expect(await screen.findByText("Missing required archived photos.")).toBeInTheDocument();
     expect(screen.getByText("Serial")).toBeInTheDocument();
   });
 
@@ -251,7 +253,7 @@ describe("Dispatch App", () => {
     expect(dispatchApiMock.getServiceRequestComplaintIntelligence).toHaveBeenCalledWith("100");
   });
 
-  it("keeps usable SR sections when only one SR subrequest fails", async () => {
+  it("lazy-loads secondary SR sections without blocking usable context", async () => {
     dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
     dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat Smith", reference: "SR-100" });
     dispatchApiMock.getServiceRequestTimeline.mockResolvedValue({ entries: [] });
@@ -265,7 +267,14 @@ describe("Dispatch App", () => {
 
     expect(await screen.findByText("Pat Smith")).toBeInTheDocument();
     expect(screen.getByText("Work panel")).toBeInTheDocument();
-    expect(screen.getByText("Photo service unavailable.")).toBeInTheDocument();
+    expect(dispatchApiMock.getServiceRequestTimeline).not.toHaveBeenCalled();
+    expect(dispatchApiMock.getServiceRequestPhotoCompliance).not.toHaveBeenCalled();
+    expect(dispatchApiMock.getServiceRequestSmsCapabilities).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText("Photo compliance"));
+
+    expect(await screen.findByText("Photo service unavailable.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry section" })).toBeInTheDocument();
   });
 
   it("drops malformed stored preferences instead of crashing on boot", async () => {

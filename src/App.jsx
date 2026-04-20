@@ -90,6 +90,7 @@ export default function App() {
   const [srPhotoCompliance, setSrPhotoCompliance] = useState(null);
   const [srComplaintIntelligence, setSrComplaintIntelligence] = useState(null);
   const [srSectionErrors, setSrSectionErrors] = useState({});
+  const [srSectionLoading, setSrSectionLoading] = useState({});
   const [srSmsCapabilities, setSrSmsCapabilities] = useState(null);
   const [srSmsHistory, setSrSmsHistory] = useState([]);
   const [srSmsPreview, setSrSmsPreview] = useState(null);
@@ -290,6 +291,7 @@ export default function App() {
     setSrPhotoCompliance(null);
     setSrComplaintIntelligence(null);
     setSrSectionErrors({});
+    setSrSectionLoading({});
     setSrSmsCapabilities(null);
     setSrSmsHistory([]);
     setSrSmsPreview(null);
@@ -297,20 +299,12 @@ export default function App() {
     try {
       const [
         customerResult,
-        timelineResult,
         workResult,
-        photoComplianceResult,
         complaintIntelligenceResult,
-        smsCapabilitiesResult,
-        smsHistoryResult,
       ] = await Promise.allSettled([
         dispatchApi.getServiceRequestCustomer(srId),
-        dispatchApi.getServiceRequestTimeline(srId),
         dispatchApi.getServiceRequestWork(srId),
-        dispatchApi.getServiceRequestPhotoCompliance(srId),
         dispatchApi.getServiceRequestComplaintIntelligence(srId),
-        dispatchApi.getServiceRequestSmsCapabilities(srId),
-        dispatchApi.getServiceRequestSmsHistory(srId),
       ]);
       if (serviceRequestLoadIdRef.current !== requestId) return;
       const nextSectionErrors = {};
@@ -322,13 +316,6 @@ export default function App() {
         nextSectionErrors.customer = formatError(customerResult.reason);
       }
 
-      if (timelineResult.status === "fulfilled") {
-        setTimeline(timelineResult.value);
-      } else {
-        setTimeline([]);
-        nextSectionErrors.timeline = formatError(timelineResult.reason);
-      }
-
       if (workResult.status === "fulfilled") {
         setSrWork(workResult.value);
       } else {
@@ -336,32 +323,11 @@ export default function App() {
         nextSectionErrors.work = formatError(workResult.reason);
       }
 
-      if (photoComplianceResult.status === "fulfilled") {
-        setSrPhotoCompliance(photoComplianceResult.value);
-      } else {
-        setSrPhotoCompliance(null);
-        nextSectionErrors.photoCompliance = formatError(photoComplianceResult.reason);
-      }
-
       if (complaintIntelligenceResult.status === "fulfilled") {
         setSrComplaintIntelligence(complaintIntelligenceResult.value);
       } else {
         setSrComplaintIntelligence(null);
         nextSectionErrors.complaintIntelligence = formatError(complaintIntelligenceResult.reason);
-      }
-
-      if (smsCapabilitiesResult.status === "fulfilled") {
-        setSrSmsCapabilities(smsCapabilitiesResult.value);
-      } else {
-        setSrSmsCapabilities(null);
-        nextSectionErrors.sms = formatError(smsCapabilitiesResult.reason);
-      }
-
-      if (smsHistoryResult.status === "fulfilled") {
-        setSrSmsHistory(smsHistoryResult.value?.items || []);
-      } else {
-        setSrSmsHistory([]);
-        nextSectionErrors.smsHistory = formatError(smsHistoryResult.reason);
       }
 
       if (customerResult.status === "rejected") {
@@ -375,6 +341,7 @@ export default function App() {
         setSrSmsPreview(null);
         setSrSmsActionState(null);
         setSrSectionErrors(nextSectionErrors);
+        setSrSectionLoading({});
         setSrError(nextSectionErrors.customer || "Could not load SR detail.");
         return;
       }
@@ -383,12 +350,8 @@ export default function App() {
 
       if (
         customerResult.status === "rejected" &&
-        timelineResult.status === "rejected" &&
         workResult.status === "rejected" &&
-        photoComplianceResult.status === "rejected" &&
-        complaintIntelligenceResult.status === "rejected" &&
-        smsCapabilitiesResult.status === "rejected" &&
-        smsHistoryResult.status === "rejected"
+        complaintIntelligenceResult.status === "rejected"
       ) {
         setSrError(nextSectionErrors.customer || nextSectionErrors.work || "Could not load SR detail.");
       }
@@ -400,6 +363,7 @@ export default function App() {
       setSrPhotoCompliance(null);
       setSrComplaintIntelligence(null);
       setSrSectionErrors({});
+      setSrSectionLoading({});
       setSrSmsCapabilities(null);
       setSrSmsHistory([]);
       setSrSmsPreview(null);
@@ -408,6 +372,62 @@ export default function App() {
     } finally {
       if (serviceRequestLoadIdRef.current !== requestId) return;
       setSrLoading(false);
+    }
+  }
+
+  async function loadServiceRequestSection(section) {
+    const srId = selectedSrId.trim();
+    if (!srId) return;
+    const requestId = serviceRequestLoadIdRef.current;
+    setSrSectionLoading((current) => ({ ...current, [section]: true }));
+    setSrSectionErrors((current) => {
+      const next = { ...current };
+      if (section === "sms") {
+        delete next.sms;
+        delete next.smsHistory;
+      } else {
+        delete next[section];
+      }
+      return next;
+    });
+    try {
+      if (section === "timeline") {
+        const payload = await dispatchApi.getServiceRequestTimeline(srId);
+        if (serviceRequestLoadIdRef.current !== requestId) return;
+        setTimeline(payload);
+      } else if (section === "photoCompliance") {
+        const payload = await dispatchApi.getServiceRequestPhotoCompliance(srId);
+        if (serviceRequestLoadIdRef.current !== requestId) return;
+        setSrPhotoCompliance(payload);
+      } else if (section === "sms") {
+        const [capabilitiesResult, historyResult] = await Promise.allSettled([
+          dispatchApi.getServiceRequestSmsCapabilities(srId),
+          dispatchApi.getServiceRequestSmsHistory(srId),
+        ]);
+        if (serviceRequestLoadIdRef.current !== requestId) return;
+        if (capabilitiesResult.status === "fulfilled") {
+          setSrSmsCapabilities(capabilitiesResult.value);
+        } else {
+          setSrSmsCapabilities(null);
+          setSrSectionErrors((current) => ({ ...current, sms: formatError(capabilitiesResult.reason) }));
+        }
+        if (historyResult.status === "fulfilled") {
+          setSrSmsHistory(historyResult.value?.items || []);
+        } else {
+          setSrSmsHistory([]);
+          setSrSectionErrors((current) => ({ ...current, smsHistory: formatError(historyResult.reason) }));
+        }
+      } else if (section === "customer") {
+        const payload = await dispatchApi.getServiceRequestCustomer(srId);
+        if (serviceRequestLoadIdRef.current !== requestId) return;
+        setCustomer(payload);
+      }
+    } catch (error) {
+      if (serviceRequestLoadIdRef.current !== requestId) return;
+      setSrSectionErrors((current) => ({ ...current, [section]: formatError(error) }));
+    } finally {
+      if (serviceRequestLoadIdRef.current !== requestId) return;
+      setSrSectionLoading((current) => ({ ...current, [section]: false }));
     }
   }
 
@@ -819,6 +839,7 @@ export default function App() {
           photoCompliance={srPhotoCompliance}
           complaintIntelligence={srComplaintIntelligence}
           sectionErrors={srSectionErrors}
+          sectionLoading={srSectionLoading}
           smsCapabilities={srSmsCapabilities}
           smsHistory={srSmsHistory}
           smsPreview={srSmsPreview}
@@ -830,6 +851,7 @@ export default function App() {
           onOpenRoutes={(techId) => loadRoutes(techId)}
           onPreviewSms={previewServiceRequestSms}
           onSendSms={sendServiceRequestSms}
+          onLoadSection={loadServiceRequestSection}
           onOpenAttentionItem={(item) => {
             setActiveTab("attention");
             handleAttentionSelect(item);
