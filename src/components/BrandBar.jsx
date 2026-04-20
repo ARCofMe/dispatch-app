@@ -1,4 +1,5 @@
 import { getWorkspaceLinkStatus } from "../workspaceLinks";
+import BrandLogo from "../brand/BrandLogo";
 import Icon from "./Icon";
 
 const WORKSPACE_ICONS = {
@@ -16,7 +17,7 @@ export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk"
       <div className="brand-bar-top">
         <div className="brand-identity">
           <div className="brand-mark-card" aria-hidden="true">
-            <Icon name="route" className="brand-mark-icon" />
+            <BrandLogo product="routeDesk" />
           </div>
           <div>
             <p className="brand-kicker">OpsHub ecosystem</p>
@@ -38,7 +39,7 @@ export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk"
         </div>
       </div>
       <p className="brand-copy">
-        Smart routes. Better days. Own the dispatch board, work the queue, and shape the field day before it slips.
+        Dispatch control for live routes, triage handoffs, and the field day before it slips.
       </p>
       <div className="brand-link-row">
         {workspaces.map(({ appKey, label, href, current }) =>
