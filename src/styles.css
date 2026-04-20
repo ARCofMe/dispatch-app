@@ -177,6 +177,10 @@ input {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
 }
 
+.triage-decision-layout {
+  grid-template-columns: minmax(340px, 0.86fr) minmax(360px, 1.14fr);
+}
+
 .triage-header {
   margin-bottom: 18px;
 }
@@ -201,6 +205,73 @@ input {
 
 .metric-card.wide {
   grid-column: span 6;
+}
+
+.sr-decision-brief,
+.dashboard-disclosure {
+  grid-column: 1 / -1;
+}
+
+.dashboard-disclosure,
+.control-disclosure {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--card-bg) 82%, transparent);
+  padding: 14px;
+}
+
+.dashboard-disclosure summary,
+.control-disclosure summary,
+.disclosure-card summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.dashboard-disclosure summary,
+.control-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-disclosure summary::after,
+.control-disclosure summary::after,
+.disclosure-card summary::after {
+  content: "Open";
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-disclosure[open] summary,
+.control-disclosure[open] summary,
+.disclosure-card[open] summary {
+  margin-bottom: 14px;
+}
+
+.dashboard-disclosure[open] summary::after,
+.control-disclosure[open] summary::after,
+.disclosure-card[open] summary::after {
+  content: "Hide";
+}
+
+.disclosure-card {
+  display: block;
+}
+
+.disclosure-card summary {
+  list-style: none;
+}
+
+.disclosure-card summary::-webkit-details-marker,
+.dashboard-disclosure summary::-webkit-details-marker,
+.control-disclosure summary::-webkit-details-marker {
+  display: none;
 }
 
 .route-signal-card {

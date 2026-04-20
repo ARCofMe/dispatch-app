@@ -28,6 +28,7 @@ export default function AttentionView({
   onOpenServiceRequest,
   onOpenRoutes,
   onOpenServiceRequestById,
+  mode = "attention",
 }) {
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, ...(initialFilters || {}) });
   const [sortBy, setSortBy] = useState(initialSortBy);
@@ -72,18 +73,128 @@ export default function AttentionView({
       visible: visibleItems.length,
     };
   }, [items, visibleItems.length]);
+  const isTriageMode = mode === "triage";
+  const toolbarContent = (
+    <>
+      <div className="filter-grid">
+        {Object.keys(DEFAULT_FILTERS).map((key) => (
+          <label key={key} className="field">
+            <span>{labelFor(key)}</span>
+            <input
+              value={filters[key]}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  [key]: event.target.value,
+                }))
+              }
+              placeholder={key === "reference" ? "SR-1234" : ""}
+            />
+          </label>
+        ))}
+        <label className="field">
+          <span>Sort</span>
+          <input list="attention-sorts" value={sortBy} onChange={(event) => setSortBy(event.target.value)} />
+          <datalist id="attention-sorts">
+            <option value="priority" />
+            <option value="age" />
+            <option value="reference" />
+            <option value="owner_gap" />
+          </datalist>
+        </label>
+      </div>
+      <div className="action-row">
+        <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
+        <button type="button" onClick={() => setFilters((current) => ({ ...current, stage: "bluefolder_discovery" }))}>
+          Discovery only
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds(visibleItems.filter((item) => !item.readOnly).slice(0, 25).map((item) => item.itemId))}
+        >
+          Select visible
+        </button>
+        <button type="button" onClick={() => setSelectedIds([])}>
+          Clear selection
+        </button>
+        <button
+          type="button"
+          disabled={!actionableVisibleIds.length}
+          onClick={() => {
+            onBulkAction("ack", actionableVisibleIds);
+            setSelectedIds([]);
+          }}
+        >
+          Ack visible
+        </button>
+        <button
+          type="button"
+          disabled={!selectedActionableIds.length}
+          onClick={() => {
+            onBulkAction("ack", selectedActionableIds);
+            setSelectedIds([]);
+          }}
+        >
+          Ack selected
+        </button>
+        <span className="muted">Selected: {selectedIds.length}</span>
+        <button type="button" onClick={onRefresh}>
+          Refresh
+        </button>
+      </div>
+
+      <div className="action-row">
+        <label className="field slim">
+          <span>Bulk owner</span>
+          <select value={bulkOwnerId} onChange={(event) => setBulkOwnerId(event.target.value)}>
+            <option value="">Select owner</option>
+            {ownerOptions.map((option) => (
+              <option key={option.bluefolderUserId} value={option.bluefolderUserId}>
+                {formatOwnerOption(option)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          disabled={!selectedActionableIds.length}
+          onClick={() => onBulkAction("assign", selectedActionableIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
+        >
+          Assign selected
+        </button>
+        <button type="button" disabled={!selectedActionableIds.length} onClick={() => onBulkAction("clear_owner", selectedActionableIds)}>
+          Clear owner
+        </button>
+        <label className="field slim">
+          <span>Bulk snooze</span>
+          <input
+            value={bulkSnoozeHours}
+            onChange={(event) => setBulkSnoozeHours(event.target.value)}
+            inputMode="numeric"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={!selectedActionableIds.length}
+          onClick={() => onBulkAction("snooze", selectedActionableIds, { hours: Number.parseInt(bulkSnoozeHours, 10) || 1 })}
+        >
+          Snooze selected
+        </button>
+      </div>
+    </>
+  );
 
   return (
-    <section className="panel attention-layout">
+    <section className={isTriageMode ? "panel attention-layout triage-decision-layout" : "panel attention-layout"}>
       <div className="attention-column">
         <div className="board-grid compact attention-summary-grid">
           <article className="metric-card">
-            <p>Open</p>
+            <p>{isTriageMode ? "To decide" : "Open"}</p>
             <strong>{queueSummary.open}</strong>
           </article>
           <article className="metric-card">
-            <p>Discovery</p>
-            <strong>{meta?.discoveryJobs ?? queueSummary.discovery}</strong>
+            <p>{isTriageMode ? "Unowned" : "Discovery"}</p>
+            <strong>{isTriageMode ? queueSummary.ownerGaps : meta?.discoveryJobs ?? queueSummary.discovery}</strong>
           </article>
           <article className="metric-card">
             <p>Urgent</p>
@@ -98,111 +209,14 @@ export default function AttentionView({
           <p className="muted">OpsHub scanned {meta.scannedJobs} job{Number(meta.scannedJobs) === 1 ? "" : "s"} for this queue.</p>
         )}
         <div className="attention-toolbar">
-          <div className="filter-grid">
-            {Object.keys(DEFAULT_FILTERS).map((key) => (
-              <label key={key} className="field">
-                <span>{labelFor(key)}</span>
-                <input
-                  value={filters[key]}
-                  onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      [key]: event.target.value,
-                    }))
-                  }
-                  placeholder={key === "reference" ? "SR-1234" : ""}
-                />
-              </label>
-            ))}
-            <label className="field">
-              <span>Sort</span>
-              <input list="attention-sorts" value={sortBy} onChange={(event) => setSortBy(event.target.value)} />
-              <datalist id="attention-sorts">
-                <option value="priority" />
-                <option value="age" />
-                <option value="reference" />
-                <option value="owner_gap" />
-              </datalist>
-            </label>
-          </div>
-          <div className="action-row">
-            <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</button>
-            <button type="button" onClick={() => setFilters((current) => ({ ...current, stage: "bluefolder_discovery" }))}>
-              Discovery only
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(visibleItems.filter((item) => !item.readOnly).slice(0, 25).map((item) => item.itemId))}
-            >
-              Select visible
-            </button>
-            <button type="button" onClick={() => setSelectedIds([])}>
-              Clear selection
-            </button>
-            <button
-              type="button"
-              disabled={!actionableVisibleIds.length}
-              onClick={() => {
-                onBulkAction("ack", actionableVisibleIds);
-                setSelectedIds([]);
-              }}
-            >
-              Ack visible
-            </button>
-            <button
-              type="button"
-              disabled={!selectedActionableIds.length}
-              onClick={() => {
-                onBulkAction("ack", selectedActionableIds);
-                setSelectedIds([]);
-              }}
-            >
-              Ack selected
-            </button>
-            <span className="muted">Selected: {selectedIds.length}</span>
-            <button type="button" onClick={onRefresh}>
-              Refresh
-            </button>
-          </div>
-
-          <div className="action-row">
-            <label className="field slim">
-              <span>Bulk owner</span>
-              <select value={bulkOwnerId} onChange={(event) => setBulkOwnerId(event.target.value)}>
-                <option value="">Select owner</option>
-                {ownerOptions.map((option) => (
-                  <option key={option.bluefolderUserId} value={option.bluefolderUserId}>
-                    {formatOwnerOption(option)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              disabled={!selectedActionableIds.length}
-              onClick={() => onBulkAction("assign", selectedActionableIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
-            >
-              Assign selected
-            </button>
-            <button type="button" disabled={!selectedActionableIds.length} onClick={() => onBulkAction("clear_owner", selectedActionableIds)}>
-              Clear owner
-            </button>
-            <label className="field slim">
-              <span>Bulk snooze</span>
-              <input
-                value={bulkSnoozeHours}
-                onChange={(event) => setBulkSnoozeHours(event.target.value)}
-                inputMode="numeric"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={!selectedActionableIds.length}
-              onClick={() => onBulkAction("snooze", selectedActionableIds, { hours: Number.parseInt(bulkSnoozeHours, 10) || 1 })}
-            >
-              Snooze selected
-            </button>
-          </div>
+          {isTriageMode ? (
+            <details className="control-disclosure">
+              <summary>Filters and bulk actions</summary>
+              {toolbarContent}
+            </details>
+          ) : (
+            toolbarContent
+          )}
         </div>
 
         {loading && <p>Loading attention queue…</p>}

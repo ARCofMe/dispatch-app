@@ -72,6 +72,38 @@ export default function ServiceRequestView({
 
       {!loading && !error && normalizedSrId && (
         <div className="sr-grid">
+          <article className="metric-card wide command-brief sr-decision-brief">
+            <div className="section-head compact">
+              <div>
+                <p className="section-kicker">SR decision brief</p>
+                <h2>{customer?.reference || `SR ${normalizedSrId}`}</h2>
+              </div>
+              <span className="status-pill">{customer?.status || work?.serviceRequestStatus || "unknown"}</span>
+            </div>
+            <div className="brief-grid">
+              <div className="brief-card">
+                <span>Next action</span>
+                <strong>{(work?.nextActions || []).length ? `${work.nextActions.length} ready` : "Review"}</strong>
+                <p>{(work?.nextActions || []).length ? "Open the work panel for the action list." : describeStatusMeta(customer?.statusMeta || work?.statusMeta)}</p>
+              </div>
+              <div className="brief-card">
+                <span>Attention</span>
+                <strong>{(work?.attentionItems || []).length || 0}</strong>
+                <p>{work?.ownerGapCount ? `${work.ownerGapCount} owner gap${Number(work.ownerGapCount) === 1 ? "" : "s"}` : "No owner gaps tied to this SR."}</p>
+              </div>
+              <div className="brief-card">
+                <span>Complaint evidence</span>
+                <strong>{complaintIntelligence?.available ? "Available" : "Not loaded"}</strong>
+                <p>{complaintIntelligence?.available ? `${complaintIntelligence.similarRequestCount || 0} similar SRs found.` : "Open Complaint Intelligence below when history is needed."}</p>
+              </div>
+              <div className="brief-card">
+                <span>Customer contact</span>
+                <strong>{smsCapabilities?.enabled ? "SMS ready" : "Check contact"}</strong>
+                <p>{smsCapabilities?.toNumber || customer?.customerPhone || "No customer phone loaded."}</p>
+              </div>
+            </div>
+          </article>
+
           <article className="metric-card wide">
             <p>SR status</p>
             {!!sectionErrors.work && <p className="error-text">{sectionErrors.work}</p>}
@@ -231,8 +263,8 @@ export default function ServiceRequestView({
             )}
           </article>
 
-          <article className="metric-card wide">
-            <p>Photo compliance</p>
+          <details className="metric-card wide disclosure-card">
+            <summary>Photo compliance</summary>
             {!!sectionErrors.photoCompliance && !photoCompliance && <p className="error-text">{sectionErrors.photoCompliance}</p>}
             {photoCompliance ? (
               <div className="list-stack compact">
@@ -255,10 +287,10 @@ export default function ServiceRequestView({
             ) : (
               <p className="muted">No photo compliance detail loaded.</p>
             )}
-          </article>
+          </details>
 
-          <article className="metric-card wide">
-            <p>Customer SMS</p>
+          <details className="metric-card wide disclosure-card">
+            <summary>Customer SMS</summary>
             {!!sectionErrors.sms && !smsCapabilities && <p className="error-text">{sectionErrors.sms}</p>}
             {smsCapabilities ? (
               <div className="list-stack compact">
@@ -333,10 +365,10 @@ export default function ServiceRequestView({
             ) : (
               <p className="muted">No SMS detail loaded.</p>
             )}
-          </article>
+          </details>
 
-          <article className="metric-card wide">
-            <p>Customer</p>
+          <details className="metric-card wide disclosure-card">
+            <summary>Customer</summary>
             {!!sectionErrors.customer && !customer && <p className="error-text">{sectionErrors.customer}</p>}
             {customer ? (
               <div className="list-stack compact">
@@ -370,10 +402,10 @@ export default function ServiceRequestView({
             ) : (
               <p className="muted">Choose an SR to load customer detail.</p>
             )}
-          </article>
+          </details>
 
-          <article className="metric-card wide">
-            <p>Timeline</p>
+          <details className="metric-card wide disclosure-card">
+            <summary>Timeline</summary>
             {!!sectionErrors.timeline && !timelineEntries.length && <p className="error-text">{sectionErrors.timeline}</p>}
             <div className="history-list tall">
               {timelineEntries.map((entry, index) => (
@@ -387,7 +419,7 @@ export default function ServiceRequestView({
               ))}
               {!timelineEntries.length && <p className="muted">No timeline loaded.</p>}
             </div>
-          </article>
+          </details>
         </div>
       )}
     </section>

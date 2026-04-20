@@ -148,14 +148,17 @@ export default function BoardView({
 
       {error && <p className="error-text">Showing last board snapshot. Refresh failed: {error}</p>}
 
-      <div className="board-grid">
+      <details className="dashboard-disclosure">
+        <summary>Board health and scan metrics</summary>
+        <div className="board-grid">
         {metrics.map(([label, value]) => (
           <article key={label} className="metric-card">
             <p>{label}</p>
             <strong>{value}</strong>
           </article>
         ))}
-      </div>
+        </div>
+      </details>
 
       <div className="board-grid secondary">
         <article className="metric-card wide">
@@ -199,7 +202,9 @@ export default function BoardView({
         </article>
       </div>
 
-      <div className="board-grid secondary">
+      <details className="dashboard-disclosure" open>
+        <summary>Queue details and parts blockers</summary>
+        <div className="board-grid secondary">
         <article className="metric-card wide">
           <div className="section-head">
             <p>Top attention</p>
@@ -241,7 +246,8 @@ export default function BoardView({
             {!openPartsCaseItems.length && <p className="muted">No open parts cases.</p>}
           </div>
         </article>
-      </div>
+        </div>
+      </details>
 
       <div className="board-grid secondary">
         <article className="metric-card wide">

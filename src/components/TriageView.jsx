@@ -28,7 +28,7 @@ export default function TriageView(props) {
           <div>
             <p className="section-kicker">Service manager workflow</p>
             <h2>Triage</h2>
-            <p>Work only the front-end decisions: intake review, missing info, parts-first, diagnostic-first, and quote-before-schedule.</p>
+            <p>Start with the SR at the top of the list, read the complaint evidence, answer only the missing diagnostic questions, then choose the next handling path.</p>
           </div>
         </div>
         <div className="board-grid secondary">
@@ -67,6 +67,7 @@ export default function TriageView(props) {
         selectedItem={selectedItem}
         selectedItemDetail={selectedItemDetail}
         complaintIntelligence={props.complaintIntelligence}
+        mode="triage"
       />
     </div>
   );
