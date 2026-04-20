@@ -93,6 +93,62 @@ describe("AttentionView", () => {
     expect(screen.getByText("Apply triage")).toBeInTheDocument();
   });
 
+  it("shows compact complaint evidence for selected triage items", () => {
+    render(
+      <AttentionView
+        items={[
+          {
+            itemId: "dispatch:SR-201:new_sr_triage",
+            srId: 201,
+            reference: "SR-201",
+            stage: "new_sr_triage",
+            stageLabel: "New SR Triage",
+            nextAction: "Decide whether this can be parts-first",
+            status: "open",
+            ageBucket: "fresh",
+          },
+        ]}
+        loading={false}
+        error=""
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={{
+          itemId: "dispatch:SR-201:new_sr_triage",
+          srId: 201,
+          reference: "SR-201",
+          stage: "new_sr_triage",
+          stageLabel: "New SR Triage",
+          nextAction: "Decide whether this can be parts-first",
+          status: "open",
+          ageBucket: "fresh",
+        }}
+        selectedItemDetail={null}
+        complaintIntelligence={{
+          available: true,
+          complaintTags: [{ tag: "no_drain" }],
+          recommendations: [{ item: "PUMP-1", itemType: "part", matchingRequestCount: 3, score: 0.6 }],
+          evidencePacket: {
+            confidence: "moderate",
+            classification: { matchScope: "model_family" },
+            diagnosticQuestions: ["Does the pump run or only hum?"],
+          },
+        }}
+        actionState={null}
+        onAction={vi.fn()}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Complaint evidence")).toBeInTheDocument();
+    expect(screen.getByText("model family")).toBeInTheDocument();
+    expect(screen.getByText("moderate")).toBeInTheDocument();
+    expect(screen.getByText("PUMP-1")).toBeInTheDocument();
+    expect(screen.getByText("Does the pump run or only hum?")).toBeInTheDocument();
+  });
+
   it("supports acknowledging selected items", () => {
     const onBulkAction = vi.fn();
     render(

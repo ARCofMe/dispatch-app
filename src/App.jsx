@@ -10,6 +10,7 @@ import RoutesView from "./components/RoutesView";
 import IntakeView from "./components/IntakeView";
 import SettingsView from "./components/SettingsView";
 import { buildTechnicianOptions } from "./components/labelUtils";
+import { isTriageStage as isTriageStageName } from "./components/triageStages";
 import { normalizeWorkspaceLinks } from "./workspaceLinks";
 
 const THEME_MODE_KEY = "dispatch-theme-mode";
@@ -63,6 +64,7 @@ export default function App() {
   const boardLoadIdRef = useRef(0);
   const attentionLoadIdRef = useRef(0);
   const attentionDetailRequestIdRef = useRef(0);
+  const attentionComplaintRequestIdRef = useRef(0);
   const serviceRequestLoadIdRef = useRef(0);
   const routesLoadIdRef = useRef(0);
   const [activeTab, setActiveTab] = useState("board");
@@ -78,6 +80,7 @@ export default function App() {
   const [attentionLoaded, setAttentionLoaded] = useState(false);
   const [selectedAttention, setSelectedAttention] = useState(null);
   const [selectedAttentionDetail, setSelectedAttentionDetail] = useState(null);
+  const [selectedAttentionComplaintIntelligence, setSelectedAttentionComplaintIntelligence] = useState(null);
   const [attentionActionState, setAttentionActionState] = useState(null);
 
   const [selectedSrId, setSelectedSrId] = useState("");
@@ -259,6 +262,20 @@ export default function App() {
       if (attentionDetailRequestIdRef.current !== requestId) return;
       setSelectedAttentionDetail(null);
       setAttentionActionState({ error: true, message: formatError(error) });
+    }
+  }
+
+  async function loadAttentionComplaintIntelligence(srId) {
+    const requestId = attentionComplaintRequestIdRef.current + 1;
+    attentionComplaintRequestIdRef.current = requestId;
+    setSelectedAttentionComplaintIntelligence({ loading: true });
+    try {
+      const payload = await dispatchApi.getServiceRequestComplaintIntelligence(srId);
+      if (attentionComplaintRequestIdRef.current !== requestId) return;
+      setSelectedAttentionComplaintIntelligence(payload);
+    } catch (error) {
+      if (attentionComplaintRequestIdRef.current !== requestId) return;
+      setSelectedAttentionComplaintIntelligence({ available: false, message: formatError(error) });
     }
   }
 
@@ -616,6 +633,7 @@ export default function App() {
   function handleAttentionSelect(item) {
     setSelectedAttention(item);
     setAttentionActionState(null);
+    setSelectedAttentionComplaintIntelligence(null);
     if (item.readOnly) {
       setSelectedAttentionDetail({ item, history: [] });
     } else {
@@ -626,6 +644,9 @@ export default function App() {
     const srId = reference.replace(/^SR-/i, "");
     if (srId) {
       setSelectedSrId(srId);
+      if (isTriageStageName(item.stage)) {
+        loadAttentionComplaintIntelligence(srId);
+      }
       if (preferences.openSrOnAttentionSelect) {
         setActiveTab("sr");
       }
@@ -758,6 +779,7 @@ export default function App() {
           onSelectItem={handleAttentionSelect}
           selectedItem={selectedAttention}
           selectedItemDetail={selectedAttentionDetail}
+          complaintIntelligence={selectedAttentionComplaintIntelligence}
           actionState={attentionActionState}
           onAction={handleAttentionAction}
           onBulkAction={handleBulkAttentionAction}

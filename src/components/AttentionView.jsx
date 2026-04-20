@@ -21,6 +21,7 @@ export default function AttentionView({
   onSelectItem,
   selectedItem,
   selectedItemDetail,
+  complaintIntelligence,
   actionState,
   onAction,
   onBulkAction,
@@ -252,6 +253,7 @@ export default function AttentionView({
       <AttentionDetail
         item={selectedItemDetail?.item || selectedItem}
         history={selectedItemDetail?.history || []}
+        complaintIntelligence={complaintIntelligence}
         actionState={actionState}
         ownerOptions={ownerOptions}
         onAction={onAction}
@@ -263,7 +265,17 @@ export default function AttentionView({
   );
 }
 
-function AttentionDetail({ item, history, actionState, ownerOptions, onAction, onOpenServiceRequest, onOpenRoutes, onOpenServiceRequestById }) {
+function AttentionDetail({
+  item,
+  history,
+  complaintIntelligence,
+  actionState,
+  ownerOptions,
+  onAction,
+  onOpenServiceRequest,
+  onOpenRoutes,
+  onOpenServiceRequestById,
+}) {
   const [ownerId, setOwnerId] = useState("");
   const [snoozeHours, setSnoozeHours] = useState("4");
   const [triageDisposition, setTriageDisposition] = useState("schedule_normal");
@@ -405,6 +417,10 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         </div>
       )}
 
+      {isTriageStage(item.stage) && (
+        <ComplaintEvidenceCard complaintIntelligence={complaintIntelligence} />
+      )}
+
       {actionState && <p className={actionState.error ? "error-text" : "muted"}>{actionState.message}</p>}
 
       <div className="detail-block">
@@ -431,6 +447,78 @@ function AttentionDetail({ item, history, actionState, ownerOptions, onAction, o
         </div>
       )}
     </aside>
+  );
+}
+
+function ComplaintEvidenceCard({ complaintIntelligence }) {
+  if (!complaintIntelligence) {
+    return (
+      <div className="detail-block">
+        <strong>Complaint evidence</strong>
+        <p className="muted">Select a triage item with an SR to load historical evidence.</p>
+      </div>
+    );
+  }
+  if (complaintIntelligence.loading) {
+    return (
+      <div className="detail-block">
+        <strong>Complaint evidence</strong>
+        <p className="muted">Loading historical complaint evidence…</p>
+      </div>
+    );
+  }
+  if (!complaintIntelligence.available) {
+    return (
+      <div className="detail-block">
+        <strong>Complaint evidence</strong>
+        <p className="muted">{complaintIntelligence.message || "No complaint evidence is available for this SR."}</p>
+      </div>
+    );
+  }
+
+  const evidencePacket = complaintIntelligence.evidencePacket || {};
+  const classification = evidencePacket.classification || {};
+  const recommendations = complaintIntelligence.recommendations || evidencePacket.rankedParts || [];
+  const questions = evidencePacket.diagnosticQuestions || [];
+  const confidence = evidencePacket.confidence || complaintIntelligence.confidence || "unknown";
+  const matchScope = classification.matchScope || complaintIntelligence.matchScope || "unknown";
+
+  return (
+    <div className="detail-block command-brief">
+      <strong>Complaint evidence</strong>
+      <div className="detail-grid single">
+        <DetailValue label="Scope" value={formatEvidenceToken(matchScope)} />
+        <DetailValue label="Confidence" value={formatEvidenceToken(confidence)} />
+      </div>
+      <div className="chip-list">
+        {(complaintIntelligence.complaintTags || []).slice(0, 6).map((tag) => (
+          <span key={tag.tag || tag} className="queue-chip">{tag.tag || tag}</span>
+        ))}
+        {!(complaintIntelligence.complaintTags || []).length && <span className="muted">No tags matched.</span>}
+      </div>
+      <div className="history-list">
+        {recommendations.slice(0, 3).map((part) => (
+          <div key={`${part.itemType || part.item_type}-${part.item}`} className="history-entry">
+            <p>{part.item}</p>
+            <span>
+              {[part.itemType || part.item_type, `${part.matchingRequestCount || part.matching_request_count || 0} matching SRs`, formatEvidenceScore(part.score)]
+                .filter(Boolean)
+                .join(" • ")}
+            </span>
+          </div>
+        ))}
+        {!recommendations.length && <p className="muted">No supported part recommendation yet. Use diagnostic-first handling.</p>}
+      </div>
+      {!!questions.length && (
+        <div className="history-list">
+          {questions.slice(0, 2).map((question, index) => (
+            <div key={`${question}-${index}`} className="history-entry">
+              <small>{question}</small>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -487,4 +575,14 @@ function formatOwnerOption(option) {
   const label = String(option?.label || "").trim() || `BF ${option?.bluefolderUserId || ""}`.trim();
   const role = String(option?.role || "").trim();
   return role ? `${label} (${role})` : label;
+}
+
+function formatEvidenceToken(value) {
+  return String(value || "unknown").replaceAll("_", " ");
+}
+
+function formatEvidenceScore(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "";
+  return `${Math.round(numeric * 100)}%`;
 }

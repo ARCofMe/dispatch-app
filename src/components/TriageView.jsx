@@ -66,6 +66,7 @@ export default function TriageView(props) {
         items={triageItems}
         selectedItem={selectedItem}
         selectedItemDetail={selectedItemDetail}
+        complaintIntelligence={props.complaintIntelligence}
       />
     </div>
   );
