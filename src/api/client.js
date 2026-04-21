@@ -55,6 +55,12 @@ export const dispatchApi = {
   getBoard() {
     return request("/dispatch/board");
   },
+  getComplaintIntelligenceDashboard() {
+    return request("/complaint_intelligence/dashboard");
+  },
+  getComplaintIntelligenceReviewQueue() {
+    return request("/complaint_intelligence/review_queue?limit=5");
+  },
   getAttention(filters = {}) {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {

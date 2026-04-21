@@ -5,6 +5,8 @@ import App from "./App";
   const { dispatchApiMock } = vi.hoisted(() => ({
   dispatchApiMock: {
     getBoard: vi.fn(),
+    getComplaintIntelligenceDashboard: vi.fn(),
+    getComplaintIntelligenceReviewQueue: vi.fn(),
     getAttention: vi.fn(),
     getAttentionItem: vi.fn(),
     getIntakeFormats: vi.fn(),
@@ -52,6 +54,8 @@ describe("Dispatch App", () => {
   beforeEach(() => {
     window.localStorage.clear();
     dispatchApiMock.getBoard.mockReset();
+    dispatchApiMock.getComplaintIntelligenceDashboard.mockReset();
+    dispatchApiMock.getComplaintIntelligenceReviewQueue.mockReset();
     dispatchApiMock.getAttention.mockReset();
     dispatchApiMock.getAttentionItem.mockReset();
     dispatchApiMock.getIntakeFormats.mockReset();
@@ -69,6 +73,16 @@ describe("Dispatch App", () => {
     dispatchApiMock.previewServiceRequestSms.mockReset();
     dispatchApiMock.sendServiceRequestSms.mockReset();
     dispatchApiMock.getAttention.mockResolvedValue({ items: [] });
+    dispatchApiMock.getComplaintIntelligenceDashboard.mockResolvedValue({
+      available: true,
+      feedbackVolume: 3,
+      reviewQueueCount: 1,
+      helpfulRate: 0.67,
+    });
+    dispatchApiMock.getComplaintIntelligenceReviewQueue.mockResolvedValue({
+      available: true,
+      items: [{ serviceRequestId: "1001", outcome: "not_helpful" }],
+    });
     dispatchApiMock.getAttentionItem.mockResolvedValue({
       item: {
         itemId: "dispatch:SR-100:quote_needed",

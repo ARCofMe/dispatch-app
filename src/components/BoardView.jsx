@@ -90,6 +90,8 @@ function boardRoleLabel(tech) {
 
 export default function BoardView({
   board,
+  complaintDashboard,
+  complaintReviewQueue,
   loading,
   error,
   onOpenAttention,
@@ -157,6 +159,23 @@ export default function BoardView({
             <strong>{value}</strong>
           </article>
         ))}
+        <article className="metric-card">
+          <p>Evidence feedback</p>
+          <strong>{complaintDashboard?.available ? complaintDashboard.feedbackVolume ?? 0 : "n/a"}</strong>
+          <span>
+            {complaintDashboard?.available
+              ? `${complaintDashboard.reviewQueueCount || 0} weak signals, ${formatRate(complaintDashboard.helpfulRate)} helpful`
+              : "Complaint Intelligence feedback is not available."}
+          </span>
+          {Array.isArray(complaintReviewQueue?.items) && complaintReviewQueue.items.length > 0 && (
+            <small>
+              Review: {complaintReviewQueue.items
+                .slice(0, 2)
+                .map((item) => `SR-${item.serviceRequestId} ${item.outcome}`)
+                .join(", ")}
+            </small>
+          )}
+        </article>
         </div>
       </details>
 
@@ -269,4 +288,10 @@ export default function BoardView({
       </div>
     </section>
   );
+}
+
+function formatRate(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "0%";
+  return `${Math.round(numeric * 100)}%`;
 }

@@ -71,6 +71,8 @@ export default function App() {
   const [board, setBoard] = useState(() => readStoredBoard());
   const [boardError, setBoardError] = useState("");
   const [boardLoading, setBoardLoading] = useState(true);
+  const [complaintDashboard, setComplaintDashboard] = useState(null);
+  const [complaintReviewQueue, setComplaintReviewQueue] = useState(null);
 
   const [attention, setAttention] = useState([]);
   const [attentionMeta, setAttentionMeta] = useState(null);
@@ -213,9 +215,15 @@ export default function App() {
     setBoardLoading(true);
     setBoardError("");
     try {
-      const payload = await dispatchApi.getBoard();
+      const [payload, complaintPayload, reviewPayload] = await Promise.all([
+        dispatchApi.getBoard(),
+        dispatchApi.getComplaintIntelligenceDashboard().catch(() => null),
+        dispatchApi.getComplaintIntelligenceReviewQueue().catch(() => null),
+      ]);
       if (boardLoadIdRef.current !== requestId) return;
       setBoard(payload);
+      setComplaintDashboard(complaintPayload);
+      setComplaintReviewQueue(reviewPayload);
       writeStoredBoard(payload);
     } catch (error) {
       if (boardLoadIdRef.current !== requestId) return;
@@ -799,6 +807,8 @@ export default function App() {
       {activeTab === "board" && (
         <BoardView
           board={board}
+          complaintDashboard={complaintDashboard}
+          complaintReviewQueue={complaintReviewQueue}
           loading={boardLoading}
           error={boardError}
           technicianOptions={technicianOptions}
