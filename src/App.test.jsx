@@ -7,6 +7,8 @@ import App from "./App";
     getBoard: vi.fn(),
     getComplaintIntelligenceDashboard: vi.fn(),
     getComplaintIntelligenceReviewQueue: vi.fn(),
+    seedComplaintIntelligenceFeedback: vi.fn(),
+    resolveComplaintIntelligenceReview: vi.fn(),
     getAttention: vi.fn(),
     getAttentionItem: vi.fn(),
     getIntakeFormats: vi.fn(),
@@ -56,6 +58,8 @@ describe("Dispatch App", () => {
     dispatchApiMock.getBoard.mockReset();
     dispatchApiMock.getComplaintIntelligenceDashboard.mockReset();
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockReset();
+    dispatchApiMock.seedComplaintIntelligenceFeedback.mockReset();
+    dispatchApiMock.resolveComplaintIntelligenceReview.mockReset();
     dispatchApiMock.getAttention.mockReset();
     dispatchApiMock.getAttentionItem.mockReset();
     dispatchApiMock.getIntakeFormats.mockReset();
@@ -81,7 +85,16 @@ describe("Dispatch App", () => {
     });
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockResolvedValue({
       available: true,
-      items: [{ serviceRequestId: "1001", outcome: "not_helpful" }],
+      items: [{ feedbackId: 1, serviceRequestId: "1001", outcome: "not_helpful", recommendedItem: "FAN-1" }],
+    });
+    dispatchApiMock.seedComplaintIntelligenceFeedback.mockResolvedValue({
+      success: true,
+      message: "Seeded 4 historical feedback records.",
+      inserted: 4,
+    });
+    dispatchApiMock.resolveComplaintIntelligenceReview.mockResolvedValue({
+      success: true,
+      message: "Resolved feedback 1 as trusted.",
     });
     dispatchApiMock.getAttentionItem.mockResolvedValue({
       item: {

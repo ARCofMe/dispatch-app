@@ -92,12 +92,15 @@ export default function BoardView({
   board,
   complaintDashboard,
   complaintReviewQueue,
+  complaintReviewAction,
   loading,
   error,
   onOpenAttention,
   onOpenAttentionItem,
   onOpenServiceRequest,
   onOpenRoutes,
+  onSeedComplaintFeedback,
+  onResolveComplaintReview,
   onRefresh,
   technicianOptions = [],
 }) {
@@ -176,6 +179,44 @@ export default function BoardView({
             </small>
           )}
         </article>
+        </div>
+      </details>
+
+      <details className="dashboard-disclosure">
+        <summary>Complaint evidence review</summary>
+        <div className="review-toolbar">
+          <button type="button" className="secondary-button" onClick={onSeedComplaintFeedback}>
+            Seed from completed SRs
+          </button>
+          {complaintReviewAction?.message && (
+            <span className={complaintReviewAction.error ? "error-text" : "muted"}>{complaintReviewAction.message}</span>
+          )}
+        </div>
+        <div className="history-list">
+          {Array.isArray(complaintReviewQueue?.items) && complaintReviewQueue.items.length ? (
+            complaintReviewQueue.items.map((item) => (
+              <div key={item.feedbackId} className="history-entry">
+                <p>
+                  SR-{item.serviceRequestId} · {item.outcome?.replaceAll("_", " ")} · {item.recommendedItem || "unspecified part"}
+                </p>
+                <span>{[item.modelNumber, item.applianceType, item.createdAt].filter(Boolean).join(" · ")}</span>
+                {item.notes && <small>{item.notes}</small>}
+                <div className="review-actions">
+                  <button type="button" className="secondary-button" onClick={() => onResolveComplaintReview?.(item.feedbackId, "trusted")}>
+                    Trust
+                  </button>
+                  <button type="button" className="secondary-button" onClick={() => onResolveComplaintReview?.(item.feedbackId, "downgraded")}>
+                    Downgrade
+                  </button>
+                  <button type="button" className="secondary-button danger" onClick={() => onResolveComplaintReview?.(item.feedbackId, "excluded")}>
+                    Exclude
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="muted">No weak evidence is waiting for review.</p>
+          )}
         </div>
       </details>
 

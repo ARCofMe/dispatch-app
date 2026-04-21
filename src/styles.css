@@ -413,6 +413,19 @@ input {
   cursor: pointer;
 }
 
+.review-toolbar,
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.secondary-button.danger {
+  color: var(--danger) !important;
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--panel-border)) !important;
+}
+
 .card-button-reset {
   display: block;
   width: 100%;

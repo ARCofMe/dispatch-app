@@ -73,6 +73,7 @@ export default function App() {
   const [boardLoading, setBoardLoading] = useState(true);
   const [complaintDashboard, setComplaintDashboard] = useState(null);
   const [complaintReviewQueue, setComplaintReviewQueue] = useState(null);
+  const [complaintReviewAction, setComplaintReviewAction] = useState(null);
 
   const [attention, setAttention] = useState([]);
   const [attentionMeta, setAttentionMeta] = useState(null);
@@ -231,6 +232,28 @@ export default function App() {
     } finally {
       if (boardLoadIdRef.current !== requestId) return;
       setBoardLoading(false);
+    }
+  }
+
+  async function seedComplaintFeedback() {
+    setComplaintReviewAction({ loading: true, message: "Seeding historical evidence feedback..." });
+    try {
+      const payload = await dispatchApi.seedComplaintIntelligenceFeedback(250);
+      setComplaintReviewAction({ error: !payload.success, message: payload.message || "Feedback seed complete." });
+      await loadBoard();
+    } catch (error) {
+      setComplaintReviewAction({ error: true, message: formatError(error) });
+    }
+  }
+
+  async function resolveComplaintReview(feedbackId, decision) {
+    setComplaintReviewAction({ loading: true, message: "Resolving evidence review..." });
+    try {
+      const payload = await dispatchApi.resolveComplaintIntelligenceReview(feedbackId, { decision });
+      setComplaintReviewAction({ error: !payload.success, message: payload.message || "Evidence review resolved." });
+      await loadBoard();
+    } catch (error) {
+      setComplaintReviewAction({ error: true, message: formatError(error) });
     }
   }
 
@@ -809,6 +832,7 @@ export default function App() {
           board={board}
           complaintDashboard={complaintDashboard}
           complaintReviewQueue={complaintReviewQueue}
+          complaintReviewAction={complaintReviewAction}
           loading={boardLoading}
           error={boardError}
           technicianOptions={technicianOptions}
@@ -821,6 +845,8 @@ export default function App() {
           onOpenRoutes={(item) =>
             loadRoutes(item?.ownerBluefolderUserId || item?.technicianBluefolderUserId || item?.bluefolderUserId)
           }
+          onSeedComplaintFeedback={seedComplaintFeedback}
+          onResolveComplaintReview={resolveComplaintReview}
           onRefresh={loadBoard}
         />
       )}

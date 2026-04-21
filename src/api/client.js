@@ -61,6 +61,18 @@ export const dispatchApi = {
   getComplaintIntelligenceReviewQueue() {
     return request("/complaint_intelligence/review_queue?limit=5");
   },
+  seedComplaintIntelligenceFeedback(limit = 250) {
+    return request("/complaint_intelligence/feedback/seed", {
+      method: "POST",
+      body: { limit },
+    });
+  },
+  resolveComplaintIntelligenceReview(feedbackId, body) {
+    return request(`/complaint_intelligence/review_queue/${feedbackId}/resolve`, {
+      method: "POST",
+      body,
+    });
+  },
   getAttention(filters = {}) {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
