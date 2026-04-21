@@ -32,6 +32,7 @@ export default function ServiceRequestView({
   const smsIntents = Array.isArray(smsCapabilities?.intents) ? smsCapabilities.intents : [];
   const [smsIntent, setSmsIntent] = useState("");
   const [smsDraft, setSmsDraft] = useState("");
+  const [evidenceFeedbackNote, setEvidenceFeedbackNote] = useState("");
   const evidencePacket = complaintIntelligence?.evidencePacket && typeof complaintIntelligence.evidencePacket === "object"
     ? complaintIntelligence.evidencePacket
     : null;
@@ -149,11 +150,20 @@ export default function ServiceRequestView({
                     <p>{diagnosticQuestions[0]}</p>
                   </div>
                 )}
+                <label className="field">
+                  <span>Feedback note</span>
+                  <input
+                    value={evidenceFeedbackNote}
+                    onChange={(event) => setEvidenceFeedbackNote(event.target.value)}
+                    maxLength={1000}
+                    placeholder="Example: matched final repair, weak model match, needs better symptom detail"
+                  />
+                </label>
                 <div className="action-row">
                   <button
                     type="button"
                     disabled={evidenceFeedbackState?.loading}
-                    onClick={() => onSubmitComplaintFeedback?.("helpful", topRecommendation?.item || "")}
+                    onClick={() => onSubmitComplaintFeedback?.("helpful", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Evidence helped
                   </button>
@@ -161,7 +171,7 @@ export default function ServiceRequestView({
                     type="button"
                     className="secondary-button"
                     disabled={evidenceFeedbackState?.loading}
-                    onClick={() => onSubmitComplaintFeedback?.("needs_review", topRecommendation?.item || "")}
+                    onClick={() => onSubmitComplaintFeedback?.("needs_review", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Needs review
                   </button>
@@ -169,7 +179,7 @@ export default function ServiceRequestView({
                     type="button"
                     className="secondary-button"
                     disabled={evidenceFeedbackState?.loading}
-                    onClick={() => onSubmitComplaintFeedback?.("not_helpful", topRecommendation?.item || "")}
+                    onClick={() => onSubmitComplaintFeedback?.("not_helpful", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Not useful
                   </button>
@@ -185,6 +195,12 @@ export default function ServiceRequestView({
                   <Detail label="Not useful" value={feedbackCounts.not_helpful || 0} />
                   <Detail label="Latest" value={formatFeedbackOutcome(complaintIntelligence?.feedbackSummary?.latest?.outcome)} />
                 </div>
+                {complaintIntelligence?.feedbackSummary?.latest?.notes && (
+                  <div className="detail-block">
+                    <strong>Latest feedback note</strong>
+                    <p>{complaintIntelligence.feedbackSummary.latest.notes}</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="detail-block">

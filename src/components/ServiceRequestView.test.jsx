@@ -111,6 +111,7 @@ describe("ServiceRequestView", () => {
     expect(screen.getByText("no_cool")).toBeInTheDocument();
     expect(screen.getByText("exact model • limited")).toBeInTheDocument();
     expect(screen.getByText("Triage questions")).toBeInTheDocument();
+    expect(screen.getByLabelText("Feedback note")).toBeInTheDocument();
     expect(screen.getAllByText("Is the evaporator fan running?").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByText("Preview SMS"));
     expect(onPreviewSms).toHaveBeenCalledWith("dispatch_follow_up", "");

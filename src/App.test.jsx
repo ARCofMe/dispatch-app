@@ -256,7 +256,10 @@ describe("Dispatch App", () => {
         topComplaintTags: [{ tag: "no_cool", count: 4 }],
         topParts: [{ item: "FAN-1", itemType: "part", count: 3 }],
       },
-      feedbackSummary: { counts: { helpful: 0, needs_review: 0, not_helpful: 0 }, latest: null },
+      feedbackSummary: {
+        counts: { helpful: 0, needs_review: 0, not_helpful: 0 },
+        latest: { outcome: "helpful", notes: "Matched a prior fan repair." },
+      },
     });
 
     render(<App />);
@@ -266,6 +269,7 @@ describe("Dispatch App", () => {
 
     expect(await screen.findByText("Complaint Intelligence")).toBeInTheDocument();
     expect(screen.getByText("Evidence brief")).toBeInTheDocument();
+    expect(screen.getByText("Matched a prior fan repair.")).toBeInTheDocument();
     expect(screen.getAllByText("FAN-1").length).toBeGreaterThan(0);
     expect(screen.getByText("no_cool")).toBeInTheDocument();
     expect(dispatchApiMock.getServiceRequestComplaintIntelligence).toHaveBeenCalledWith("100");
@@ -291,13 +295,14 @@ describe("Dispatch App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
     fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+    fireEvent.change(await screen.findByLabelText("Feedback note"), { target: { value: "Matched final repair." } });
     fireEvent.click(await screen.findByRole("button", { name: "Evidence helped" }));
 
     await waitFor(() =>
       expect(dispatchApiMock.submitServiceRequestComplaintFeedback).toHaveBeenCalledWith("100", {
         outcome: "helpful",
         recommendedItem: "FAN-1",
-        notes: "",
+        notes: "Matched final repair.",
       }),
     );
     expect(await screen.findByText("Recorded Complaint Intelligence feedback as helpful.")).toBeInTheDocument();
