@@ -103,6 +103,12 @@ export const dispatchApi = {
   getServiceRequestComplaintIntelligence(srId) {
     return request(`/dispatch/sr/${srId}/complaint_intelligence`);
   },
+  submitServiceRequestComplaintFeedback(srId, body) {
+    return request(`/dispatch/sr/${srId}/complaint_intelligence/feedback`, {
+      method: "POST",
+      body,
+    });
+  },
   getRoutePreview(bluefolderUserId, options = {}) {
     const params = new URLSearchParams({
       bluefolder_user_id: `${bluefolderUserId}`,

@@ -95,6 +95,7 @@ export default function App() {
   const [srSmsHistory, setSrSmsHistory] = useState([]);
   const [srSmsPreview, setSrSmsPreview] = useState(null);
   const [srSmsActionState, setSrSmsActionState] = useState(null);
+  const [srEvidenceFeedbackState, setSrEvidenceFeedbackState] = useState(null);
   const [srError, setSrError] = useState("");
   const [srLoading, setSrLoading] = useState(false);
 
@@ -296,6 +297,7 @@ export default function App() {
     setSrSmsHistory([]);
     setSrSmsPreview(null);
     setSrSmsActionState(null);
+    setSrEvidenceFeedbackState(null);
     try {
       const [
         customerResult,
@@ -340,6 +342,7 @@ export default function App() {
         setSrSmsHistory([]);
         setSrSmsPreview(null);
         setSrSmsActionState(null);
+        setSrEvidenceFeedbackState(null);
         setSrSectionErrors(nextSectionErrors);
         setSrSectionLoading({});
         setSrError(nextSectionErrors.customer || "Could not load SR detail.");
@@ -368,6 +371,7 @@ export default function App() {
       setSrSmsHistory([]);
       setSrSmsPreview(null);
       setSrSmsActionState(null);
+      setSrEvidenceFeedbackState(null);
       setSrError(formatError(error));
     } finally {
       if (serviceRequestLoadIdRef.current !== requestId) return;
@@ -471,6 +475,31 @@ export default function App() {
       setSrSmsHistory(historyPayload?.items || []);
     } catch (error) {
       setSrSmsActionState({ error: true, message: formatError(error) });
+    }
+  }
+
+  async function submitComplaintFeedback(outcome, recommendedItem = "", notes = "") {
+    const srId = selectedSrId.trim();
+    if (!srId) return;
+    setSrEvidenceFeedbackState({ loading: true, message: "Saving evidence feedback…" });
+    try {
+      const payload = await dispatchApi.submitServiceRequestComplaintFeedback(srId, {
+        outcome,
+        recommendedItem,
+        notes,
+      });
+      setSrComplaintIntelligence((current) =>
+        current
+          ? {
+              ...current,
+              feedbackSummary: payload.feedbackSummary || current.feedbackSummary,
+              feedbackCaptureEnabled: true,
+            }
+          : current,
+      );
+      setSrEvidenceFeedbackState({ loading: false, message: payload.message || "Evidence feedback saved." });
+    } catch (error) {
+      setSrEvidenceFeedbackState({ loading: false, error: true, message: formatError(error) });
     }
   }
 
@@ -844,6 +873,7 @@ export default function App() {
           smsHistory={srSmsHistory}
           smsPreview={srSmsPreview}
           smsActionState={srSmsActionState}
+          evidenceFeedbackState={srEvidenceFeedbackState}
           technicianOptions={technicianOptions}
           loading={srLoading}
           error={srError}
@@ -851,6 +881,7 @@ export default function App() {
           onOpenRoutes={(techId) => loadRoutes(techId)}
           onPreviewSms={previewServiceRequestSms}
           onSendSms={sendServiceRequestSms}
+          onSubmitComplaintFeedback={submitComplaintFeedback}
           onLoadSection={loadServiceRequestSection}
           onOpenAttentionItem={(item) => {
             setActiveTab("attention");

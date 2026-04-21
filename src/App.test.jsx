@@ -16,6 +16,7 @@ import App from "./App";
     getServiceRequestWork: vi.fn(),
     getServiceRequestPhotoCompliance: vi.fn(),
     getServiceRequestComplaintIntelligence: vi.fn(),
+    submitServiceRequestComplaintFeedback: vi.fn(),
     getServiceRequestSmsCapabilities: vi.fn(),
     getServiceRequestSmsHistory: vi.fn(),
     previewServiceRequestSms: vi.fn(),
@@ -62,6 +63,7 @@ describe("Dispatch App", () => {
     dispatchApiMock.getServiceRequestWork.mockReset();
     dispatchApiMock.getServiceRequestPhotoCompliance.mockReset();
     dispatchApiMock.getServiceRequestComplaintIntelligence.mockReset();
+    dispatchApiMock.submitServiceRequestComplaintFeedback.mockReset();
     dispatchApiMock.getServiceRequestSmsCapabilities.mockReset();
     dispatchApiMock.getServiceRequestSmsHistory.mockReset();
     dispatchApiMock.previewServiceRequestSms.mockReset();
@@ -100,6 +102,14 @@ describe("Dispatch App", () => {
       complaintTags: [],
       recommendations: [],
       commonResolutions: [],
+      feedbackSummary: { counts: {}, latest: null },
+      modelFamilyTrends: null,
+    });
+    dispatchApiMock.submitServiceRequestComplaintFeedback.mockResolvedValue({
+      success: true,
+      outcome: "helpful",
+      message: "Recorded Complaint Intelligence feedback as helpful.",
+      feedbackSummary: { counts: { helpful: 1 }, latest: { outcome: "helpful" } },
     });
     dispatchApiMock.getServiceRequestSmsCapabilities.mockResolvedValue({
       provider: "dry_run",
@@ -240,6 +250,13 @@ describe("Dispatch App", () => {
       similarRequestCount: 2,
       recommendations: [{ item: "FAN-1", itemType: "part", matchingRequestCount: 2, score: 1 }],
       commonResolutions: ["Replaced evaporator fan"],
+      modelFamilyTrends: {
+        modelFamily: "RF1",
+        requestCount: 5,
+        topComplaintTags: [{ tag: "no_cool", count: 4 }],
+        topParts: [{ item: "FAN-1", itemType: "part", count: 3 }],
+      },
+      feedbackSummary: { counts: { helpful: 0, needs_review: 0, not_helpful: 0 }, latest: null },
     });
 
     render(<App />);
@@ -248,9 +265,42 @@ describe("Dispatch App", () => {
     fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
 
     expect(await screen.findByText("Complaint Intelligence")).toBeInTheDocument();
-    expect(screen.getByText("FAN-1")).toBeInTheDocument();
+    expect(screen.getByText("Evidence brief")).toBeInTheDocument();
+    expect(screen.getAllByText("FAN-1").length).toBeGreaterThan(0);
     expect(screen.getByText("no_cool")).toBeInTheDocument();
     expect(dispatchApiMock.getServiceRequestComplaintIntelligence).toHaveBeenCalledWith("100");
+  });
+
+  it("submits evidence feedback from the SR evidence brief", async () => {
+    dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });
+    dispatchApiMock.getServiceRequestCustomer.mockResolvedValue({ customerName: "Pat Smith", reference: "SR-100" });
+    dispatchApiMock.getServiceRequestWork.mockResolvedValue({ urgentCount: 0, ownerGapCount: 0, attentionItems: [], nextActions: [] });
+    dispatchApiMock.getServiceRequestComplaintIntelligence.mockResolvedValue({
+      available: true,
+      request: { modelNumber: "RF1", brand: "Samsung", applianceType: "refrigerator", complaintText: "not cooling" },
+      complaintTags: [{ tag: "no_cool", confidence: 1, source: "rules" }],
+      similarRequestCount: 2,
+      recommendations: [{ item: "FAN-1", itemType: "part", matchingRequestCount: 2, score: 1 }],
+      commonResolutions: [],
+      modelFamilyTrends: null,
+      feedbackSummary: { counts: {}, latest: null },
+      evidencePacket: { confidence: "limited", classification: { matchScope: "exact_model" }, diagnosticQuestions: [] },
+    });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
+    fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Evidence helped" }));
+
+    await waitFor(() =>
+      expect(dispatchApiMock.submitServiceRequestComplaintFeedback).toHaveBeenCalledWith("100", {
+        outcome: "helpful",
+        recommendedItem: "FAN-1",
+        notes: "",
+      }),
+    );
+    expect(await screen.findByText("Recorded Complaint Intelligence feedback as helpful.")).toBeInTheDocument();
   });
 
   it("lazy-loads secondary SR sections without blocking usable context", async () => {

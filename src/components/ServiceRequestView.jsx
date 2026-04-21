@@ -15,12 +15,14 @@ export default function ServiceRequestView({
   smsHistory,
   smsPreview,
   smsActionState,
+  evidenceFeedbackState,
   loading,
   error,
   onChange,
   onOpenRoutes,
   onPreviewSms,
   onSendSms,
+  onSubmitComplaintFeedback,
   onLoadSection,
   onOpenAttentionItem,
   technicianOptions = [],
@@ -37,6 +39,10 @@ export default function ServiceRequestView({
   const diagnosticQuestions = Array.isArray(evidencePacket?.diagnosticQuestions) ? evidencePacket.diagnosticQuestions : [];
   const matchScope = classification.matchScope || complaintIntelligence?.matchScope;
   const confidence = evidencePacket?.confidence || complaintIntelligence?.confidence;
+  const recommendations = Array.isArray(complaintIntelligence?.recommendations) ? complaintIntelligence.recommendations : [];
+  const topRecommendation = recommendations[0] || null;
+  const feedbackCounts = complaintIntelligence?.feedbackSummary?.counts || {};
+  const modelFamilyTrends = complaintIntelligence?.modelFamilyTrends || null;
   const smsLoaded = Boolean(smsCapabilities) || Boolean((smsHistory || []).length);
 
   useEffect(() => {
@@ -105,6 +111,87 @@ export default function ServiceRequestView({
                 <p>{smsCapabilities?.toNumber || customer?.customerPhone || "No customer phone loaded."}</p>
               </div>
             </div>
+          </article>
+
+          <article className="metric-card wide evidence-brief">
+            <p className="section-kicker">Evidence brief</p>
+            {complaintIntelligence?.available ? (
+              <div className="list-stack compact">
+                <div className="detail-grid">
+                  <Detail label="Confidence" value={confidence || "unknown"} />
+                  <Detail label="Match scope" value={formatMatchScope(matchScope) || "unknown"} />
+                  <Detail label="Similar SRs" value={complaintIntelligence.similarRequestCount} />
+                  <Detail label="Top part" value={topRecommendation?.item || "none"} />
+                </div>
+                <div className="detail-block">
+                  <strong>Dispatch read</strong>
+                  <p>{buildEvidenceSummary(complaintIntelligence)}</p>
+                </div>
+                {!!modelFamilyTrends && (
+                  <div className="detail-block">
+                    <strong>Model-family trend</strong>
+                    <p>
+                      {modelFamilyTrends.modelFamily} family: {modelFamilyTrends.requestCount || 0} completed SRs in evidence.
+                    </p>
+                    <div className="chip-list">
+                      {(modelFamilyTrends.topComplaintTags || []).slice(0, 3).map((item) => (
+                        <span key={item.tag} className="queue-chip">{item.tag} ({item.count})</span>
+                      ))}
+                      {(modelFamilyTrends.topParts || []).slice(0, 3).map((item) => (
+                        <span key={`${item.itemType}-${item.item}`} className="queue-chip">{item.item} ({item.count})</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!diagnosticQuestions.length && (
+                  <div className="detail-block">
+                    <strong>First diagnostic question</strong>
+                    <p>{diagnosticQuestions[0]}</p>
+                  </div>
+                )}
+                <div className="action-row">
+                  <button
+                    type="button"
+                    disabled={evidenceFeedbackState?.loading}
+                    onClick={() => onSubmitComplaintFeedback?.("helpful", topRecommendation?.item || "")}
+                  >
+                    Evidence helped
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={evidenceFeedbackState?.loading}
+                    onClick={() => onSubmitComplaintFeedback?.("needs_review", topRecommendation?.item || "")}
+                  >
+                    Needs review
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={evidenceFeedbackState?.loading}
+                    onClick={() => onSubmitComplaintFeedback?.("not_helpful", topRecommendation?.item || "")}
+                  >
+                    Not useful
+                  </button>
+                  {evidenceFeedbackState?.message && (
+                    <span className={evidenceFeedbackState?.error ? "error-text" : "muted"}>
+                      {evidenceFeedbackState.message}
+                    </span>
+                  )}
+                </div>
+                <div className="detail-grid">
+                  <Detail label="Helpful" value={feedbackCounts.helpful || 0} />
+                  <Detail label="Needs review" value={feedbackCounts.needs_review || 0} />
+                  <Detail label="Not useful" value={feedbackCounts.not_helpful || 0} />
+                  <Detail label="Latest" value={formatFeedbackOutcome(complaintIntelligence?.feedbackSummary?.latest?.outcome)} />
+                </div>
+              </div>
+            ) : (
+              <div className="detail-block">
+                <strong>Evidence unavailable</strong>
+                <p>{describeComplaintIntelligenceUnavailable(complaintIntelligence, normalizedSrId)}</p>
+              </div>
+            )}
           </article>
 
           <article className="metric-card wide">
@@ -538,9 +625,23 @@ function formatEvidenceLabel(matchScope, confidence) {
   return values.length ? values.join(" • ") : "unknown";
 }
 
+function buildEvidenceSummary(complaintIntelligence) {
+  const topRecommendation = Array.isArray(complaintIntelligence?.recommendations) ? complaintIntelligence.recommendations[0] : null;
+  const similarCount = complaintIntelligence?.similarRequestCount || 0;
+  if (!topRecommendation) {
+    return `Historical evidence is limited. ${similarCount} similar SRs matched, but no part is consistently supported yet.`;
+  }
+  return `${topRecommendation.item} is the strongest historical part signal from ${similarCount} similar completed SRs. Use the diagnostic questions before committing to a parts-first path.`;
+}
+
 function formatMatchScope(matchScope) {
   const value = String(matchScope || "").replace(/_/g, " ").trim();
   return value || "";
+}
+
+function formatFeedbackOutcome(value) {
+  const normalized = String(value || "").replace(/_/g, " ").trim();
+  return normalized || "none";
 }
 
 function truncateText(value, maxLength) {

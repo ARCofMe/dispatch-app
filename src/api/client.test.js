@@ -203,4 +203,19 @@ describe("dispatchApi client", () => {
     expect(url).toContain("/dispatch/sr/100/complaint_intelligence");
     expect(options.method).toBe("GET");
   });
+
+  it("posts complaint intelligence feedback for a service request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ success: true, outcome: "helpful" })),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await dispatchApi.submitServiceRequestComplaintFeedback(100, { outcome: "helpful", recommendedItem: "FAN-1" });
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain("/dispatch/sr/100/complaint_intelligence/feedback");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual({ outcome: "helpful", recommendedItem: "FAN-1" });
+  });
 });
