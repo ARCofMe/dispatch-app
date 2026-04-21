@@ -43,6 +43,8 @@ export default function ServiceRequestView({
   const recommendations = Array.isArray(complaintIntelligence?.recommendations) ? complaintIntelligence.recommendations : [];
   const topRecommendation = recommendations[0] || null;
   const feedbackCounts = complaintIntelligence?.feedbackSummary?.counts || {};
+  const feedbackCaptureEnabled = complaintIntelligence?.feedbackCaptureEnabled !== false;
+  const feedbackHealth = complaintIntelligence?.feedbackHealth || null;
   const modelFamilyTrends = complaintIntelligence?.modelFamilyTrends || null;
   const smsLoaded = Boolean(smsCapabilities) || Boolean((smsHistory || []).length);
 
@@ -128,6 +130,12 @@ export default function ServiceRequestView({
                   <strong>Dispatch read</strong>
                   <p>{buildEvidenceSummary(complaintIntelligence)}</p>
                 </div>
+                {!!feedbackHealth?.label && (
+                  <div className="detail-block">
+                    <strong>Feedback signal</strong>
+                    <p>{feedbackHealth.label}</p>
+                  </div>
+                )}
                 {!!modelFamilyTrends && (
                   <div className="detail-block">
                     <strong>Model-family trend</strong>
@@ -162,7 +170,7 @@ export default function ServiceRequestView({
                 <div className="action-row">
                   <button
                     type="button"
-                    disabled={evidenceFeedbackState?.loading}
+                    disabled={evidenceFeedbackState?.loading || !feedbackCaptureEnabled}
                     onClick={() => onSubmitComplaintFeedback?.("helpful", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Evidence helped
@@ -170,7 +178,7 @@ export default function ServiceRequestView({
                   <button
                     type="button"
                     className="secondary-button"
-                    disabled={evidenceFeedbackState?.loading}
+                    disabled={evidenceFeedbackState?.loading || !feedbackCaptureEnabled}
                     onClick={() => onSubmitComplaintFeedback?.("needs_review", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Needs review
@@ -178,7 +186,7 @@ export default function ServiceRequestView({
                   <button
                     type="button"
                     className="secondary-button"
-                    disabled={evidenceFeedbackState?.loading}
+                    disabled={evidenceFeedbackState?.loading || !feedbackCaptureEnabled}
                     onClick={() => onSubmitComplaintFeedback?.("not_helpful", topRecommendation?.item || "", evidenceFeedbackNote)}
                   >
                     Not useful
@@ -188,6 +196,7 @@ export default function ServiceRequestView({
                       {evidenceFeedbackState.message}
                     </span>
                   )}
+                  {!feedbackCaptureEnabled && <span className="muted">Feedback capture is not enabled for this evidence source.</span>}
                 </div>
                 <div className="detail-grid">
                   <Detail label="Helpful" value={feedbackCounts.helpful || 0} />

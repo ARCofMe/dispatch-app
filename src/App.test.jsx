@@ -260,6 +260,7 @@ describe("Dispatch App", () => {
         counts: { helpful: 0, needs_review: 0, not_helpful: 0 },
         latest: { outcome: "helpful", notes: "Matched a prior fan repair." },
       },
+      feedbackHealth: { status: "supportive", label: "Prior feedback supports this evidence" },
     });
 
     render(<App />);
@@ -269,6 +270,7 @@ describe("Dispatch App", () => {
 
     expect(await screen.findByText("Complaint Intelligence")).toBeInTheDocument();
     expect(screen.getByText("Evidence brief")).toBeInTheDocument();
+    expect(screen.getByText("Prior feedback supports this evidence")).toBeInTheDocument();
     expect(screen.getByText("Matched a prior fan repair.")).toBeInTheDocument();
     expect(screen.getAllByText("FAN-1").length).toBeGreaterThan(0);
     expect(screen.getByText("no_cool")).toBeInTheDocument();
