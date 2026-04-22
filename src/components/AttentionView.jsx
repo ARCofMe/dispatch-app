@@ -157,8 +157,8 @@ export default function AttentionView({
         </label>
         <button
           type="button"
-          disabled={!selectedActionableIds.length}
-          onClick={() => onBulkAction("assign", selectedActionableIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) || 0 })}
+          disabled={!selectedActionableIds.length || !bulkOwnerId}
+          onClick={() => onBulkAction("assign", selectedActionableIds, { assignedOwnerBluefolderUserId: Number.parseInt(bulkOwnerId, 10) })}
         >
           Assign selected
         </button>
@@ -383,10 +383,10 @@ function AttentionDetail({
         </label>
         <button
           type="button"
-          disabled={isReadOnly}
+          disabled={isReadOnly || !ownerId}
           onClick={() =>
             onAction(item.itemId, "assign", {
-              assignedOwnerBluefolderUserId: Number.parseInt(ownerId, 10) || 0,
+              assignedOwnerBluefolderUserId: Number.parseInt(ownerId, 10),
             })
           }
         >

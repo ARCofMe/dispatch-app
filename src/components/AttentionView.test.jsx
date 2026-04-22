@@ -278,6 +278,46 @@ describe("AttentionView", () => {
     expect(screen.getAllByText("Danny Marquez").length).toBeGreaterThan(0);
   });
 
+  it("requires an owner selection before assigning attention ownership", () => {
+    const onAction = vi.fn();
+
+    render(
+      <AttentionView
+        items={[]}
+        loading={false}
+        error=""
+        ownerOptions={[{ bluefolderUserId: 13051, displayName: "Danny Marquez" }]}
+        onRefresh={vi.fn()}
+        onSelectItem={vi.fn()}
+        selectedItem={{
+          itemId: "dispatch:SR-301:quote_needed",
+          srId: 301,
+          reference: "SR-301",
+          stage: "quote_needed",
+          stageLabel: "Quote Needed",
+          nextAction: "Call landlord",
+          status: "open",
+          ageBucket: "warm",
+        }}
+        selectedItemDetail={null}
+        actionState={null}
+        onAction={onAction}
+        onBulkAction={vi.fn()}
+        onOpenServiceRequest={vi.fn()}
+        onOpenRoutes={vi.fn()}
+        onOpenServiceRequestById={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Assign" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Assign owner"), { target: { value: "13051" } });
+    fireEvent.click(screen.getByRole("button", { name: "Assign" }));
+
+    expect(onAction).toHaveBeenCalledWith("dispatch:SR-301:quote_needed", "assign", {
+      assignedOwnerBluefolderUserId: 13051,
+    });
+  });
+
   it("marks discovery items read-only while leaving SR navigation available", () => {
     const onBulkAction = vi.fn();
     const onAction = vi.fn();
