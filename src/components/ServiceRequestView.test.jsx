@@ -38,7 +38,18 @@ describe("ServiceRequestView", () => {
     render(
       <ServiceRequestView
         srId="200"
-        customer={{ customerName: "Pat Smith", subject: "Dryer no heat", reference: "SR-200" }}
+        customer={{
+          customerName: "Pat Smith",
+          subject: "Dryer no heat",
+          reference: "SR-200",
+          statusMeta: {
+            categoryLabel: "Parts",
+            primarySurface: "partsdesk",
+            blocksScheduling: true,
+            schedulingReleaseCondition: "ETA is confirmed.",
+            actionRequired: "PartsDesk should confirm ETA before scheduling.",
+          },
+        }}
         timeline={{ entries: [] }}
         work={{
           urgentCount: 1,
@@ -103,6 +114,10 @@ describe("ServiceRequestView", () => {
     );
 
     expect(screen.getByText("Work panel")).toBeInTheDocument();
+    expect(screen.getByText("Review status")).toBeInTheDocument();
+    expect(screen.getByText("Owner surface")).toBeInTheDocument();
+    expect(screen.getByText("partsdesk")).toBeInTheDocument();
+    expect(screen.getByText("Release condition: ETA is confirmed.")).toBeInTheDocument();
     expect(screen.getByText("Call landlord")).toBeInTheDocument();
     expect(screen.getByText("Track ETA")).toBeInTheDocument();
     expect(screen.getByText("Customer SMS")).toBeInTheDocument();

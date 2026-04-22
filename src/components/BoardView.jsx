@@ -138,6 +138,8 @@ export default function BoardView({
   const technicianLoad = asArray(board.technicianLoad);
   const topAttentionItems = asArray(board.topAttention);
   const openPartsCaseItems = asArray(board.openPartsCaseItems);
+  const urgentAttentionCount = topAttentionItems.filter((item) => item.ageBucket === "urgent").length;
+  const unassignedAttentionCount = topAttentionItems.filter((item) => !item.assignedOwnerLabel && !item.followUpOwnerLabel).length;
 
   return (
     <section className="panel board-layout">
@@ -174,6 +176,12 @@ export default function BoardView({
         <span>2. Resolve owner gaps</span>
         <span>3. Check parts blockers</span>
         <span>4. Build routes</span>
+      </div>
+
+      <div className="chip-list">
+        <span className="queue-chip">Urgent visible: {urgentAttentionCount}</span>
+        <span className="queue-chip">Unowned visible: {unassignedAttentionCount}</span>
+        <span className="queue-chip">Parts blockers: {openPartsCaseItems.length}</span>
       </div>
 
       <details className="dashboard-disclosure">

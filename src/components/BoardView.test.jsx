@@ -55,6 +55,9 @@ describe("BoardView", () => {
     expect(screen.getByText("Visible techs")).toBeInTheDocument();
     expect(screen.getByText("Dispatch command brief")).toBeInTheDocument();
     expect(screen.getByText("Work the board in this order")).toBeInTheDocument();
+    expect(screen.getByText("Urgent visible: 1")).toBeInTheDocument();
+    expect(screen.getByText("Unowned visible: 0")).toBeInTheDocument();
+    expect(screen.getByText("Parts blockers: 0")).toBeInTheDocument();
     expect(screen.getByText("First risk")).toBeInTheDocument();
     expect(screen.getByText("Loaded tech")).toBeInTheDocument();
     expect(screen.getByText("Hot queue")).toBeInTheDocument();

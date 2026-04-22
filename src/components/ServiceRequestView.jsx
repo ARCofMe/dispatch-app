@@ -84,6 +84,12 @@ export default function ServiceRequestView({
 
       {!loading && !error && normalizedSrId && (
         <div className="sr-grid">
+          <div className="workflow-strip">
+            <span>Review status</span>
+            <span>Check work</span>
+            <span>Use evidence</span>
+            <span>Contact customer</span>
+          </div>
           <article className="metric-card wide command-brief sr-decision-brief">
             <div className="section-head compact">
               <div>
@@ -226,12 +232,19 @@ export default function ServiceRequestView({
               <div className="detail-grid">
                 <Detail label="Current" value={customer?.status || work?.serviceRequestStatus || "unknown"} />
                 <Detail label="Category" value={customer?.statusMeta?.categoryLabel || work?.statusMeta?.categoryLabel || "Other"} />
+                <Detail label="Owner surface" value={customer?.statusMeta?.primarySurface || work?.statusMeta?.primarySurface || "ops_hub"} />
+                <Detail label="Blocks scheduling" value={flagText(customer?.statusMeta?.blocksScheduling || work?.statusMeta?.blocksScheduling)} />
                 <Detail label="Parts active" value={flagText(customer?.statusMeta?.isActiveParts || work?.statusMeta?.isActiveParts)} />
                 <Detail label="Closed" value={flagText(customer?.statusMeta?.isClosed || work?.statusMeta?.isClosed)} />
               </div>
               <div className="detail-block">
                 <strong>Operational read</strong>
                 <p>{describeStatusMeta(customer?.statusMeta || work?.statusMeta)}</p>
+                {(customer?.statusMeta?.schedulingReleaseCondition || work?.statusMeta?.schedulingReleaseCondition) && (
+                  <p className="muted">
+                    Release condition: {customer?.statusMeta?.schedulingReleaseCondition || work?.statusMeta?.schedulingReleaseCondition}
+                  </p>
+                )}
               </div>
             </div>
           </article>
