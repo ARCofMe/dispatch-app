@@ -35,6 +35,10 @@ function formatCountMap(values) {
     .join(" · ");
 }
 
+function formatDecision(item) {
+  return [item?.recommendedItem, item?.decision, item?.modelNumber || item?.complaintTag].filter(Boolean).join(" · ");
+}
+
 function commandBrief(board) {
   const load = asArray(board?.technicianLoad);
   const topTech = load
@@ -189,6 +193,11 @@ export default function BoardView({
             </small>
           )}
           {complaintDashboard?.feedbackHealth?.label && <small>{complaintDashboard.feedbackHealth.label}</small>}
+          {Array.isArray(complaintDashboard?.recentReviewDecisions) && complaintDashboard.recentReviewDecisions.length > 0 && (
+            <small>
+              Recent decisions: {complaintDashboard.recentReviewDecisions.slice(0, 2).map(formatDecision).filter(Boolean).join(", ")}
+            </small>
+          )}
           {Array.isArray(complaintReviewQueue?.items) && complaintReviewQueue.items.length > 0 && (
             <small>
               Review: {complaintReviewQueue.items
@@ -203,6 +212,9 @@ export default function BoardView({
           <strong>{statusCatalog?.knownCount ?? "n/a"}</strong>
           <span>{formatCountMap(statusCatalog?.primarySurfaceCounts)}</span>
           <small>{formatCountMap(statusCatalog?.categoryCounts)}</small>
+          {Array.isArray(statusCatalog?.surfaceActions) && statusCatalog.surfaceActions.length > 0 && (
+            <small>{statusCatalog.surfaceActions.slice(0, 2).map((item) => `${item.label}: ${item.action}`).join(" ")}</small>
+          )}
         </article>
         </div>
       </details>

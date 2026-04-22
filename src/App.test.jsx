@@ -85,11 +85,13 @@ describe("Dispatch App", () => {
       reviewQueueCount: 1,
       helpfulRate: 0.67,
       feedbackHealth: { status: "review_needed", label: "Some evidence feedback still needs operator review" },
+      recentReviewDecisions: [{ recommendedItem: "FAN-1", decision: "trusted", modelNumber: "RF100" }],
     });
     dispatchApiMock.getBlueFolderStatusCatalog.mockResolvedValue({
       knownCount: 4,
       primarySurfaceCounts: { partsdesk: 1, routedesk: 2, ops_hub: 1 },
       categoryCounts: { parts: 1, scheduling: 1, review: 1, quote: 1 },
+      surfaceActions: [{ label: "PartsDesk", action: "Review part-blocked and ordering statuses." }],
     });
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockResolvedValue({
       available: true,
