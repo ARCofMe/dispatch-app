@@ -169,6 +169,13 @@ export default function BoardView({
 
       {error && <p className="error-text">Showing last board snapshot. Refresh failed: {error}</p>}
 
+      <div className="workflow-strip">
+        <span>1. Clear urgent attention</span>
+        <span>2. Resolve owner gaps</span>
+        <span>3. Check parts blockers</span>
+        <span>4. Build routes</span>
+      </div>
+
       <details className="dashboard-disclosure">
         <summary>Board health and scan metrics</summary>
         <div className="board-grid">
@@ -314,7 +321,7 @@ export default function BoardView({
         </article>
       </div>
 
-      <details className="dashboard-disclosure" open>
+      <details className="dashboard-disclosure">
         <summary>Queue details and parts blockers</summary>
         <div className="board-grid secondary">
         <article className="metric-card wide">

@@ -187,6 +187,12 @@ export default function AttentionView({
   return (
     <section className={isTriageMode ? "panel attention-layout triage-decision-layout" : "panel attention-layout"}>
       <div className="attention-column">
+        <div className="workflow-strip compact">
+          <span>Pick urgent</span>
+          <span>Assign owner</span>
+          <span>Ack or snooze</span>
+          <span>Open SR</span>
+        </div>
         <div className="board-grid compact attention-summary-grid">
           <article className="metric-card">
             <p>{isTriageMode ? "To decide" : "Open"}</p>
@@ -209,14 +215,10 @@ export default function AttentionView({
           <p className="muted">OpsHub scanned {meta.scannedJobs} job{Number(meta.scannedJobs) === 1 ? "" : "s"} for this queue.</p>
         )}
         <div className="attention-toolbar">
-          {isTriageMode ? (
-            <details className="control-disclosure">
-              <summary>Filters and bulk actions</summary>
-              {toolbarContent}
-            </details>
-          ) : (
-            toolbarContent
-          )}
+          <details className="control-disclosure">
+            <summary>{isTriageMode ? "Filters and bulk actions" : "Filters, sort, and bulk actions"}</summary>
+            {toolbarContent}
+          </details>
         </div>
 
         {loading && <p>Loading attention queue…</p>}

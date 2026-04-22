@@ -194,6 +194,31 @@ input {
   gap: 16px;
 }
 
+.workflow-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--card-bg) 78%, transparent);
+}
+
+.workflow-strip span {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--subtle-surface);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.workflow-strip.compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .metric-card {
   grid-column: span 3;
   padding: 18px;
@@ -1082,6 +1107,10 @@ a:focus-visible {
   .brief-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .workflow-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -1105,6 +1134,10 @@ a:focus-visible {
   }
 
   .brief-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-strip {
     grid-template-columns: 1fr;
   }
 
