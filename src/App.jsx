@@ -236,6 +236,7 @@ export default function App() {
   }
 
   async function seedComplaintFeedback() {
+    if (complaintReviewAction.loading) return;
     setComplaintReviewAction({ loading: true, message: "Seeding historical evidence feedback..." });
     try {
       const payload = await dispatchApi.seedComplaintIntelligenceFeedback(250);
@@ -247,6 +248,7 @@ export default function App() {
   }
 
   async function resolveComplaintReview(feedbackId, decision) {
+    if (complaintReviewAction.loading) return;
     setComplaintReviewAction({ loading: true, message: "Resolving evidence review..." });
     try {
       const payload = await dispatchApi.resolveComplaintIntelligenceReview(feedbackId, { decision });

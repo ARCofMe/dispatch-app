@@ -118,6 +118,7 @@ export default function BoardView({
     ["Open parts cases", metricValue(board, "openPartsCases")],
     ["Scanned jobs", metricValue(board, "scannedJobs")],
   ];
+  const complaintReviewBusy = Boolean(complaintReviewAction?.loading);
   const briefItems = commandBrief(board);
   const technicianLoad = asArray(board.technicianLoad);
   const topAttentionItems = asArray(board.topAttention);
@@ -170,6 +171,12 @@ export default function BoardView({
               ? `${complaintDashboard.reviewQueueCount || 0} weak signals, ${formatRate(complaintDashboard.helpfulRate)} helpful`
               : "Complaint Intelligence feedback is not available."}
           </span>
+          {complaintDashboard?.available && (
+            <small>
+              Decisions: {complaintDashboard.trustedCount || 0} trusted, {complaintDashboard.downgradedCount || 0} downgraded,{" "}
+              {complaintDashboard.excludedCount || 0} excluded
+            </small>
+          )}
           {Array.isArray(complaintReviewQueue?.items) && complaintReviewQueue.items.length > 0 && (
             <small>
               Review: {complaintReviewQueue.items
@@ -185,7 +192,7 @@ export default function BoardView({
       <details className="dashboard-disclosure">
         <summary>Complaint evidence review</summary>
         <div className="review-toolbar">
-          <button type="button" className="secondary-button" onClick={onSeedComplaintFeedback}>
+          <button type="button" className="secondary-button" onClick={onSeedComplaintFeedback} disabled={complaintReviewBusy}>
             Seed from completed SRs
           </button>
           {complaintReviewAction?.message && (
@@ -202,13 +209,28 @@ export default function BoardView({
                 <span>{[item.modelNumber, item.applianceType, item.createdAt].filter(Boolean).join(" · ")}</span>
                 {item.notes && <small>{item.notes}</small>}
                 <div className="review-actions">
-                  <button type="button" className="secondary-button" onClick={() => onResolveComplaintReview?.(item.feedbackId, "trusted")}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onResolveComplaintReview?.(item.feedbackId, "trusted")}
+                    disabled={complaintReviewBusy}
+                  >
                     Trust
                   </button>
-                  <button type="button" className="secondary-button" onClick={() => onResolveComplaintReview?.(item.feedbackId, "downgraded")}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onResolveComplaintReview?.(item.feedbackId, "downgraded")}
+                    disabled={complaintReviewBusy}
+                  >
                     Downgrade
                   </button>
-                  <button type="button" className="secondary-button danger" onClick={() => onResolveComplaintReview?.(item.feedbackId, "excluded")}>
+                  <button
+                    type="button"
+                    className="secondary-button danger"
+                    onClick={() => onResolveComplaintReview?.(item.feedbackId, "excluded")}
+                    disabled={complaintReviewBusy}
+                  >
                     Exclude
                   </button>
                 </div>
