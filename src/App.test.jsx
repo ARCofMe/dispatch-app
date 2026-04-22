@@ -7,6 +7,7 @@ import App from "./App";
     getBoard: vi.fn(),
     getComplaintIntelligenceDashboard: vi.fn(),
     getComplaintIntelligenceReviewQueue: vi.fn(),
+    getBlueFolderStatusCatalog: vi.fn(),
     seedComplaintIntelligenceFeedback: vi.fn(),
     resolveComplaintIntelligenceReview: vi.fn(),
     getAttention: vi.fn(),
@@ -58,6 +59,7 @@ describe("Dispatch App", () => {
     dispatchApiMock.getBoard.mockReset();
     dispatchApiMock.getComplaintIntelligenceDashboard.mockReset();
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockReset();
+    dispatchApiMock.getBlueFolderStatusCatalog.mockReset();
     dispatchApiMock.seedComplaintIntelligenceFeedback.mockReset();
     dispatchApiMock.resolveComplaintIntelligenceReview.mockReset();
     dispatchApiMock.getAttention.mockReset();
@@ -82,6 +84,12 @@ describe("Dispatch App", () => {
       feedbackVolume: 3,
       reviewQueueCount: 1,
       helpfulRate: 0.67,
+      feedbackHealth: { status: "review_needed", label: "Some evidence feedback still needs operator review" },
+    });
+    dispatchApiMock.getBlueFolderStatusCatalog.mockResolvedValue({
+      knownCount: 4,
+      primarySurfaceCounts: { partsdesk: 1, routedesk: 2, ops_hub: 1 },
+      categoryCounts: { parts: 1, scheduling: 1, review: 1, quote: 1 },
     });
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockResolvedValue({
       available: true,

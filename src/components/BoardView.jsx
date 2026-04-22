@@ -25,6 +25,16 @@ function allTechniciansIdle(payload) {
   return technicianLoad.length > 0 && technicianLoad.every((tech) => Number(tech.assignmentCount || 0) === 0);
 }
 
+function formatCountMap(values) {
+  if (!values || typeof values !== "object") return "No catalog loaded";
+  const entries = Object.entries(values).filter(([, value]) => Number(value || 0) > 0);
+  if (!entries.length) return "No catalog groups";
+  return entries
+    .sort((left, right) => Number(right[1] || 0) - Number(left[1] || 0))
+    .map(([key, value]) => `${key.replaceAll("_", " ")} ${value}`)
+    .join(" · ");
+}
+
 function commandBrief(board) {
   const load = asArray(board?.technicianLoad);
   const topTech = load
@@ -93,6 +103,7 @@ export default function BoardView({
   complaintDashboard,
   complaintReviewQueue,
   complaintReviewAction,
+  statusCatalog,
   loading,
   error,
   onOpenAttention,
@@ -177,6 +188,7 @@ export default function BoardView({
               {complaintDashboard.excludedCount || 0} excluded
             </small>
           )}
+          {complaintDashboard?.feedbackHealth?.label && <small>{complaintDashboard.feedbackHealth.label}</small>}
           {Array.isArray(complaintReviewQueue?.items) && complaintReviewQueue.items.length > 0 && (
             <small>
               Review: {complaintReviewQueue.items
@@ -185,6 +197,12 @@ export default function BoardView({
                 .join(", ")}
             </small>
           )}
+        </article>
+        <article className="metric-card">
+          <p>Status ownership</p>
+          <strong>{statusCatalog?.knownCount ?? "n/a"}</strong>
+          <span>{formatCountMap(statusCatalog?.primarySurfaceCounts)}</span>
+          <small>{formatCountMap(statusCatalog?.categoryCounts)}</small>
         </article>
         </div>
       </details>

@@ -61,6 +61,9 @@ export const dispatchApi = {
   getComplaintIntelligenceReviewQueue() {
     return request("/complaint_intelligence/review_queue?limit=5");
   },
+  getBlueFolderStatusCatalog() {
+    return request("/bluefolder/status_catalog");
+  },
   seedComplaintIntelligenceFeedback(limit = 250) {
     return request("/complaint_intelligence/feedback/seed", {
       method: "POST",
