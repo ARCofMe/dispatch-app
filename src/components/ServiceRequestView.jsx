@@ -677,6 +677,7 @@ function truncateText(value, maxLength) {
 
 function describeStatusMeta(meta) {
   if (!meta || typeof meta !== "object") return "No BlueFolder status classification loaded yet.";
+  if (meta.actionRequired) return meta.actionRequired;
   if (meta.isClosed) return "This SR is in a closed/completed state and should generally not drive new dispatch or parts work.";
   if (meta.isQuoteNeeded) return "This SR is blocked on quote approval before it can move forward cleanly.";
   if (meta.isActiveParts) return "This SR still reflects active parts work and should stay visible to operations until the parts loop is cleared.";

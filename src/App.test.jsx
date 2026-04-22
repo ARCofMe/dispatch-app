@@ -91,7 +91,8 @@ describe("Dispatch App", () => {
       knownCount: 4,
       primarySurfaceCounts: { partsdesk: 1, routedesk: 2, ops_hub: 1 },
       categoryCounts: { parts: 1, scheduling: 1, review: 1, quote: 1 },
-      surfaceActions: [{ label: "PartsDesk", action: "Review part-blocked and ordering statuses." }],
+      workstreamCounts: { parts: 1, dispatch: 2, ops_hub: 1 },
+      surfaceActions: [{ label: "PartsDesk", action: "Own part ordering, ETA, and tracking statuses before dispatch schedules." }],
     });
     dispatchApiMock.getComplaintIntelligenceReviewQueue.mockResolvedValue({
       available: true,

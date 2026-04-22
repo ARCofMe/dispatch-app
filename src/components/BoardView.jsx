@@ -211,7 +211,7 @@ export default function BoardView({
           <p>Status ownership</p>
           <strong>{statusCatalog?.knownCount ?? "n/a"}</strong>
           <span>{formatCountMap(statusCatalog?.primarySurfaceCounts)}</span>
-          <small>{formatCountMap(statusCatalog?.categoryCounts)}</small>
+          <small>{formatCountMap(statusCatalog?.workstreamCounts || statusCatalog?.categoryCounts)}</small>
           {Array.isArray(statusCatalog?.surfaceActions) && statusCatalog.surfaceActions.length > 0 && (
             <small>{statusCatalog.surfaceActions.slice(0, 2).map((item) => `${item.label}: ${item.action}`).join(" ")}</small>
           )}
