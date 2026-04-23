@@ -115,11 +115,17 @@ describe("ServiceRequestView", () => {
 
     expect(screen.getByText("Work panel")).toBeInTheDocument();
     expect(screen.getByText("Review status")).toBeInTheDocument();
+    expect(screen.getByText("Surface: PartsDesk")).toBeInTheDocument();
+    expect(screen.getByText("Workflow ownership")).toBeInTheDocument();
+    expect(screen.getByText("Primary surface")).toBeInTheDocument();
+    expect(screen.getByText("PartsDesk")).toBeInTheDocument();
+    expect(screen.getByText("Schedule gate")).toBeInTheDocument();
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
     expect(screen.getByText("Owner surface")).toBeInTheDocument();
     expect(screen.getByText("partsdesk")).toBeInTheDocument();
     expect(screen.getByText("Release condition: ETA is confirmed.")).toBeInTheDocument();
-    expect(screen.getByText("Call landlord")).toBeInTheDocument();
-    expect(screen.getByText("Track ETA")).toBeInTheDocument();
+    expect(screen.getAllByText("Call landlord").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Track ETA").length).toBeGreaterThan(0);
     expect(screen.getByText("Customer SMS")).toBeInTheDocument();
     expect(screen.getByText("Complaint Intelligence")).toBeInTheDocument();
     expect(screen.getAllByText("FAN-1").length).toBeGreaterThan(0);

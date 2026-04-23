@@ -47,6 +47,36 @@ export default function ServiceRequestView({
   const feedbackHealth = complaintIntelligence?.feedbackHealth || null;
   const modelFamilyTrends = complaintIntelligence?.modelFamilyTrends || null;
   const smsLoaded = Boolean(smsCapabilities) || Boolean((smsHistory || []).length);
+  const statusMeta = customer?.statusMeta || work?.statusMeta || {};
+  const topAttentionItem = (work?.attentionItems || [])[0] || null;
+  const workflowBriefItems = [
+    {
+      label: "Primary surface",
+      value: formatSurfaceLabel(statusMeta.primarySurface) || "Ops Hub",
+      detail: statusMeta.actionRequired || describeStatusMeta(statusMeta),
+    },
+    {
+      label: "Schedule gate",
+      value: statusMeta.blocksScheduling ? "Blocked" : "Open",
+      detail: statusMeta.schedulingReleaseCondition || "No release condition loaded.",
+    },
+    {
+      label: "Attention owner",
+      value: topAttentionItem ? technicianDisplayLabel(topAttentionItem, technicianOptions) || "Unowned" : "Clear",
+      detail: topAttentionItem?.nextAction || "No active attention item for this SR.",
+    },
+    {
+      label: "Customer contact",
+      value: smsCapabilities?.enabled ? "SMS ready" : "Manual",
+      detail: smsCapabilities?.toNumber || customer?.customerPhone || "No customer phone loaded.",
+    },
+  ];
+  const workflowSignals = [
+    `Surface: ${formatSurfaceLabel(statusMeta.primarySurface) || "Ops Hub"}`,
+    `Scheduling: ${statusMeta.blocksScheduling ? "blocked" : "open"}`,
+    `Attention: ${(work?.attentionItems || []).length || 0}`,
+    `Evidence: ${complaintIntelligence?.available ? `${complaintIntelligence.similarRequestCount || 0} similar` : "not loaded"}`,
+  ];
 
   useEffect(() => {
     setSmsIntent("");
@@ -90,6 +120,11 @@ export default function ServiceRequestView({
             <span>Use evidence</span>
             <span>Contact customer</span>
           </div>
+          <div className="chip-list">
+            {workflowSignals.map((item) => (
+              <span key={item} className="queue-chip">{item}</span>
+            ))}
+          </div>
           <article className="metric-card wide command-brief sr-decision-brief">
             <div className="section-head compact">
               <div>
@@ -119,6 +154,19 @@ export default function ServiceRequestView({
                 <strong>{smsCapabilities?.enabled ? "SMS ready" : "Check contact"}</strong>
                 <p>{smsCapabilities?.toNumber || customer?.customerPhone || "No customer phone loaded."}</p>
               </div>
+            </div>
+          </article>
+
+          <article className="metric-card wide">
+            <p>Workflow ownership</p>
+            <div className="brief-grid">
+              {workflowBriefItems.map((item) => (
+                <div key={item.label} className="brief-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                  <p>{item.detail}</p>
+                </div>
+              ))}
             </div>
           </article>
 
@@ -670,6 +718,16 @@ function buildEvidenceSummary(complaintIntelligence) {
     return `Historical evidence is limited. ${similarCount} similar SRs matched, but no part is consistently supported yet.`;
   }
   return `${topRecommendation.item} is the strongest historical part signal from ${similarCount} similar completed SRs. Use the diagnostic questions before committing to a parts-first path.`;
+}
+
+function formatSurfaceLabel(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "partsdesk") return "PartsDesk";
+  if (normalized === "routedesk") return "RouteDesk";
+  if (normalized === "ops_hub") return "Ops Hub";
+  if (normalized === "archive") return "Archive";
+  return normalized.replaceAll("_", " ");
 }
 
 function formatMatchScope(matchScope) {
