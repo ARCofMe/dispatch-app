@@ -33,6 +33,7 @@ export default function ServiceRequestView({
   const [smsIntent, setSmsIntent] = useState("");
   const [smsDraft, setSmsDraft] = useState("");
   const [evidenceFeedbackNote, setEvidenceFeedbackNote] = useState("");
+  const [viewMode, setViewMode] = useState("essentials");
   const evidencePacket = complaintIntelligence?.evidencePacket && typeof complaintIntelligence.evidencePacket === "object"
     ? complaintIntelligence.evidencePacket
     : null;
@@ -81,7 +82,15 @@ export default function ServiceRequestView({
   useEffect(() => {
     setSmsIntent("");
     setSmsDraft("");
+    setEvidenceFeedbackNote("");
   }, [normalizedSrId]);
+
+  const sectionSignals = [
+    summarizeSection("Customer", customer, sectionLoading.customer, sectionErrors.customer),
+    summarizeSection("Photo", photoCompliance, sectionLoading.photoCompliance, sectionErrors.photoCompliance),
+    summarizeSection("SMS", smsCapabilities || smsHistory?.length, sectionLoading.sms, sectionErrors.sms || sectionErrors.smsHistory),
+    summarizeSection("Timeline", timelineEntries.length, sectionLoading.timeline, sectionErrors.timeline),
+  ];
 
   useEffect(() => {
     if (smsIntent || !smsIntents.length) return;
@@ -94,8 +103,16 @@ export default function ServiceRequestView({
       <div className="sr-toolbar">
         <label className="field narrow">
           <span>SR ID</span>
-          <input value={srId} onChange={(event) => onChange(event.target.value)} placeholder="100" />
+          <input value={srId} onChange={(event) => onChange(String(event.target.value || "").replace(/[^\d]/g, ""))} placeholder="100" />
         </label>
+        <div className="action-row">
+          <button type="button" className={viewMode === "essentials" ? "" : "secondary-button"} onClick={() => setViewMode("essentials")}>
+            Essentials
+          </button>
+          <button type="button" className={viewMode === "full" ? "" : "secondary-button"} onClick={() => setViewMode("full")}>
+            Full view
+          </button>
+        </div>
       </div>
 
       {loading && <p>Loading service request detail…</p>}
@@ -158,6 +175,15 @@ export default function ServiceRequestView({
           </article>
 
           <article className="metric-card wide">
+            <p>Section loadout</p>
+            <div className="chip-list">
+              {sectionSignals.map((item) => (
+                <span key={item.label} className="queue-chip">{item.label}: {item.state}</span>
+              ))}
+            </div>
+          </article>
+
+          <article className="metric-card wide">
             <p>Workflow ownership</p>
             <div className="brief-grid">
               {workflowBriefItems.map((item) => (
@@ -170,6 +196,7 @@ export default function ServiceRequestView({
             </div>
           </article>
 
+          {(viewMode === "full" || complaintIntelligence?.available) && (
           <article className="metric-card wide evidence-brief">
             <p className="section-kicker">Evidence brief</p>
             {complaintIntelligence?.available ? (
@@ -272,6 +299,7 @@ export default function ServiceRequestView({
               </div>
             )}
           </article>
+          )}
 
           <article className="metric-card wide">
             <p>SR status</p>
@@ -439,6 +467,7 @@ export default function ServiceRequestView({
             )}
           </article>
 
+          {(viewMode === "full" || photoCompliance?.shouldNotify || sectionErrors.photoCompliance) && (
           <details
             className="metric-card wide disclosure-card"
             onToggle={(event) => {
@@ -477,7 +506,9 @@ export default function ServiceRequestView({
               />
             )}
           </details>
+          )}
 
+          {(viewMode === "full" || smsActionState?.message || smsCapabilities?.enabled) && (
           <details
             className="metric-card wide disclosure-card"
             onToggle={(event) => {
@@ -568,7 +599,9 @@ export default function ServiceRequestView({
               />
             )}
           </details>
+          )}
 
+          {(viewMode === "full" || customer) && (
           <details
             className="metric-card wide disclosure-card"
             onToggle={(event) => {
@@ -618,7 +651,9 @@ export default function ServiceRequestView({
               />
             )}
           </details>
+          )}
 
+          {(viewMode === "full" || timelineEntries.length > 0) && (
           <details
             className="metric-card wide disclosure-card"
             onToggle={(event) => {
@@ -650,6 +685,7 @@ export default function ServiceRequestView({
               )}
             </div>
           </details>
+          )}
         </div>
       )}
     </section>
@@ -756,4 +792,11 @@ function describeStatusMeta(meta) {
   if (meta.isScheduling) return "This SR is in a scheduling-oriented state rather than an active blocker state.";
   if (meta.isReview) return "This SR is sitting in a review/triage state that may need office follow-up.";
   return "This SR status is known but does not currently map to a stronger operations rule.";
+}
+
+function summarizeSection(label, value, loading, error) {
+  if (loading) return { label, state: "loading" };
+  if (error) return { label, state: "error" };
+  if (Array.isArray(value)) return { label, state: value.length ? "loaded" : "empty" };
+  return { label, state: value ? "loaded" : "idle" };
 }

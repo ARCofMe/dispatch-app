@@ -263,6 +263,7 @@ describe("Dispatch App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Service Request" }));
     fireEvent.change(screen.getByLabelText("SR ID"), { target: { value: "100" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Full view" }));
 
     expect(await screen.findByText("Photo compliance")).toBeInTheDocument();
     expect(dispatchApiMock.getServiceRequestPhotoCompliance).not.toHaveBeenCalled();
@@ -366,6 +367,7 @@ describe("Dispatch App", () => {
     expect(dispatchApiMock.getServiceRequestPhotoCompliance).not.toHaveBeenCalled();
     expect(dispatchApiMock.getServiceRequestSmsCapabilities).not.toHaveBeenCalled();
 
+    fireEvent.click(await screen.findByRole("button", { name: "Full view" }));
     fireEvent.click(screen.getByText("Photo compliance"));
 
     expect(await screen.findByText("Photo service unavailable.")).toBeInTheDocument();
