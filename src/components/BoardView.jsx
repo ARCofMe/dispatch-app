@@ -140,6 +140,13 @@ export default function BoardView({
   const openPartsCaseItems = asArray(board.openPartsCaseItems);
   const urgentAttentionCount = topAttentionItems.filter((item) => item.ageBucket === "urgent").length;
   const unassignedAttentionCount = topAttentionItems.filter((item) => !item.assignedOwnerLabel && !item.followUpOwnerLabel).length;
+  const idleTechnicianCount = technicianLoad.filter((tech) => Number(tech.assignmentCount || 0) === 0).length;
+  const workflowWidget = [
+    `Evidence adoption: ${complaintDashboard?.available ? formatRate(complaintDashboard.helpfulRate) : "n/a"}`,
+    `Weak recommendations: ${complaintDashboard?.reviewQueueCount || 0}`,
+    `Parts blockers: ${openPartsCaseItems.length}`,
+    `Idle techs: ${idleTechnicianCount}`,
+  ];
 
   return (
     <section className="panel board-layout">
@@ -230,6 +237,14 @@ export default function BoardView({
           {Array.isArray(statusCatalog?.surfaceActions) && statusCatalog.surfaceActions.length > 0 && (
             <small>{statusCatalog.surfaceActions.slice(0, 2).map((item) => `${item.label}: ${item.action}`).join(" ")}</small>
           )}
+        </article>
+        <article className="metric-card">
+          <p>Ops Hub workflow widget</p>
+          <strong>{board?.attentionJobs || 0}</strong>
+          <span>{workflowWidget.join(" · ")}</span>
+          <small>
+            {complaintDashboard?.feedbackHealth?.label || "Evidence feedback health is not loaded."}
+          </small>
         </article>
         </div>
       </details>
@@ -367,6 +382,14 @@ export default function BoardView({
                 </div>
                 <div className="row-meta">
                   <span>{item.nextAction || "No next action"}</span>
+                </div>
+                <div className="action-row compact-actions">
+                  <button type="button" className="secondary-button" onClick={() => onOpenServiceRequest?.(item)}>
+                    Open SR
+                  </button>
+                  <button type="button" className="secondary-button" onClick={onOpenAttention}>
+                    Open queue
+                  </button>
                 </div>
               </div>
             ))}

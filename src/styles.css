@@ -482,6 +482,11 @@ input {
   font-size: 0.82rem;
 }
 
+.compact-actions {
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
 .attention-card {
   width: 100%;
   text-align: left;
