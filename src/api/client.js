@@ -8,7 +8,7 @@ const ATTENTION_REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_OPS_HUB_ATTENTI
 
 async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeoutMs = Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : REQUEST_TIMEOUT_MS;
+  const timeoutMs = clampTimeout(options.timeoutMs || REQUEST_TIMEOUT_MS);
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const hasBody = options.body !== undefined;
   try {
@@ -92,40 +92,40 @@ export const dispatchApi = {
     return request(`/dispatch/attention/${encodeURIComponent(itemId)}`);
   },
   getServiceRequestTimeline(srId) {
-    return request(`/dispatch/sr/${srId}/timeline`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/timeline`);
   },
   getServiceRequestCustomer(srId) {
-    return request(`/dispatch/sr/${srId}/customer`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/customer`);
   },
   getServiceRequestWork(srId) {
-    return request(`/dispatch/sr/${srId}/work`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/work`);
   },
   getServiceRequestSmsCapabilities(srId) {
-    return request(`/dispatch/sr/${srId}/sms_capabilities`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/sms_capabilities`);
   },
   getServiceRequestSmsHistory(srId) {
-    return request(`/dispatch/sr/${srId}/sms/history`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/sms/history`);
   },
   previewServiceRequestSms(srId, body) {
-    return request(`/dispatch/sr/${srId}/sms/preview`, {
+    return request(`/dispatch/sr/${encodePathPart(srId)}/sms/preview`, {
       method: "POST",
       body,
     });
   },
   sendServiceRequestSms(srId, body) {
-    return request(`/dispatch/sr/${srId}/sms/send`, {
+    return request(`/dispatch/sr/${encodePathPart(srId)}/sms/send`, {
       method: "POST",
       body,
     });
   },
   getServiceRequestPhotoCompliance(srId) {
-    return request(`/dispatch/sr/${srId}/photo_compliance`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/photo_compliance`);
   },
   getServiceRequestComplaintIntelligence(srId) {
-    return request(`/dispatch/sr/${srId}/complaint_intelligence`);
+    return request(`/dispatch/sr/${encodePathPart(srId)}/complaint_intelligence`);
   },
   submitServiceRequestComplaintFeedback(srId, body) {
-    return request(`/dispatch/sr/${srId}/complaint_intelligence/feedback`, {
+    return request(`/dispatch/sr/${encodePathPart(srId)}/complaint_intelligence/feedback`, {
       method: "POST",
       body,
     });
@@ -212,7 +212,7 @@ export const dispatchApi = {
     });
   },
   postAttentionAction(itemId, action, body = {}) {
-    return request(`/dispatch/attention/${encodeURIComponent(itemId)}/${action}`, {
+    return request(`/dispatch/attention/${encodePathPart(itemId)}/${encodePathPart(action)}`, {
       method: "POST",
       body,
     });
@@ -221,13 +221,23 @@ export const dispatchApi = {
     return request("/dispatch/attention/bulk", {
       method: "POST",
       body: {
-        action,
-        itemIds,
+        action: String(action || "").trim(),
+        itemIds: Array.isArray(itemIds) ? itemIds.map((itemId) => String(itemId || "").trim()).filter(Boolean) : [],
         ...body,
       },
     });
   },
 };
+
+function encodePathPart(value) {
+  return encodeURIComponent(String(value || "").trim());
+}
+
+function clampTimeout(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 30000;
+  return Math.min(120000, Math.max(5000, numeric));
+}
 
 export function getDispatcherId() {
   const stored = readLocalStorage(DISPATCHER_ID_STORAGE_KEY);

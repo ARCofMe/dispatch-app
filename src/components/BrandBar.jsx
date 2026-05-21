@@ -6,7 +6,6 @@ const WORKSPACE_ICONS = {
   opsHub: "brain",
   routeDesk: "route",
   partsDesk: "parts",
-  fieldDesk: "field",
 };
 
 export default function BrandBar({ workspaceLinks = {}, currentApp = "routeDesk" }) {

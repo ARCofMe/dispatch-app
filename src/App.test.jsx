@@ -423,7 +423,6 @@ describe("Dispatch App", () => {
       JSON.stringify({
         routeDeskUrl: "https://route.example.com",
         partsAppUrl: "https://parts.example.com",
-        fieldDeskUrl: "javascript:alert(1)",
       })
     );
     dispatchApiMock.getBoard.mockResolvedValue({ mappedTechs: [] });

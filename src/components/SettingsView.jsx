@@ -1,4 +1,4 @@
-import { getWorkspaceLinkStatus } from "../workspaceLinks";
+import { getWorkspaceLinkStatus, summarizeWorkspaceLinks } from "../workspaceLinks";
 
 const SETTINGS_THEME_KEY = "dispatch-theme-mode";
 
@@ -27,9 +27,7 @@ export default function SettingsView({
   onWorkspaceLinksChange,
 }) {
   const ecosystemStatus = getWorkspaceLinkStatus(workspaceLinks, "routeDesk");
-  const configuredCount = ecosystemStatus.filter((item) => item.configured).length;
-  const siblingStatus = ecosystemStatus.filter((item) => !item.current);
-  const configuredSiblingCount = siblingStatus.filter((item) => item.configured).length;
+  const workspaceSummary = summarizeWorkspaceLinks(workspaceLinks, "routeDesk");
   const preflightChecks = [
     { label: "API base set", ready: Boolean(apiBase) },
     { label: "Operator ID set", ready: Boolean(dispatcherId) },
@@ -37,7 +35,6 @@ export default function SettingsView({
     { label: "Auto-load default technician", ready: Boolean(autoLoadDefaultRouteTech) },
     { label: "OpsHub launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "opsHub")?.configured) },
     { label: "PartsDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "partsDesk")?.configured) },
-    { label: "FieldDesk launcher ready", ready: Boolean(ecosystemStatus.find((item) => item.appKey === "fieldDesk")?.configured) },
   ];
   const criticalChecks = preflightChecks.filter((item) => item.label !== "Auto-load default technician");
   const readyCount = preflightChecks.filter((item) => item.ready).length;
@@ -56,7 +53,8 @@ export default function SettingsView({
         <div className="settings-grid">
           <Detail label="Overall status" value={isPresentationReady ? "Ready for presentation" : "Needs attention"} />
           <Detail label="Checks passed" value={`${readyCount} / ${preflightChecks.length}`} />
-          <Detail label="Sibling apps" value={`${configuredSiblingCount} / ${siblingStatus.length} linked`} />
+          <Detail label="Sibling apps" value={`${workspaceSummary.siblingConfigured} / ${workspaceSummary.siblingTotal} linked`} />
+          <Detail label="Launcher readiness" value={workspaceSummary.ready ? "Ready" : "Needs links"} />
           <Detail label="Default route tech" value={defaultRouteTechnicianId || "not selected"} />
         </div>
         <div className="settings-grid">
@@ -202,7 +200,7 @@ export default function SettingsView({
       <article className="metric-card wide">
         <p>Ecosystem links</p>
         <p className="muted">
-          {configuredCount} of {ecosystemStatus.length} workspaces configured.
+          {workspaceSummary.configured} of {workspaceSummary.total} workspaces configured.
         </p>
         <div className="settings-grid">
           <label className="field route-field">
@@ -229,18 +227,10 @@ export default function SettingsView({
               placeholder="parts.example.com"
             />
           </label>
-          <label className="field route-field">
-            <span>FieldDesk URL</span>
-            <input
-              value={workspaceLinks?.fieldDeskUrl || ""}
-              onChange={(event) => onWorkspaceLinksChange?.({ ...workspaceLinks, fieldDeskUrl: event.target.value })}
-              placeholder="field.example.com"
-            />
-          </label>
         </div>
         <p className="muted">
           Bare domains are normalized to `https://`. Invalid or unsafe URLs stay hidden. Saved values override the
-          launcher defaults seeded from your env file.
+          launcher defaults seeded from your env file. FieldDesk runs on each technician device and is configured there.
         </p>
         <div className="settings-grid">
           {ecosystemStatus.map((item) => (
@@ -254,6 +244,25 @@ export default function SettingsView({
               ) : null}
             </div>
           ))}
+        </div>
+        {workspaceSummary.missingLabels.length > 0 && (
+          <p className="muted">Missing launchers: {workspaceSummary.missingLabels.join(", ")}</p>
+        )}
+        {workspaceSummary.configuredLabels.length > 0 && (
+          <p className="muted">Ready launchers: {workspaceSummary.configuredLabels.join(", ")}</p>
+        )}
+      </article>
+
+      <article className="metric-card wide device-note">
+        <p className="section-kicker">Tech Desk</p>
+        <h2 className="settings-title">Per-device FieldDesk</h2>
+        <p className="settings-copy">
+          FieldDesk is not a shared launcher from RouteDesk. Each technician phone or tablet stores its own OpsHub base,
+          token, technician subject, and optional handoff links in the device runtime settings.
+        </p>
+        <div className="settings-grid">
+          <Detail label="RouteDesk responsibility" value="dispatch handoff only" />
+          <Detail label="FieldDesk location" value="technician device" />
         </div>
       </article>
     </section>

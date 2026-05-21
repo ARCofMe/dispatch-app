@@ -35,7 +35,6 @@ const DEFAULT_WORKSPACE_LINKS = {
   opsHubUrl: import.meta.env.VITE_OPSHUB_URL || "",
   routeDeskUrl: import.meta.env.VITE_ROUTEDESK_URL || "",
   partsAppUrl: import.meta.env.VITE_PARTSAPP_URL || "",
-  fieldDeskUrl: import.meta.env.VITE_FIELDDESK_URL || "",
 };
 
 function resolveThemeMode(themeMode) {
@@ -827,10 +826,19 @@ export default function App() {
     }
   }
 
+  const navBadges = {
+    triage: attentionMeta?.counts?.triage ? String(attentionMeta.counts.triage) : "",
+    attention: attention.length ? String(attention.length) : "",
+    sr: selectedSrId ? "1" : "",
+    routes: routePreview?.stops?.length ? String(routePreview.stops.length) : "",
+    intake: intakeImportResult?.success || manualIntakeResult?.success ? "1" : "",
+    settings: dispatcherId ? "" : "!",
+  };
+
   return (
     <div className="app-shell">
       <BrandBar workspaceLinks={workspaceLinks} currentApp="routeDesk" />
-      <TabNav activeTab={activeTab} onSelect={setActiveTab} />
+      <TabNav activeTab={activeTab} onSelect={setActiveTab} badges={navBadges} />
 
       {activeTab === "board" && (
         <BoardView

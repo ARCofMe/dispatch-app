@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getWorkspaceLinkStatus, normalizeWorkspaceLinks, sanitizeWorkspaceUrl } from "./workspaceLinks";
+import { getWorkspaceLinkStatus, normalizeWorkspaceLinks, sanitizeWorkspaceUrl, summarizeWorkspaceLinks } from "./workspaceLinks";
 
 describe("workspaceLinks", () => {
   it("normalizes bare domains to https", () => {
@@ -9,19 +9,19 @@ describe("workspaceLinks", () => {
   it("rejects unsafe schemes", () => {
     expect(sanitizeWorkspaceUrl("javascript:alert(1)")).toBe("");
     expect(sanitizeWorkspaceUrl("ftp://files.example.com")).toBe("");
+    expect(sanitizeWorkspaceUrl("https://user:pass@ops.example.com")).toBe("");
   });
 
   it("normalizes the full workspace link payload against defaults", () => {
     expect(
       normalizeWorkspaceLinks(
         { routeDeskUrl: "https://route.example.com", partsAppUrl: "bad url" },
-        { opsHubUrl: "ops.example.com", fieldDeskUrl: "field.example.com" },
+        { opsHubUrl: "ops.example.com" },
       ),
     ).toEqual({
       opsHubUrl: "https://ops.example.com/",
       routeDeskUrl: "https://route.example.com/",
       partsAppUrl: "",
-      fieldDeskUrl: "https://field.example.com/",
     });
   });
 
@@ -43,6 +43,18 @@ describe("workspaceLinks", () => {
       configured: true,
       href: "https://parts.example.com/",
       current: false,
+    });
+  });
+
+  it("summarizes configured sibling launchers", () => {
+    expect(summarizeWorkspaceLinks({ opsHubUrl: "ops.example.com" }, "routeDesk")).toMatchObject({
+      total: 3,
+      configured: 1,
+      siblingTotal: 2,
+      siblingConfigured: 1,
+      ready: false,
+      missingLabels: ["PartsDesk"],
+      configuredLabels: ["OpsHub"],
     });
   });
 });

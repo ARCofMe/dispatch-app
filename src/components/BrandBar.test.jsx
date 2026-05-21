@@ -10,7 +10,6 @@ describe("BrandBar", () => {
           opsHubUrl: "ops.example.com",
           routeDeskUrl: "https://route.example.com",
           partsAppUrl: "https://parts.example.com",
-          fieldDeskUrl: "javascript:alert(1)",
         }}
       />
     );

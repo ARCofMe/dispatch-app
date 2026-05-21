@@ -30,20 +30,21 @@ describe("SettingsView", () => {
           opsHubUrl: "ops.example.com",
           routeDeskUrl: "",
           partsAppUrl: "parts.example.com",
-          fieldDeskUrl: "",
         }}
         onWorkspaceLinksChange={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("2 of 4 workspaces configured.")).toBeInTheDocument();
-    expect(screen.getByText("2 / 3 linked")).toBeInTheDocument();
+    expect(screen.getByText("2 of 3 workspaces configured.")).toBeInTheDocument();
+    expect(screen.getByText("2 / 2 linked")).toBeInTheDocument();
     expect(screen.getByText("Current app")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open PartsDesk" })).toHaveAttribute("href", "https://parts.example.com/");
     expect(screen.getByText("Needs attention")).toBeInTheDocument();
-    expect(screen.getByText("5 / 7")).toBeInTheDocument();
-    expect(screen.getByText("FieldDesk launcher ready")).toBeInTheDocument();
-    expect(screen.getByText("Next fixes: Default technician selected, FieldDesk launcher ready")).toBeInTheDocument();
+    expect(screen.getByText("5 / 6")).toBeInTheDocument();
+    expect(screen.queryByText("FieldDesk launcher ready")).not.toBeInTheDocument();
+    expect(screen.getByText("Next fixes: Default technician selected")).toBeInTheDocument();
+    expect(screen.getByText("Per-device FieldDesk")).toBeInTheDocument();
+    expect(screen.getByText("technician device")).toBeInTheDocument();
     expect(screen.getAllByText("Missing").length).toBeGreaterThan(0);
   });
 
@@ -71,7 +72,7 @@ describe("SettingsView", () => {
         apiBase="https://api.example.com"
         onClearRouteDraft={vi.fn()}
         onClearIntakeDraft={vi.fn()}
-        workspaceLinks={{ opsHubUrl: "", routeDeskUrl: "", partsAppUrl: "", fieldDeskUrl: "" }}
+        workspaceLinks={{ opsHubUrl: "", routeDeskUrl: "", partsAppUrl: "" }}
         onWorkspaceLinksChange={vi.fn()}
       />,
     );
